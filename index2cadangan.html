@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Robux Top Up - Platform Resmi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&display=swap");
+
+      :root {
+        --roblox-red: #ff6b6b;
+        --roblox-blue: #0084ff;
+        --roblox-yellow: #ffd93d;
+        --roblox-green: #6bcf7f;
+        --roblox-purple: #a78bfa;
+      }
+
+      body {
+        font-family: "Fredoka", sans-serif;
+        background-color: #f8f9fa;
+      }
+
+      .roblox-gradient {
+        background: linear-gradient(
+          135deg,
+          var(--roblox-red) 0%,
+          var(--roblox-blue) 100%
+        );
+      }
+
+      .roblox-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .roblox-card::before {
+        content: "";
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(
+          45deg,
+          var(--roblox-red),
+          var(--roblox-blue),
+          var(--roblox-yellow),
+          var(--roblox-green)
+        );
+        border-radius: 20px;
+        opacity: 0;
+        z-index: -1;
+        transition: opacity 0.3s ease;
+      }
+
+      .roblox-card:hover::before {
+        opacity: 1;
+      }
+
+      .roblox-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .roblox-button {
+        background: var(--roblox-red);
+        color: white;
+        border-radius: 50px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .roblox-button::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+      }
+
+      .roblox-button:hover::after {
+        width: 300px;
+        height: 300px;
+      }
+
+      .roblox-button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+      }
+
+      .feature-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        animation: float 3s ease-in-out infinite;
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0px);
+        }
+        50% {
+          transform: translateY(-15px);
+        }
+      }
+
+      .feature-icon:nth-child(1) {
+        animation-delay: 0s;
+        background: linear-gradient(135deg, #ff6b6b, #ff8787);
+      }
+      .feature-icon:nth-child(2) {
+        animation-delay: 0.5s;
+        background: linear-gradient(135deg, #0084ff, #4da3ff);
+      }
+      .feature-icon:nth-child(3) {
+        animation-delay: 1s;
+        background: linear-gradient(135deg, #6bcf7f, #8fe5a1);
+      }
+      .feature-icon:nth-child(4) {
+        animation-delay: 1.5s;
+        background: linear-gradient(135deg, #ffd93d, #ffed4e);
+      }
+
+      .header-icon {
+        animation: bounce 2s infinite;
+      }
+
+      @keyframes bounce {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-10px);
+        }
+      }
+
+      .pulse {
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      .gamepass-card {
+        background: linear-gradient(135deg, #a78bfa 0%, #c4b5fd 100%);
+        border: 3px solid var(--roblox-purple);
+        position: relative;
+      }
+
+      .gamepass-card::after {
+        content: "★";
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 1.5rem;
+        color: var(--roblox-yellow);
+        animation: rotate 10s linear infinite;
+      }
+
+      @keyframes rotate {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .roblox-badge {
+        background: var(--roblox-yellow);
+        color: #333;
+        font-weight: 700;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        box-shadow: 0 3px 10px rgba(255, 217, 61, 0.3);
+      }
+
+      .roblox-badge.popular {
+        background: var(--roblox-red);
+        color: white;
+      }
+
+      .roblox-badge.exclusive {
+        background: var(--roblox-purple);
+        color: white;
+      }
+
+      .header {
+        background: white;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        position: sticky;
+        top: 0;
+        z-index: 50;
+      }
+
+      .hero-bg {
+        background: linear-gradient(
+          135deg,
+          var(--roblox-red) 0%,
+          var(--roblox-blue) 100%
+        );
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero-bg::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.1) 0%,
+          transparent 70%
+        );
+        animation: pulse-bg 15s ease-in-out infinite;
+      }
+
+      @keyframes pulse-bg {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 0.5;
+        }
+        50% {
+          transform: scale(1.1);
+          opacity: 0.7;
+        }
+      }
+
+      .section-title {
+        position: relative;
+        display: inline-block;
+      }
+
+      .section-title::after {
+        content: "";
+        position: absolute;
+        bottom: -5px;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: var(--roblox-red);
+        border-radius: 2px;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50">
+    <header class="header">
+      <div class="container mx-auto px-4 py-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-4">
+            <div
+              class="w-14 h-14 bg-gradient-to-br from-red-500 to-blue-500 rounded-2xl flex items-center justify-center header-icon"
+            >
+              <i class="fas fa-gamepad text-white text-2xl"></i>
+            </div>
+            <h1
+              class="text-3xl font-bold bg-gradient-to-r from-red-500 to-blue-500 bg-clip-text text-transparent"
+            >
+              Robux Top Up
+            </h1>
+          </div>
+          <nav class="hidden md:flex items-center space-x-8">
+            <a
+              href="#"
+              class="text-gray-600 hover:text-red-500 transition font-medium"
+              >Beranda</a
+            >
+            <a
+              href="#"
+              class="text-gray-600 hover:text-red-500 transition font-medium"
+              >Cara Top Up</a
+            >
+            <a
+              href="#"
+              class="text-gray-600 hover:text-red-500 transition font-medium"
+              >Bantuan</a
+            >
+            <div class="relative">
+              <button
+                class="flex items-center text-gray-600 hover:text-red-500 transition font-medium"
+              >
+                <i class="fas fa-globe mr-2"></i>
+                <span>ID</span>
+                <i class="fas fa-chevron-down text-xs ml-1"></i>
+              </button>
+              <div
+                class="absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-lg py-2 z-10 hidden"
+              >
+                <a
+                  href="#"
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >Indonesia</a
+                >
+                <a
+                  href="#"
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >English</a
+                >
+              </div>
+            </div>
+            <button class="roblox-button px-6 py-3">
+              <i class="fas fa-user mr-2"></i>Masuk
+            </button>
+          </nav>
+          <button class="md:hidden text-gray-600">
+            <i class="fas fa-bars text-2xl"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <section class="hero-bg text-white py-20">
+      <div class="container mx-auto px-4 relative z-10">
+        <div class="text-center mb-12">
+          <h2 class="text-5xl md:text-6xl font-bold mb-4 animate-pulse">
+            Top Up Robux dengan Mudah!
+          </h2>
+          <p class="text-2xl mb-8 opacity-90 max-w-2xl mx-auto">
+            Platform resmi untuk pembelian Robux aman dan cepat
+          </p>
+          <div class="flex justify-center space-x-4 mb-8">
+            <span
+              class="bg-white bg-opacity-20 px-4 py-2 rounded-full font-medium"
+              >100% Aman</span
+            >
+            <span
+              class="bg-white bg-opacity-20 px-4 py-2 rounded-full font-medium"
+              >Proses Cepat</span
+            >
+            <span
+              class="bg-white bg-opacity-20 px-4 py-2 rounded-full font-medium"
+              >Harga Terbaik</span
+            >
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-10 max-w-5xl mx-auto">
+          <div class="roblox-card p-8">
+            <div class="flex justify-between items-start mb-6">
+              <div
+                class="w-16 h-16 bg-gradient-to-br from-red-500 to-orange-500 rounded-2xl flex items-center justify-center"
+              >
+                <i class="fas fa-bolt text-white text-2xl"></i>
+              </div>
+              <span class="roblox-badge popular">POPULER</span>
+            </div>
+            <h3 class="text-3xl font-bold mb-4 text-gray-800">Fast Robux</h3>
+            <p class="text-gray-600 mb-6 text-lg">
+              Dapatkan Robux dalam hitungan menit dengan proses yang cepat dan
+              aman. Pilih paket sesuai kebutuhan Anda.
+            </p>
+            <ul class="space-y-3 mb-8">
+              <li class="flex items-center text-gray-700">
+                <i class="fas fa-check-circle text-green-500 mr-3 text-xl"></i>
+                <span class="font-medium">Proses dalam 1-10 menit</span>
+              </li>
+              <li class="flex items-center text-gray-700">
+                <i class="fas fa-check-circle text-green-500 mr-3 text-xl"></i>
+                <span class="font-medium">Harga terbaik di Indonesia</span>
+              </li>
+              <li class="flex items-center text-gray-700">
+                <i class="fas fa-check-circle text-green-500 mr-3 text-xl"></i>
+                <span class="font-medium">100% aman dan terpercaya</span>
+              </li>
+            </ul>
+            <a
+              href="fast-robux_marstorekita.html"
+              class="roblox-button w-full py-4 text-center block"
+            >
+              Top Up Sekarang
+            </a>
+          </div>
+
+          <div class="gamepass-card roblox-card p-8 text-gray-800">
+            <div class="flex justify-between items-start mb-6">
+              <div
+                class="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center"
+              >
+                <i class="fas fa-star text-white text-2xl"></i>
+              </div>
+              <span class="roblox-badge exclusive">EXCLUSIF</span>
+            </div>
+            <h3 class="text-3xl font-bold mb-4">Gamepass Robux</h3>
+            <p class="text-gray-700 mb-6 text-lg">
+              Beli Robux lebih murah, dengan memilih paket dan membuat gamepass
+              kamu sudah bisa meningkatkan akun Roblox mu!
+            </p>
+            <ul class="space-y-3 mb-8">
+              <li class="flex items-center">
+                <i class="fas fa-check-circle text-purple-600 mr-3 text-xl"></i>
+                <span class="font-medium"
+                  >Pendapatan 70% dari setiap pembelian</span
+                >
+              </li>
+              <li class="flex items-center">
+                <i class="fas fa-check-circle text-purple-600 mr-3 text-xl"></i>
+                <span class="font-medium">Statistik penjualan real-time</span>
+              </li>
+              <li class="flex items-center">
+                <i class="fas fa-check-circle text-purple-600 mr-3 text-xl"></i>
+                <span class="font-medium"
+                  >Gamepass wajib dibuat sesuai nominal</span
+                >
+              </li>
+            </ul>
+            <a
+              href="gamepass-robux_marstorekita.html"
+              class="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white text-center py-4 rounded-full font-semibold hover:from-purple-700 hover:to-pink-700 transition-all transform hover:scale-105"
+            >
+              Top Up Sekarang
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="py-20 bg-white">
+      <div class="container mx-auto px-4">
+        <h3
+          class="text-4xl font-bold text-center text-gray-800 mb-16 section-title"
+        >
+          Mengapa Memilih Kami?
+        </h3>
+        <div class="grid md:grid-cols-4 gap-8">
+          <div class="text-center">
+            <div class="feature-icon mx-auto">
+              <i class="fas fa-bolt text-white"></i>
+            </div>
+            <h4 class="font-bold text-xl text-gray-800 mb-2">Proses Cepat</h4>
+            <p class="text-gray-600">Robux masuk dalam hitungan menit</p>
+          </div>
+
+          <div class="text-center">
+            <div class="feature-icon mx-auto">
+              <i class="fas fa-shield-alt text-white"></i>
+            </div>
+            <h4 class="font-bold text-xl text-gray-800 mb-2">100% Legal</h4>
+            <p class="text-gray-600">Platform resmi dan terpercaya</p>
+          </div>
+
+          <div class="text-center">
+            <div class="feature-icon mx-auto">
+              <i class="fas fa-headset text-white"></i>
+            </div>
+            <h4 class="font-bold text-xl text-gray-800 mb-2">Support 24/7</h4>
+            <p class="text-gray-600">Tim siap membantu kapan saja</p>
+          </div>
+
+          <div class="text-center">
+            <div class="feature-icon mx-auto">
+              <i class="fas fa-gift text-white"></i>
+            </div>
+            <h4 class="font-bold text-xl text-gray-800 mb-2">Bonus Menarik</h4>
+            <p class="text-gray-600">Dapatkan bonus setiap pembelian</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="py-20 bg-gradient-to-br from-blue-50 to-purple-50">
+      <div class="container mx-auto px-4">
+        <div class="grid md:grid-cols-3 gap-8">
+          <div class="roblox-card p-6">
+            <div class="flex items-center mb-4">
+              <div
+                class="w-14 h-14 bg-gradient-to-br from-red-500 to-orange-500 rounded-2xl flex items-center justify-center mr-4"
+              >
+                <i class="fas fa-lock text-white text-xl"></i>
+              </div>
+              <h4 class="text-2xl font-bold text-gray-800">
+                Keamanan Terjamin
+              </h4>
+            </div>
+            <p class="text-gray-600 text-lg">
+              Sistem enkripsi tingkat tinggi melindungi data dan transaksi Anda
+            </p>
+          </div>
+
+          <div class="roblox-card p-6">
+            <div class="flex items-center mb-4">
+              <div
+                class="w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mr-4"
+              >
+                <i class="fas fa-credit-card text-white text-xl"></i>
+              </div>
+              <h4 class="text-2xl font-bold text-gray-800">
+                Metode Pembayaran Lengkap
+              </h4>
+            </div>
+            <p class="text-gray-600 text-lg">
+              QRIS, Transfer Bank, E-Wallet - semua metode pembayaran tersedia
+            </p>
+          </div>
+
+          <div class="roblox-card p-6">
+            <div class="flex items-center mb-4">
+              <div
+                class="w-14 h-14 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center mr-4"
+              >
+                <i class="fas fa-chart-line text-white text-xl"></i>
+              </div>
+              <h4 class="text-2xl font-bold text-gray-800">Harga Terbaik</h4>
+            </div>
+            <p class="text-gray-600 text-lg">
+              Harga kompetitif dengan diskon spesial untuk pembelian besar
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="py-20 roblox-gradient text-white">
+      <div class="container mx-auto px-4 text-center">
+        <h3 class="text-4xl font-bold mb-6">
+          Siap Meningkatkan Pengalaman Roblox Anda?
+        </h3>
+        <p class="text-2xl mb-10 max-w-2xl mx-auto">
+          Top Up Robux sekarang dan nikmati fitur-fitur eksklusif di game
+          favorit Anda
+        </p>
+        <div class="flex flex-col sm:flex-row justify-center gap-6">
+          <a
+            href="fast-robux_marstorekita.html"
+            class="roblox-button px-10 py-4 text-lg"
+          >
+            Top Up Sekarang
+          </a>
+          <a
+            href="#"
+            class="bg-transparent border-4 border-white text-white px-10 py-4 rounded-full font-semibold text-lg hover:bg-white hover:text-red-500 transition-all transform hover:scale-105"
+          >
+            Pelajari Lebih Lanjut
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <footer class="bg-gray-900 text-white py-12">
+      <div class="container mx-auto px-4">
+        <div class="grid md:grid-cols-4 gap-8 mb-8">
+          <div>
+            <h5 class="font-semibold text-xl mb-4 text-red-400">
+              Tentang Kami
+            </h5>
+            <p class="text-gray-400 text-lg">
+              Platform resmi untuk top up Robux dengan harga terbaik dan proses
+              cepat.
+            </p>
+          </div>
+          <div>
+            <h5 class="font-semibold text-xl mb-4 text-red-400">Layanan</h5>
+            <ul class="space-y-3 text-gray-400 text-lg">
+              <li>
+                <a href="#" class="hover:text-white transition">Top Up Robux</a>
+              </li>
+              <li>
+                <a href="#" class="hover:text-white transition"
+                  >Gamepass Robux</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h5 class="font-semibold text-xl mb-4 text-red-400">Bantuan</h5>
+            <ul class="space-y-3 text-gray-400 text-lg">
+              <li>
+                <a href="#" class="hover:text-white transition"
+                  >Cara Pembayaran</a
+                >
+              </li>
+              <li><a href="#" class="hover:text-white transition">FAQ</a></li>
+              <li>
+                <a href="#" class="hover:text-white transition"
+                  >Syarat & Ketentuan</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h5 class="font-semibold text-xl mb-4 text-red-400">Ikuti Kami</h5>
+            <div class="flex space-x-4">
+              <a
+                href="#"
+                class="text-gray-400 hover:text-white transition text-2xl"
+              >
+                <i class="fab fa-instagram"></i>
+              </a>
+              <a
+                href="#"
+                class="text-gray-400 hover:text-white transition text-2xl"
+              >
+                <i class="fab fa-youtube"></i>
+              </a>
+              <a
+                href="#"
+                class="text-gray-400 hover:text-white transition text-2xl"
+              >
+                <i class="fab fa-discord"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+        <div
+          class="border-t border-gray-700 pt-6 text-center text-gray-400 text-lg"
+        >
+          <p>&copy; 2024 Robux Top Up. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+    <script>
+      // Konfigurasi dari proyek Firebase Anda
+      const firebaseConfig = {
+        apiKey: "AIzaSyBP-BfH2y4PnhDR4x0WZceIcu_AA2EKSO4",
+        authDomain: "marstorekita-storebase.firebaseapp.com",
+        projectId: "marstorekita-storebase",
+        storageBucket: "marstorekita-storebase.firebasestorage.app",
+        messagingSenderId: "655700298665",
+        appId: "1:655700298665:web:ae6c703ba545283c2152b8",
+        measurementId: "G-LERLQVVGRF",
+      };
+
+      // Inisialisasi Firebase App
+      firebase.initializeApp(firebaseConfig);
+
+      // Inisialisasi Firestore Database (ini yang akan jadi 'db' Anda)
+      const db = firebase.firestore();
+
+      // Catatan: getAnalytics(app) tidak kita gunakan di sini untuk menyederhanakan.
+    </script>
+
+    <script>
+      // Mobile menu toggle
+      document.addEventListener("DOMContentLoaded", function () {
+        const mobileMenuBtn = document.querySelector("header .md\\:hidden");
+        const mobileMenu = document.createElement("div");
+        mobileMenu.className =
+          "hidden md:hidden bg-white shadow-lg absolute top-full left-0 right-0 z-50";
+        mobileMenu.innerHTML = `
+          <div class="container mx-auto px-4 py-4 space-y-4">
+            <a href="#" class="block text-gray-600 hover:text-red-500 transition font-medium text-lg">Beranda</a>
+            <a href="#" class="block text-gray-600 hover:text-red-500 transition font-medium text-lg">Cara Top Up</a>
+            <a href="#" class="block text-gray-600 hover:text-red-500 transition font-medium text-lg">Bantuan</a>
+            <button class="roblox-button w-full px-6 py-3">
+              <i class="fas fa-user mr-2"></i>Masuk
+            </button>
+          </div>
+        `;
+        document.querySelector("header").appendChild(mobileMenu);
+
+        mobileMenuBtn.addEventListener("click", function () {
+          mobileMenu.classList.toggle("hidden");
+        });
+
+        // Close mobile menu when clicking outside
+        document.addEventListener("click", function (event) {
+          if (
+            !mobileMenuBtn.contains(event.target) &&
+            !mobileMenu.contains(event.target)
+          ) {
+            mobileMenu.classList.add("hidden");
+          }
+        });
+
+        // Language dropdown toggle
+        const langButton = document.querySelector(".fa-globe").parentElement;
+        const langDropdown = langButton.nextElementSibling;
+
+        langButton.addEventListener("click", function (e) {
+          e.stopPropagation();
+          langDropdown.classList.toggle("hidden");
+        });
+
+        // Close language dropdown when clicking outside
+        document.addEventListener("click", function (event) {
+          if (
+            !langButton.contains(event.target) &&
+            !langDropdown.contains(event.target)
+          ) {
+            langDropdown.classList.add("hidden");
+          }
+        });
+
+        // Add ripple effect to buttons
+        const buttons = document.querySelectorAll(".roblox-button");
+        buttons.forEach((button) => {
+          button.addEventListener("click", function (e) {
+            const ripple = document.createElement("span");
+            ripple.classList.add(
+              "absolute",
+              "bg-white",
+              "bg-opacity-30",
+              "rounded-full"
+            );
+
+            const rect = this.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            const x = e.clientX - rect.left - size / 2;
+            const y = e.clientY - rect.top - size / 2;
+
+            ripple.style.width = ripple.style.height = size + "px";
+            ripple.style.left = x + "px";
+            ripple.style.top = y + "px";
+
+            this.style.position = "relative";
+            this.style.overflow = "hidden";
+            this.appendChild(ripple);
+
+            setTimeout(() => {
+              ripple.remove();
+            }, 600);
+          });
+        });
+      });
+    </script>
+
+    <script src="order.js"></script>
+  </body>
+</html>

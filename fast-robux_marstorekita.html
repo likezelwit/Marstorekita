@@ -1,0 +1,2521 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fast Robux - Top Up Cepat & Aman</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-analytics.js"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&display=swap");
+
+      :root {
+        --roblox-red: #ff6b6b;
+        --roblox-blue: #0084ff;
+        --roblox-yellow: #ffd93d;
+        --roblox-green: #6bcf7f;
+        --roblox-purple: #a78bfa;
+      }
+
+      body {
+        font-family: "Fredoka", sans-serif;
+        background-color: #f8f9fa;
+      }
+
+      .roblox-gradient {
+        background: linear-gradient(
+          135deg,
+          var(--roblox-red) 0%,
+          var(--roblox-blue) 100%
+        );
+      }
+
+      .roblox-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .roblox-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .roblox-button {
+        background: var(--roblox-red);
+        color: white;
+        border-radius: 50px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .roblox-button::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+      }
+
+      .roblox-button:hover::after {
+        width: 300px;
+        height: 300px;
+      }
+
+      .roblox-button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+      }
+
+      .flash-sale {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .flash-sale::before {
+        content: "FLASH SALE";
+        position: absolute;
+        top: 10px;
+        right: -30px;
+        background: var(--roblox-red);
+        color: white;
+        padding: 5px 40px;
+        transform: rotate(45deg);
+        font-weight: bold;
+        font-size: 0.75rem;
+        z-index: 10;
+      }
+
+      .premium-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: linear-gradient(135deg, #ffd700, #ffa500);
+        color: #333;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: bold;
+        z-index: 10;
+      }
+
+      .regular-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: var(--roblox-blue);
+        color: white;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: bold;
+        z-index: 10;
+      }
+
+      .stock-info {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 3px 8px;
+        border-radius: 15px;
+        font-size: 0.7rem;
+        z-index: 10;
+      }
+
+      .discount-badge {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: var(--roblox-green);
+        color: white;
+        padding: 3px 8px;
+        border-radius: 15px;
+        font-size: 0.75rem;
+        font-weight: bold;
+        z-index: 10;
+      }
+
+      .category-title {
+        background: linear-gradient(
+          135deg,
+          var(--roblox-red),
+          var(--roblox-blue)
+        );
+        color: white;
+        padding: 10px 20px;
+        border-radius: 50px;
+        font-weight: 600;
+        display: inline-block;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .input-field {
+        background: #f3f4f6;
+        border: 2px solid transparent;
+        border-radius: 15px;
+        padding: 12px 20px;
+        transition: all 0.3s ease;
+        width: 100%;
+      }
+
+      .input-field:focus {
+        outline: none;
+        border-color: var(--roblox-blue);
+        background: white;
+        box-shadow: 0 0 0 4px rgba(0, 132, 255, 0.1);
+      }
+
+      .step-indicator {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 30px;
+      }
+
+      .step {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #e5e7eb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin: 0 10px;
+        position: relative;
+      }
+
+      .step.active {
+        background: var(--roblox-blue);
+        color: white;
+      }
+
+      .step.completed {
+        background: var(--roblox-green);
+        color: white;
+      }
+
+      .step::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 100%;
+        width: 20px;
+        height: 2px;
+        background: #e5e7eb;
+        transform: translateY(-50%);
+      }
+
+      .step:last-child::after {
+        display: none;
+      }
+
+      .step.completed::after {
+        background: var(--roblox-green);
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      .pulse {
+        animation: pulse 2s infinite;
+      }
+
+      .info-box {
+        background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
+        border-left: 4px solid var(--roblox-blue);
+        padding: 15px;
+        border-radius: 10px;
+        margin: 20px 0;
+      }
+
+      .country-select {
+        position: relative;
+      }
+
+      .country-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #d1d5db;
+        border-top: none;
+        border-radius: 0 0 0.5rem 0.5rem;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 10;
+        display: none;
+      }
+
+      .country-dropdown.show {
+        display: block;
+      }
+
+      .country-option {
+        display: flex;
+        align-items: center;
+        padding: 0.5rem;
+        cursor: pointer;
+      }
+
+      .country-option:hover {
+        background-color: #f3f4f6;
+      }
+
+      .quantity-selector {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 20px 0;
+      }
+
+      .quantity-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--roblox-blue);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .quantity-btn:hover {
+        background: var(--roblox-red);
+        transform: scale(1.1);
+      }
+
+      .quantity-input {
+        width: 80px;
+        height: 40px;
+        text-align: center;
+        font-size: 1.2rem;
+        font-weight: bold;
+        border: 2px solid #e5e7eb;
+        border-radius: 10px;
+        margin: 0 10px;
+      }
+
+      .selected-package {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border: 2px solid var(--roblox-blue);
+        border-radius: 20px;
+        padding: 20px;
+        margin: 20px 0;
+      }
+
+      .whatsapp-btn {
+        background: #25d366;
+        color: white;
+        border-radius: 50px;
+        padding: 12px 24px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        text-decoration: none;
+      }
+
+      .whatsapp-btn:hover {
+        background: #128c7e;
+        transform: scale(1.05);
+        box-shadow: 0 5px 15px rgba(37, 211, 102, 0.3);
+      }
+
+      .payment-card {
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+      }
+
+      .payment-card:hover {
+        border-color: var(--roblox-blue);
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      }
+
+      .payment-card.selected {
+        border-color: var(--roblox-red);
+        background: rgba(255, 107, 107, 0.05);
+      }
+
+      .payment-icon {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        margin: 0 auto 15px;
+      }
+
+      .payment-info {
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        border: 2px solid var(--roblox-green);
+        border-radius: 20px;
+        padding: 20px;
+        margin: 20px 0;
+        display: none;
+      }
+
+      .payment-info.show {
+        display: block;
+      }
+
+      .ewallet-redirect {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        border: 2px solid #f59e0b;
+        border-radius: 20px;
+        padding: 20px;
+        margin: 20px 0;
+        display: none;
+      }
+
+      .ewallet-redirect.show {
+        display: block;
+      }
+
+      .qr-code-container {
+        display: flex;
+        justify-content: center;
+        margin: 20px 0;
+      }
+
+      .qr-code {
+        width: 200px;
+        height: 200px;
+        background: white;
+        border: 2px solid #e5e7eb;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        text-align: center;
+        padding: 10px;
+      }
+
+      .payment-instructions {
+        background: #f9fafb;
+        border-radius: 10px;
+        padding: 15px;
+        margin: 15px 0;
+      }
+
+      .payment-instructions h5 {
+        color: #374151;
+        margin-bottom: 10px;
+      }
+
+      .payment-instructions ol {
+        margin-left: 20px;
+      }
+
+      .payment-instructions li {
+        margin-bottom: 5px;
+        color: #4b5563;
+      }
+
+      .payment-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 15px;
+      }
+
+      .payment-method {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 15px;
+        border-radius: 12px;
+        background: white;
+        border: 2px solid #e5e7eb;
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+
+      .payment-method:hover {
+        border-color: var(--roblox-blue);
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      }
+
+      .payment-method.selected {
+        border-color: var(--roblox-red);
+        background: rgba(255, 107, 107, 0.05);
+      }
+
+      .payment-method-icon {
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 10px;
+        font-size: 24px;
+      }
+
+      .payment-method-name {
+        font-weight: 600;
+        text-align: center;
+        font-size: 14px;
+      }
+
+      .payment-category {
+        margin-bottom: 25px;
+      }
+
+      .payment-category-title {
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 15px;
+        color: #374151;
+        display: flex;
+        align-items: center;
+      }
+
+      .payment-category-title i {
+        margin-right: 8px;
+        color: var(--roblox-blue);
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+      <div class="container mx-auto px-4 py-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-4">
+            <div
+              class="w-14 h-14 bg-gradient-to-br from-red-500 to-blue-500 rounded-2xl flex items-center justify-center"
+            >
+              <i class="fas fa-gamepad text-white text-2xl"></i>
+            </div>
+            <h1
+              class="text-3xl font-bold bg-gradient-to-r from-red-500 to-blue-500 bg-clip-text text-transparent"
+            >
+              Fast Robux
+            </h1>
+          </div>
+          <nav class="hidden md:flex items-center space-x-8">
+            <a
+              href="#"
+              class="text-gray-600 hover:text-red-500 transition font-medium"
+              >Beranda</a
+            >
+            <a
+              href="#"
+              class="text-gray-600 hover:text-red-500 transition font-medium"
+              >Cara Top Up</a
+            >
+            <a
+              href="#"
+              class="text-gray-600 hover:text-red-500 transition font-medium"
+              >Bantuan</a
+            >
+            <button class="roblox-button px-6 py-3">
+              <i class="fas fa-user mr-2"></i>Masuk
+            </button>
+          </nav>
+          <button class="md:hidden text-gray-600">
+            <i class="fas fa-bars text-2xl"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="roblox-gradient text-white py-16">
+      <div class="container mx-auto px-4 text-center">
+        <h2 class="text-4xl md:text-5xl font-bold mb-4">
+          Top Up Robux Cepat & Aman
+        </h2>
+        <p class="text-xl mb-8 max-w-2xl mx-auto">
+          Proses dalam 1-10 menit dengan harga terbaik dan bonus menarik
+        </p>
+        <div class="flex justify-center space-x-4">
+          <div class="bg-white/20 backdrop-blur-sm rounded-lg px-6 py-3">
+            <i class="fas fa-bolt mr-2"></i>Proses Cepat
+          </div>
+          <div class="bg-white/20 backdrop-blur-sm rounded-lg px-6 py-3">
+            <i class="fas fa-shield-alt mr-2"></i>100% Aman
+          </div>
+          <div class="bg-white/20 backdrop-blur-sm rounded-lg px-6 py-3">
+            <i class="fas fa-gift mr-2"></i>Bonus Menarik
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-12">
+      <!-- Step Indicator -->
+      <div class="step-indicator mb-12">
+        <div class="step active">1</div>
+        <div class="step">2</div>
+        <div class="step">3</div>
+        <div class="step">4</div>
+        <div class="step">5</div>
+      </div>
+
+      <!-- Step 1: Account Data -->
+      <div id="step1" class="max-w-2xl mx-auto">
+        <div class="roblox-card p-8 mb-8">
+          <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">
+            Masukkan Data Akun
+          </h3>
+          <div class="space-y-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-user mr-2"></i>Username
+              </label>
+              <input
+                type="text"
+                id="username"
+                class="input-field"
+                placeholder="Masukkan Username"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-lock mr-2"></i>Password
+              </label>
+              <input
+                type="password"
+                id="password"
+                class="input-field"
+                placeholder="Masukkan Password"
+              />
+            </div>
+            <div class="info-box">
+              <p class="text-sm text-blue-800">
+                <i class="fas fa-info-circle mr-2"></i>
+                Please make sure you fill the correct account data
+              </p>
+            </div>
+            <button
+              onclick="validateAndProceed()"
+              id="step1Button"
+              class="roblox-button w-full py-4 text-center font-semibold text-lg"
+              disabled
+            >
+              Lanjut ke Pilihan Nominal <i class="fas fa-arrow-right ml-2"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Package Selection -->
+      <div id="step2" class="hidden max-w-6xl mx-auto">
+        <div class="roblox-card p-8 mb-8">
+          <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">
+            Pilih Nominal
+          </h3>
+
+          <!-- Flash Sale Category -->
+          <div class="mb-12">
+            <h4 class="category-title">
+              <i class="fas fa-bolt mr-2"></i>Flash Sale
+            </h4>
+            <div
+              class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6"
+            >
+              <!-- Flash Sale Item 1 -->
+              <div class="roblox-card flash-sale relative">
+                <div class="discount-badge">Disc 6%</div>
+                <div class="stock-info">905 / 1.000 purchased</div>
+                <div class="p-6">
+                  <div
+                    class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4 mx-auto"
+                  >
+                    <i class="fas fa-coins text-blue-600 text-2xl"></i>
+                  </div>
+                  <h5 class="text-xl font-bold text-center mb-2">80 Robux</h5>
+                  <p class="text-sm text-gray-600 text-center mb-4">
+                    Roblox - 80 Robux
+                  </p>
+                  <div class="text-center mb-4">
+                    <span class="text-2xl font-bold text-red-600"
+                      >Rp 20.400</span
+                    >
+                    <div class="text-sm text-gray-500 line-through">
+                      Rp 21.600
+                    </div>
+                  </div>
+                  <button
+                    onclick="selectPackage('Fast Robux', '80 Robux', 80, 20400)"
+                    class="roblox-button w-full py-2"
+                  >
+                    Pilih
+                  </button>
+                </div>
+              </div>
+
+              <!-- Flash Sale Item 2 -->
+              <div class="roblox-card flash-sale relative">
+                <div class="discount-badge">Disc 6%</div>
+                <div class="stock-info">908 / 1.000 purchased</div>
+                <div class="p-6">
+                  <div
+                    class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4 mx-auto"
+                  >
+                    <i class="fas fa-coins text-blue-600 text-2xl"></i>
+                  </div>
+                  <h5 class="text-xl font-bold text-center mb-2">160 Robux</h5>
+                  <p class="text-sm text-gray-600 text-center mb-4">
+                    Roblox - 160 Robux
+                  </p>
+                  <div class="text-center mb-4">
+                    <span class="text-2xl font-bold text-red-600"
+                      >Rp 40.800</span
+                    >
+                    <div class="text-sm text-gray-500 line-through">
+                      Rp 43.200
+                    </div>
+                  </div>
+                  <button
+                    onclick="selectPackage('Fast Robux', '160 Robux', 160, 40800)"
+                    class="roblox-button w-full py-2"
+                  >
+                    Pilih
+                  </button>
+                </div>
+              </div>
+
+              <!-- Flash Sale Item 3 -->
+              <div class="roblox-card flash-sale relative">
+                <div class="discount-badge">Disc 6%</div>
+                <div class="stock-info">846 / 1.000 purchased</div>
+                <div class="p-6">
+                  <div
+                    class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4 mx-auto"
+                  >
+                    <i class="fas fa-coins text-blue-600 text-2xl"></i>
+                  </div>
+                  <h5 class="text-xl font-bold text-center mb-2">240 Robux</h5>
+                  <p class="text-sm text-gray-600 text-center mb-4">
+                    Roblox - 240 Robux
+                  </p>
+                  <div class="text-center mb-4">
+                    <span class="text-2xl font-bold text-red-600"
+                      >Rp 61.200</span
+                    >
+                    <div class="text-sm text-gray-500 line-through">
+                      Rp 64.800
+                    </div>
+                  </div>
+                  <button
+                    onclick="selectPackage('Fast Robux', '240 Robux', 240, 61200)"
+                    class="roblox-button w-full py-2"
+                  >
+                    Pilih
+                  </button>
+                </div>
+              </div>
+
+              <!-- Flash Sale Item 4 -->
+              <div class="roblox-card flash-sale relative">
+                <div class="discount-badge">Disc 6%</div>
+                <div class="stock-info">820 / 1.000 purchased</div>
+                <div class="p-6">
+                  <div
+                    class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4 mx-auto"
+                  >
+                    <i class="fas fa-coins text-blue-600 text-2xl"></i>
+                  </div>
+                  <h5 class="text-xl font-bold text-center mb-2">320 Robux</h5>
+                  <p class="text-sm text-gray-600 text-center mb-4">
+                    Roblox - 320 Robux
+                  </p>
+                  <div class="text-center mb-4">
+                    <span class="text-2xl font-bold text-red-600"
+                      >Rp 81.600</span
+                    >
+                    <div class="text-sm text-gray-500 line-through">
+                      Rp 86.400
+                    </div>
+                  </div>
+                  <button
+                    onclick="selectPackage('Fast Robux', '320 Robux', 320, 81600)"
+                    class="roblox-button w-full py-2"
+                  >
+                    Pilih
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Premium Category -->
+          <div class="mb-12">
+            <h4 class="category-title">
+              <i class="fas fa-crown mr-2"></i>🎟 Robux Premium
+            </h4>
+            <div
+              class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6"
+            >
+              <!-- Premium Item 1 -->
+              <div class="roblox-card relative">
+                <div class="premium-badge">PREMIUM</div>
+                <div class="p-6">
+                  <div
+                    class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4 mx-auto"
+                  >
+                    <i class="fas fa-gem text-purple-600 text-2xl"></i>
+                  </div>
+                  <h5 class="text-xl font-bold text-center mb-2">
+                    450 Robux Premium
+                  </h5>
+                  <p class="text-sm text-gray-600 text-center mb-4">
+                    Roblox - 450 Robux Premium
+                  </p>
+                  <div class="text-center mb-4">
+                    <span class="text-2xl font-bold text-purple-600"
+                      >Rp 87.000</span
+                    >
+                  </div>
+                  <button
+                    onclick="selectPackage('Fast Robux', '450 Robux Premium', 450, 87000)"
+                    class="roblox-button w-full py-2"
+                  >
+                    Pilih
+                  </button>
+                </div>
+              </div>
+
+              <!-- Premium Item 2 -->
+              <div class="roblox-card relative">
+                <div class="premium-badge">PREMIUM</div>
+                <div class="p-6">
+                  <div
+                    class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4 mx-auto"
+                  >
+                    <i class="fas fa-gem text-purple-600 text-2xl"></i>
+                  </div>
+                  <h5 class="text-xl font-bold text-center mb-2">
+                    1000 Robux Premium
+                  </h5>
+                  <p class="text-sm text-gray-600 text-center mb-4">
+                    Roblox - 1000 Robux Premium
+                  </p>
+                  <div class="text-center mb-4">
+                    <span class="text-2xl font-bold text-purple-600"
+                      >Rp 174.000</span
+                    >
+                  </div>
+                  <button
+                    onclick="selectPackage('Fast Robux', '1000 Robux Premium', 1000, 174000)"
+                    class="roblox-button w-full py-2"
+                  >
+                    Pilih
+                  </button>
+                </div>
+              </div>
+
+              <!-- Premium Item 3 -->
+              <div class="roblox-card relative">
+                <div class="premium-badge">PREMIUM</div>
+                <div class="p-6">
+                  <div
+                    class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4 mx-auto"
+                  >
+                    <i class="fas fa-gem text-purple-600 text-2xl"></i>
+                  </div>
+                  <h5 class="text-xl font-bold text-center mb-2">
+                    1550 Robux Premium
+                  </h5>
+                  <p class="text-sm text-gray-600 text-center mb-4">
+                    Roblox - 1550 Robux Premium
+                  </p>
+                  <div class="text-center mb-4">
+                    <span class="text-2xl font-bold text-purple-600"
+                      >Rp 261.000</span
+                    >
+                  </div>
+                  <button
+                    onclick="selectPackage('Fast Robux', '1550 Robux Premium', 1550, 261000)"
+                    class="roblox-button w-full py-2"
+                  >
+                    Pilih
+                  </button>
+                </div>
+              </div>
+
+              <!-- Premium Item 4 -->
+              <div class="roblox-card relative">
+                <div class="premium-badge">PREMIUM</div>
+                <div class="p-6">
+                  <div
+                    class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4 mx-auto"
+                  >
+                    <i class="fas fa-gem text-purple-600 text-2xl"></i>
+                  </div>
+                  <h5 class="text-xl font-bold text-center mb-2">
+                    2650 Robux Premium
+                  </h5>
+                  <p class="text-sm text-gray-600 text-center mb-4">
+                    Roblox - 2650 Robux Premium
+                  </p>
+                  <div class="text-center mb-4">
+                    <span class="text-2xl font-bold text-purple-600"
+                      >Rp 435.000</span
+                    >
+                  </div>
+                  <button
+                    onclick="selectPackage('Fast Robux', '2650 Robux Premium', 2650, 435000)"
+                    class="roblox-button w-full py-2"
+                  >
+                    Pilih
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Regular Category -->
+          <div>
+            <h4 class="category-title">
+              <i class="fas fa-fire mr-2"></i>🔥 Robux Regular
+            </h4>
+            <div
+              class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6"
+            >
+              <!-- Regular Items -->
+              <div class="roblox-card relative">
+                <div class="regular-badge">REGULAR</div>
+                <div class="p-6">
+                  <div
+                    class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 mx-auto"
+                  >
+                    <i class="fas fa-coins text-green-600 text-2xl"></i>
+                  </div>
+                  <h5 class="text-xl font-bold text-center mb-2">500 Robux</h5>
+                  <p class="text-sm text-gray-600 text-center mb-4">
+                    Roblox - 500 Robux
+                  </p>
+                  <div class="text-center mb-4">
+                    <span class="text-2xl font-bold text-green-600"
+                      >Rp 78.300</span
+                    >
+                  </div>
+                  <button
+                    onclick="selectPackage('Fast Robux', '500 Robux', 500, 78300)"
+                    class="roblox-button w-full py-2"
+                  >
+                    Pilih
+                  </button>
+                </div>
+              </div>
+
+              <div class="roblox-card relative">
+                <div class="regular-badge">REGULAR</div>
+                <div class="p-6">
+                  <div
+                    class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 mx-auto"
+                  >
+                    <i class="fas fa-coins text-green-600 text-2xl"></i>
+                  </div>
+                  <h5 class="text-xl font-bold text-center mb-2">1000 Robux</h5>
+                  <p class="text-sm text-gray-600 text-center mb-4">
+                    Roblox - 1000 Robux
+                  </p>
+                  <div class="text-center mb-4">
+                    <span class="text-2xl font-bold text-green-600"
+                      >Rp 156.600</span
+                    >
+                  </div>
+                  <button
+                    onclick="selectPackage('Fast Robux', '1000 Robux', 1000, 156600)"
+                    class="roblox-button w-full py-2"
+                  >
+                    Pilih
+                  </button>
+                </div>
+              </div>
+
+              <div class="roblox-card relative">
+                <div class="regular-badge">REGULAR</div>
+                <div class="p-6">
+                  <div
+                    class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 mx-auto"
+                  >
+                    <i class="fas fa-coins text-green-600 text-2xl"></i>
+                  </div>
+                  <h5 class="text-xl font-bold text-center mb-2">1500 Robux</h5>
+                  <p class="text-sm text-gray-600 text-center mb-4">
+                    Roblox - 1500 Robux
+                  </p>
+                  <div class="text-center mb-4">
+                    <span class="text-2xl font-bold text-green-600"
+                      >Rp 234.900</span
+                    >
+                  </div>
+                  <button
+                    onclick="selectPackage('Fast Robux', '1500 Robux', 1500, 234900)"
+                    class="roblox-button w-full py-2"
+                  >
+                    Pilih
+                  </button>
+                </div>
+              </div>
+
+              <div class="roblox-card relative">
+                <div class="regular-badge">REGULAR</div>
+                <div class="p-6">
+                  <div
+                    class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 mx-auto"
+                  >
+                    <i class="fas fa-coins text-green-600 text-2xl"></i>
+                  </div>
+                  <h5 class="text-xl font-bold text-center mb-2">2000 Robux</h5>
+                  <p class="text-sm text-gray-600 text-center mb-4">
+                    Roblox - 2000 Robux
+                  </p>
+                  <div class="text-center mb-4">
+                    <span class="text-2xl font-bold text-green-600"
+                      >Rp 313.200</span
+                    >
+                  </div>
+                  <button
+                    onclick="selectPackage('Fast Robux', '2000 Robux', 2000, 313200)"
+                    class="roblox-button w-full py-2"
+                  >
+                    Pilih
+                  </button>
+                </div>
+              </div>
+
+              <div class="roblox-card relative">
+                <div class="regular-badge">REGULAR</div>
+                <div class="p-6">
+                  <div
+                    class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 mx-auto"
+                  >
+                    <i class="fas fa-coins text-green-600 text-2xl"></i>
+                  </div>
+                  <h5 class="text-xl font-bold text-center mb-2">2500 Robux</h5>
+                  <p class="text-sm text-gray-600 text-center mb-4">
+                    Roblox - 2500 Robux
+                  </p>
+                  <div class="text-center mb-4">
+                    <span class="text-2xl font-bold text-green-600"
+                      >Rp 398.750</span
+                    >
+                  </div>
+                  <button
+                    onclick="selectPackage('Fast Robux', '2500 Robux', 2500, 398750)"
+                    class="roblox-button w-full py-2"
+                  >
+                    Pilih
+                  </button>
+                </div>
+              </div>
+
+              <div class="roblox-card relative">
+                <div class="regular-badge">REGULAR</div>
+                <div class="p-6">
+                  <div
+                    class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 mx-auto"
+                  >
+                    <i class="fas fa-coins text-green-600 text-2xl"></i>
+                  </div>
+                  <h5 class="text-xl font-bold text-center mb-2">3000 Robux</h5>
+                  <p class="text-sm text-gray-600 text-center mb-4">
+                    Roblox - 3000 Robux
+                  </p>
+                  <div class="text-center mb-4">
+                    <span class="text-2xl font-bold text-green-600"
+                      >Rp 478.500</span
+                    >
+                  </div>
+                  <button
+                    onclick="selectPackage('Fast Robux', '3000 Robux', 3000, 478500)"
+                    class="roblox-button w-full py-2"
+                  >
+                    Pilih
+                  </button>
+                </div>
+              </div>
+
+              <div class="roblox-card relative">
+                <div class="regular-badge">REGULAR</div>
+                <div class="p-6">
+                  <div
+                    class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 mx-auto"
+                  >
+                    <i class="fas fa-coins text-green-600 text-2xl"></i>
+                  </div>
+                  <h5 class="text-xl font-bold text-center mb-2">3500 Robux</h5>
+                  <p class="text-sm text-gray-600 text-center mb-4">
+                    Roblox - 3500 Robux
+                  </p>
+                  <div class="text-center mb-4">
+                    <span class="text-2xl font-bold text-green-600"
+                      >Rp 558.250</span
+                    >
+                  </div>
+                  <button
+                    onclick="selectPackage('Fast Robux', '3500 Robux', 3500, 558250)"
+                    class="roblox-button w-full py-2"
+                  >
+                    Pilih
+                  </button>
+                </div>
+              </div>
+
+              <div class="roblox-card relative">
+                <div class="regular-badge">REGULAR</div>
+                <div class="p-6">
+                  <div
+                    class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 mx-auto"
+                  >
+                    <i class="fas fa-coins text-green-600 text-2xl"></i>
+                  </div>
+                  <h5 class="text-xl font-bold text-center mb-2">4000 Robux</h5>
+                  <p class="text-sm text-gray-600 text-center mb-4">
+                    Roblox - 4000 Robux
+                  </p>
+                  <div class="text-center mb-4">
+                    <span class="text-2xl font-bold text-green-600"
+                      >Rp 638.000</span
+                    >
+                  </div>
+                  <button
+                    onclick="selectPackage('Fast Robux', '4000 Robux', 4000, 638000)"
+                    class="roblox-button w-full py-2"
+                  >
+                    Pilih
+                  </button>
+                </div>
+              </div>
+
+              <div class="roblox-card relative">
+                <div class="regular-badge">REGULAR</div>
+                <div class="p-6">
+                  <div
+                    class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 mx-auto"
+                  >
+                    <i class="fas fa-coins text-green-600 text-2xl"></i>
+                  </div>
+                  <h5 class="text-xl font-bold text-center mb-2">5000 Robux</h5>
+                  <p class="text-sm text-gray-600 text-center mb-4">
+                    Roblox - 5000 Robux
+                  </p>
+                  <div class="text-center mb-4">
+                    <span class="text-2xl font-bold text-green-600"
+                      >Rp 797.500</span
+                    >
+                  </div>
+                  <button
+                    onclick="selectPackage('Fast Robux', '5000 Robux', 5000, 797500)"
+                    class="roblox-button w-full py-2"
+                  >
+                    Pilih
+                  </button>
+                </div>
+              </div>
+
+              <div class="roblox-card relative">
+                <div class="regular-badge">REGULAR</div>
+                <div class="p-6">
+                  <div
+                    class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 mx-auto"
+                  >
+                    <i class="fas fa-coins text-green-600 text-2xl"></i>
+                  </div>
+                  <h5 class="text-xl font-bold text-center mb-2">8000 Robux</h5>
+                  <p class="text-sm text-gray-600 text-center mb-4">
+                    Roblox - 8000 Robux
+                  </p>
+                  <div class="text-center mb-4">
+                    <span class="text-2xl font-bold text-green-600"
+                      >Rp 1.276.000</span
+                    >
+                  </div>
+                  <button
+                    onclick="selectPackage('Fast Robux', '8000 Robux', 8000, 1276000)"
+                    class="roblox-button w-full py-2"
+                  >
+                    Pilih
+                  </button>
+                </div>
+              </div>
+
+              <div class="roblox-card relative">
+                <div class="regular-badge">REGULAR</div>
+                <div class="p-6">
+                  <div
+                    class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 mx-auto"
+                  >
+                    <i class="fas fa-coins text-green-600 text-2xl"></i>
+                  </div>
+                  <h5 class="text-xl font-bold text-center mb-2">
+                    10.000 Robux
+                  </h5>
+                  <p class="text-sm text-gray-600 text-center mb-4">
+                    Roblox - 10.000 Robux
+                  </p>
+                  <div class="text-center mb-4">
+                    <span class="text-2xl font-bold text-green-600"
+                      >Rp 1.595.000</span
+                    >
+                  </div>
+                  <button
+                    onclick="selectPackage('Fast Robux', '10.000 Robux', 10000, 1595000)"
+                    class="roblox-button w-full py-2"
+                  >
+                    Pilih
+                  </button>
+                </div>
+              </div>
+
+              <div class="roblox-card relative">
+                <div class="regular-badge">REGULAR</div>
+                <div class="p-6">
+                  <div
+                    class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 mx-auto"
+                  >
+                    <i class="fas fa-coins text-green-600 text-2xl"></i>
+                  </div>
+                  <h5 class="text-xl font-bold text-center mb-2">
+                    15.000 Robux
+                  </h5>
+                  <p class="text-sm text-gray-600 text-center mb-4">
+                    Roblox - 15.000 Robux
+                  </p>
+                  <div class="text-center mb-4">
+                    <span class="text-2xl font-bold text-green-600"
+                      >Rp 2.392.500</span
+                    >
+                  </div>
+                  <button
+                    onclick="selectPackage('Fast Robux', '15.000 Robux', 15000, 2392500)"
+                    class="roblox-button w-full py-2"
+                  >
+                    Pilih
+                  </button>
+                </div>
+              </div>
+
+              <div class="roblox-card relative">
+                <div class="regular-badge">REGULAR</div>
+                <div class="p-6">
+                  <div
+                    class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 mx-auto"
+                  >
+                    <i class="fas fa-coins text-green-600 text-2xl"></i>
+                  </div>
+                  <h5 class="text-xl font-bold text-center mb-2">
+                    22.000 Robux
+                  </h5>
+                  <p class="text-sm text-gray-600 text-center mb-4">
+                    Roblox - 22.000 Robux
+                  </p>
+                  <div class="text-center mb-4">
+                    <span class="text-2xl font-bold text-green-600"
+                      >Rp 3.190.000</span
+                    >
+                  </div>
+                  <button
+                    onclick="selectPackage('Fast Robux', '22.000 Robux', 22000, 3190000)"
+                    class="roblox-button w-full py-2"
+                  >
+                    Pilih
+                  </button>
+                </div>
+              </div>
+
+              <div class="roblox-card relative">
+                <div class="regular-badge">REGULAR</div>
+                <div class="p-6">
+                  <div
+                    class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4 mx-auto"
+                  >
+                    <i class="fas fa-coins text-green-600 text-2xl"></i>
+                  </div>
+                  <h5 class="text-xl font-bold text-center mb-2">
+                    44.000 Robux
+                  </h5>
+                  <p class="text-sm text-gray-600 text-center mb-4">
+                    Roblox - 44.000 Robux
+                  </p>
+                  <div class="text-center mb-4">
+                    <span class="text-2xl font-bold text-green-600"
+                      >Rp 6.380.000</span
+                    >
+                  </div>
+                  <button
+                    onclick="selectPackage('Fast Robux', '44.000 Robux', 44000, 6380000)"
+                    class="roblox-button w-full py-2"
+                  >
+                    Pilih
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-between">
+          <button
+            onclick="showStep1()"
+            class="bg-gray-300 text-gray-700 px-8 py-3 rounded-lg font-semibold hover:bg-gray-400 transition"
+          >
+            <i class="fas fa-arrow-left mr-2"></i>Kembali
+          </button>
+          <button
+            onclick="showStep3()"
+            class="roblox-button px-8 py-3 font-semibold pulse"
+            disabled
+            id="step2Button"
+          >
+            Lanjut ke Pembayaran <i class="fas fa-arrow-right ml-2"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 3: Payment Method Selection -->
+      <div id="step3" class="hidden max-w-6xl mx-auto">
+        <div class="roblox-card p-8 mb-8">
+          <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">
+            Pilih Metode Pembayaran
+          </h3>
+
+          <!-- E-Wallet Section -->
+          <div class="payment-category">
+            <h4 class="payment-category-title">
+              <i class="fas fa-wallet"></i> E-Wallet
+            </h4>
+            <div class="payment-grid">
+              <div
+                class="payment-method"
+                onclick="selectPaymentMethod('GoPay')"
+              >
+                <div class="payment-method-icon" style="color: #00a1de">
+                  <i class="fas fa-wallet"></i>
+                </div>
+                <div class="payment-method-name">GoPay</div>
+              </div>
+              <div class="payment-method" onclick="selectPaymentMethod('OVO')">
+                <div class="payment-method-icon" style="color: #6b46c1">
+                  <i class="fas fa-wallet"></i>
+                </div>
+                <div class="payment-method-name">OVO</div>
+              </div>
+              <div class="payment-method" onclick="selectPaymentMethod('DANA')">
+                <div class="payment-method-icon" style="color: #0084ff">
+                  <i class="fas fa-wallet"></i>
+                </div>
+                <div class="payment-method-name">DANA</div>
+              </div>
+              <div
+                class="payment-method"
+                onclick="selectPaymentMethod('ShopeePay')"
+              >
+                <div class="payment-method-icon" style="color: #ee4d2d">
+                  <i class="fas fa-wallet"></i>
+                </div>
+                <div class="payment-method-name">ShopeePay</div>
+              </div>
+              <div
+                class="payment-method"
+                onclick="selectPaymentMethod('LinkAja')"
+              >
+                <div class="payment-method-icon" style="color: #e51937">
+                  <i class="fas fa-wallet"></i>
+                </div>
+                <div class="payment-method-name">LinkAja</div>
+              </div>
+              <div
+                class="payment-method"
+                onclick="selectPaymentMethod('Sakuku')"
+              >
+                <div class="payment-method-icon" style="color: #0060af">
+                  <i class="fas fa-wallet"></i>
+                </div>
+                <div class="payment-method-name">Sakuku</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bank Transfer Section -->
+          <div class="payment-category">
+            <h4 class="payment-category-title">
+              <i class="fas fa-university"></i> Transfer Bank
+            </h4>
+            <div class="payment-grid">
+              <div class="payment-method" onclick="selectPaymentMethod('BCA')">
+                <div class="payment-method-icon" style="color: #0060af">
+                  <i class="fas fa-university"></i>
+                </div>
+                <div class="payment-method-name">BCA</div>
+              </div>
+              <div
+                class="payment-method"
+                onclick="selectPaymentMethod('Mandiri')"
+              >
+                <div class="payment-method-icon" style="color: #003d79">
+                  <i class="fas fa-university"></i>
+                </div>
+                <div class="payment-method-name">Mandiri</div>
+              </div>
+              <div class="payment-method" onclick="selectPaymentMethod('BNI')">
+                <div class="payment-method-icon" style="color: #f7941d">
+                  <i class="fas fa-university"></i>
+                </div>
+                <div class="payment-method-name">BNI</div>
+              </div>
+              <div class="payment-method" onclick="selectPaymentMethod('BRI')">
+                <div class="payment-method-icon" style="color: #00529c">
+                  <i class="fas fa-university"></i>
+                </div>
+                <div class="payment-method-name">BRI</div>
+              </div>
+              <div
+                class="payment-method"
+                onclick="selectPaymentMethod('CIMB Niaga')"
+              >
+                <div class="payment-method-icon" style="color: #ff0000">
+                  <i class="fas fa-university"></i>
+                </div>
+                <div class="payment-method-name">CIMB Niaga</div>
+              </div>
+              <div
+                class="payment-method"
+                onclick="selectPaymentMethod('Permata')"
+              >
+                <div class="payment-method-icon" style="color: #003d79">
+                  <i class="fas fa-university"></i>
+                </div>
+                <div class="payment-method-name">Permata</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- E-Cards Section -->
+          <div class="payment-category">
+            <h4 class="payment-category-title">
+              <i class="fas fa-credit-card"></i> Kartu Kredit & Debit
+            </h4>
+            <div class="payment-grid">
+              <div class="payment-method" onclick="selectPaymentMethod('Visa')">
+                <div class="payment-method-icon" style="color: #1a1f71">
+                  <i class="fas fa-credit-card"></i>
+                </div>
+                <div class="payment-method-name">Visa</div>
+              </div>
+              <div
+                class="payment-method"
+                onclick="selectPaymentMethod('Mastercard')"
+              >
+                <div class="payment-method-icon" style="color: #eb001b">
+                  <i class="fas fa-credit-card"></i>
+                </div>
+                <div class="payment-method-name">Mastercard</div>
+              </div>
+              <div class="payment-method" onclick="selectPaymentMethod('JCB')">
+                <div class="payment-method-icon" style="color: #0e4c92">
+                  <i class="fas fa-credit-card"></i>
+                </div>
+                <div class="payment-method-name">JCB</div>
+              </div>
+              <div
+                class="payment-method"
+                onclick="selectPaymentMethod('American Express')"
+              >
+                <div class="payment-method-icon" style="color: #006fcf">
+                  <i class="fas fa-credit-card"></i>
+                </div>
+                <div class="payment-method-name">AmEx</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- QRIS Section -->
+          <div class="payment-category">
+            <h4 class="payment-category-title">
+              <i class="fas fa-qrcode"></i> QRIS
+            </h4>
+            <div class="payment-grid">
+              <div class="payment-method" onclick="selectPaymentMethod('QRIS')">
+                <div class="payment-method-icon" style="color: #2e7d32">
+                  <i class="fas fa-qrcode"></i>
+                </div>
+                <div class="payment-method-name">QRIS</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Retail Section -->
+          <div class="payment-category">
+            <h4 class="payment-category-title">
+              <i class="fas fa-store"></i> Retail
+            </h4>
+            <div class="payment-grid">
+              <div
+                class="payment-method"
+                onclick="selectPaymentMethod('Indomaret')"
+              >
+                <div class="payment-method-icon" style="color: #ff0000">
+                  <i class="fas fa-store"></i>
+                </div>
+                <div class="payment-method-name">Indomaret</div>
+              </div>
+              <div
+                class="payment-method"
+                onclick="selectPaymentMethod('Alfamart')"
+              >
+                <div class="payment-method-icon" style="color: #003d79">
+                  <i class="fas fa-store"></i>
+                </div>
+                <div class="payment-method-name">Alfamart</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Payment Info Display -->
+          <div id="paymentInfo" class="payment-info mt-8">
+            <h4 class="text-lg font-bold mb-4 text-green-800">
+              Informasi Pembayaran
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <div class="space-y-3">
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Toko:</span>
+                    <span class="font-medium">Fast Robux Store</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Metode:</span>
+                    <span class="font-medium" id="selectedPaymentDisplay"
+                      >-</span
+                    >
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Jumlah:</span>
+                    <span
+                      class="font-bold text-lg text-red-600"
+                      id="paymentAmount"
+                      >Rp 0</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Payment Instructions -->
+            <div id="paymentInstructions" class="payment-instructions">
+              <h5 class="font-bold mb-2">Petunjuk Pembayaran:</h5>
+              <ol class="list-decimal pl-5 space-y-1 text-sm">
+                <li id="instruction1">-</li>
+                <li id="instruction2">-</li>
+                <li id="instruction3">-</li>
+                <li id="instruction4">-</li>
+              </ol>
+            </div>
+          </div>
+
+          <div class="mt-8 p-4 bg-blue-50 rounded-lg">
+            <p class="text-sm text-blue-800">
+              <i class="fas fa-info-circle mr-2"></i>
+              Pastikan Anda memilih metode pembayaran yang sesuai. Setelah
+              memilih, lanjutkan ke langkah konfirmasi.
+            </p>
+          </div>
+
+          <div class="flex justify-between mt-8">
+            <button
+              onclick="showStep2()"
+              class="bg-gray-300 text-gray-700 px-8 py-3 rounded-lg font-semibold hover:bg-gray-400 transition"
+            >
+              <i class="fas fa-arrow-left mr-2"></i>Kembali
+            </button>
+            <button
+              onclick="showStep4()"
+              class="roblox-button px-8 py-3 font-semibold pulse"
+              disabled
+              id="step3Button"
+            >
+              Lanjut ke Konfirmasi <i class="fas fa-arrow-right ml-2"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: Confirmation (Final Step) -->
+      <div id="step4" class="hidden max-w-4xl mx-auto">
+        <div class="roblox-card p-8 mb-8">
+          <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">
+            Konfirmasi Pembelian
+          </h3>
+
+          <!-- Selected Package -->
+          <div class="selected-package mb-8">
+            <h4 class="text-xl font-bold mb-4">Paket yang Dipilih</h4>
+            <div class="flex justify-between items-center">
+              <div>
+                <p class="text-lg font-medium" id="selectedPackageName">-</p>
+                <p class="text-gray-600" id="selectedPackageDesc">-</p>
+              </div>
+              <div class="text-right">
+                <p
+                  class="text-2xl font-bold text-red-600"
+                  id="selectedPackagePrice"
+                >
+                  Rp 0
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Selected Payment Method -->
+          <div class="selected-package mb-8">
+            <h4 class="text-xl font-bold mb-4">Metode Pembayaran</h4>
+            <div class="flex justify-between items-center">
+              <div>
+                <p class="text-lg font-medium" id="selectedPaymentMethod">-</p>
+                <p class="text-gray-600" id="selectedPaymentDesc">-</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quantity Selector -->
+          <div class="mb-8">
+            <h4 class="text-lg font-semibold mb-4">Jumlah Pembelian</h4>
+            <div class="quantity-selector">
+              <div class="quantity-btn" onclick="changeQuantity(-1)">
+                <i class="fas fa-minus"></i>
+              </div>
+              <input
+                type="number"
+                id="quantity"
+                class="quantity-input"
+                value="1"
+                min="1"
+                onchange="updateTotal()"
+              />
+              <div class="quantity-btn" onclick="changeQuantity(1)">
+                <i class="fas fa-plus"></i>
+              </div>
+            </div>
+            <p class="text-sm text-gray-600 mt-2">Minimal pembelian: 1</p>
+          </div>
+
+          <!-- Contact Details -->
+          <div class="mb-8">
+            <h4 class="text-lg font-semibold mb-4">Detail Kontak</h4>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  <i class="fas fa-envelope mr-2"></i>Email
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  class="input-field"
+                  placeholder="example@gmail.com"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  <i class="fas fa-phone mr-2"></i>No. WhatsApp
+                </label>
+                <div class="flex">
+                  <div class="country-select">
+                    <div
+                      class="flex items-center justify-center px-4 border border-r-0 border-gray-300 rounded-l-lg bg-gray-50 cursor-pointer"
+                      onclick="toggleCountryDropdown()"
+                    >
+                      <span id="countryFlag" class="mr-2">🇮🇩</span>
+                      <span id="countryCode" class="text-gray-600">+62</span>
+                      <i class="fas fa-chevron-down text-gray-600 ml-2"></i>
+                    </div>
+                    <div id="countryDropdown" class="country-dropdown">
+                      <div
+                        class="country-option"
+                        onclick="selectCountry('🇮🇩', '+62', 'Indonesia')"
+                      >
+                        <span class="mr-2">🇮🇩</span>
+                        <span>+62</span>
+                        <span class="ml-2 text-gray-600">Indonesia</span>
+                      </div>
+                      <div
+                        class="country-option"
+                        onclick="selectCountry('🇲🇾', '+60', 'Malaysia')"
+                      >
+                        <span class="mr-2">🇲🇾</span>
+                        <span>+60</span>
+                        <span class="ml-2 text-gray-600">Malaysia</span>
+                      </div>
+                      <div
+                        class="country-option"
+                        onclick="selectCountry('🇸🇬', '+65', 'Singapura')"
+                      >
+                        <span class="mr-2">🇸🇬</span>
+                        <span>+65</span>
+                        <span class="ml-2 text-gray-600">Singapura</span>
+                      </div>
+                      <div
+                        class="country-option"
+                        onclick="selectCountry('🇹🇭', '+66', 'Thailand')"
+                      >
+                        <span class="mr-2">🇹🇭</span>
+                        <span>+66</span>
+                        <span class="ml-2 text-gray-600">Thailand</span>
+                      </div>
+                      <div
+                        class="country-option"
+                        onclick="selectCountry('🇻🇳', '+84', 'Vietnam')"
+                      >
+                        <span class="mr-2">🇻🇳</span>
+                        <span>+84</span>
+                        <span class="ml-2 text-gray-600">Vietnam</span>
+                      </div>
+                      <div
+                        class="country-option"
+                        onclick="selectCountry('🇵🇭', '+63', 'Filipina')"
+                      >
+                        <span class="mr-2">🇵🇭</span>
+                        <span>+63</span>
+                        <span class="ml-2 text-gray-600">Filipina</span>
+                      </div>
+                      <div
+                        class="country-option"
+                        onclick="selectCountry('🇺🇸', '+1', 'Amerika Serikat')"
+                      >
+                        <span class="mr-2">🇺🇸</span>
+                        <span>+1</span>
+                        <span class="ml-2 text-gray-600">Amerika Serikat</span>
+                      </div>
+                    </div>
+                  </div>
+                  <input
+                    type="tel"
+                    id="phoneNumber"
+                    class="flex-1 px-4 py-3 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="81234567890"
+                  />
+                </div>
+                <p class="text-xs text-gray-500 mt-1">
+                  **Nomor ini akan dihubungi jika terjadi masalah
+                </p>
+                <p class="text-xs text-gray-500">
+                  Bukti transaksi akan kami kirim ke Email yang kamu isi di
+                  atas.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Process Information -->
+          <div class="info-box mb-8">
+            <h4 class="text-lg font-semibold mb-3">
+              Cara Top Up Robux Roblox:
+            </h4>
+            <ol class="list-decimal pl-5 space-y-2 text-sm">
+              <li>Pilih Nominal</li>
+              <li>Pilih Metode Pembayaran</li>
+              <li>Masukkan Username dan Password Roblox kamu</li>
+              <li>Tentukan Jumlah Pembelian</li>
+              <li>Isi Detail Kontak (Pastikan nomer whatsapp sudah benar!)</li>
+              <li>Klik Pesan Sekarang dan lakukan Pembayaran</li>
+              <li>Pesanan akan proses sesuai urutan</li>
+              <li>Done</li>
+            </ol>
+          </div>
+
+          <!-- Additional Info -->
+          <div
+            class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded mb-8"
+          >
+            <h4 class="font-semibold mb-2">
+              Info tambahan khusus Produk Roblox:
+            </h4>
+            <ul class="list-disc pl-5 space-y-1 text-sm">
+              <li>
+                Pesanan kamu diproses sesuai urutan, bisa sangat cepat, bisa
+                sedikit lama. tergantung banyaknya antrian pada saat kamu
+                membeli!
+              </li>
+              <li>
+                Jangan khawatir, pesanan kamu tetap akan diproses, tidak perlu
+                spam chat ya! 🚫
+              </li>
+              <li>
+                Sambil menunggu antrian, kamu boleh login dan memainkan game nya
+                kok, tidak akan nabrak.
+              </li>
+              <li>
+                Jam kerja admin VIA LOGIN adalah dari jam 07:00 Pagi - 01:00
+                (dini hari / malam hari)
+              </li>
+              <li>
+                Order di atas jam 00:00 akan mulai diproses pagi hari pada awal
+                jam kerja / 07:00 WIB (sesuai urutan orderan)
+              </li>
+            </ul>
+          </div>
+
+          <!-- Contact Support -->
+          <div class="bg-red-50 border-l-4 border-red-400 p-4 rounded mb-8">
+            <h4 class="font-semibold mb-2">Mengalami Kendala / Error..? 🚫</h4>
+            <p class="text-sm mb-3">Silahkan Klik untuk menghubungi Admin 👉</p>
+            <a
+              href="https://wa.me/6285880929519?text=halo%20min%20ada%20keluhan%20nih"
+              target="_blank"
+              class="whatsapp-btn"
+            >
+              <i class="fab fa-whatsapp mr-2"></i>Hubungi Admin di WhatsApp
+            </a>
+          </div>
+
+          <!-- Order Summary -->
+          <div class="bg-gray-50 rounded-lg p-6 mb-8">
+            <h4 class="font-semibold text-lg mb-4">Ringkasan Pesanan</h4>
+            <div class="space-y-3">
+              <div class="flex justify-between">
+                <span class="text-gray-600">Roblox</span>
+                <span class="font-medium" id="summaryRoblox">-</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">Metode Pembayaran</span>
+                <span class="font-medium" id="summaryPayment">-</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">Harga</span>
+                <span class="font-medium" id="summaryHarga">Rp 0</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">Jumlah Pembelian</span>
+                <span class="font-medium" id="summaryJumlah">1</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">Biaya</span>
+                <span class="font-medium">Rp 0</span>
+              </div>
+              <div class="flex justify-between border-t pt-3">
+                <span class="font-bold text-lg">Total Pembayaran</span>
+                <span class="font-bold text-lg text-red-600" id="summaryTotal"
+                  >Rp 0</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <div class="flex justify-between">
+            <button
+              onclick="showStep3()"
+              class="bg-gray-300 text-gray-700 px-8 py-3 rounded-lg font-semibold hover:bg-gray-400 transition"
+            >
+              <i class="fas fa-arrow-left mr-2"></i>Kembali
+            </button>
+            <button
+              onclick="completeTransaction()"
+              class="roblox-button px-8 py-3 font-semibold pulse"
+              id="step4Button"
+              disabled
+            >
+              Kirim Pesanan <i class="fas fa-paper-plane ml-2"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- Step 5: Transaction Confirmation -->
+      <div id="step5" class="hidden max-w-4xl mx-auto">
+        <div class="roblox-card p-8 mb-8">
+          <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">
+            Transaksi Berhasil Disimpan
+          </h3>
+          <p class="text-center mb-4">
+            ID Transaksi Anda: <span id="orderIdDisplay"></span>
+          </p>
+          <p class="text-center">
+            ID Transaksi telah disimpan. Silakan hubungi admin untuk konfirmasi
+            pembayaran melalui WhatsApp.
+          </p>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-12 mt-12">
+      <div class="container mx-auto px-4">
+        <div class="grid md:grid-cols-4 gap-8 mb-8">
+          <div>
+            <h5 class="font-semibold text-xl mb-4 text-red-400">
+              Tentang Kami
+            </h5>
+            <p class="text-gray-400 text-lg">
+              Platform resmi untuk top up Robux dengan harga terbaik dan proses
+              cepat.
+            </p>
+          </div>
+          <div>
+            <h5 class="font-semibold text-xl mb-4 text-red-400">Layanan</h5>
+            <ul class="space-y-3 text-gray-400 text-lg">
+              <li>
+                <a href="#" class="hover:text-white transition">Fast Robux</a>
+              </li>
+              <li>
+                <a href="#" class="hover:text-white transition"
+                  >Gamepass Robux</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h5 class="font-semibold text-xl mb-4 text-red-400">Bantuan</h5>
+            <ul class="space-y-3 text-gray-400 text-lg">
+              <li>
+                <a href="#" class="hover:text-white transition"
+                  >Cara Pembayaran</a
+                >
+              </li>
+              <li><a href="#" class="hover:text-white transition">FAQ</a></li>
+              <li>
+                <a href="#" class="hover:text-white transition"
+                  >Syarat & Ketentuan</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h5 class="font-semibold text-xl mb-4 text-red-400">Ikuti Kami</h5>
+            <div class="flex space-x-4">
+              <a
+                href="#"
+                class="text-gray-400 hover:text-white transition text-2xl"
+              >
+                <i class="fab fa-instagram"></i>
+              </a>
+              <a
+                href="#"
+                class="text-gray-400 hover:text-white transition text-2xl"
+              >
+                <i class="fab fa-youtube"></i>
+              </a>
+              <a
+                href="#"
+                class="text-gray-400 hover:text-white transition text-2xl"
+              >
+                <i class="fab fa-discord"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+        <div
+          class="border-t border-gray-700 pt-6 text-center text-gray-400 text-lg"
+        >
+          <p>&copy; 2024 Fast Robux. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+      const firebaseConfig = {
+        apiKey: "AIzaSyBP-BfH2y4PnhDR4x0WZceIcu_AA2EKSO4",
+        authDomain: "marstorekita-storebase.firebaseapp.com",
+        projectId: "marstorekita-storebase",
+        storageBucket: "marstorekita-storebase.firebasestorage.app",
+        messagingSenderId: "655700298665",
+        appId: "1:655700298665:web:ae6c703ba545283c2152b8",
+        measurementId: "G-LERLQVVGRF",
+      };
+
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+      firebase.analytics();
+      const db = firebase.firestore(); // Ini penting untuk bisa menyimpan data
+
+      // Global variables
+      let selectedPackageData = null;
+      let selectedPaymentMethod = null;
+      let selectedCountry = {
+        flag: "🇮🇩",
+        code: "+62",
+        name: "Indonesia",
+      };
+
+      // Step navigation
+      function showStep1() {
+        document.getElementById("step1").classList.remove("hidden");
+        document.getElementById("step2").classList.add("hidden");
+        document.getElementById("step3").classList.add("hidden");
+        document.getElementById("step4").classList.add("hidden");
+        document.getElementById("step5").classList.add("hidden");
+
+        // Update step indicators
+        document.querySelectorAll(".step").forEach((step, index) => {
+          step.classList.remove("active", "completed");
+          if (index === 0) {
+            step.classList.add("active");
+          }
+        });
+      }
+
+      function showStep2() {
+        document.getElementById("step1").classList.add("hidden");
+        document.getElementById("step2").classList.remove("hidden");
+        document.getElementById("step3").classList.add("hidden");
+        document.getElementById("step4").classList.add("hidden");
+        document.getElementById("step5").classList.add("hidden");
+
+        // Update step indicators
+        document.querySelectorAll(".step").forEach((step, index) => {
+          step.classList.remove("active", "completed");
+          if (index === 0) {
+            step.classList.add("completed");
+          } else if (index === 1) {
+            step.classList.add("active");
+          }
+        });
+      }
+
+      function showStep3() {
+        document.getElementById("step1").classList.add("hidden");
+        document.getElementById("step2").classList.add("hidden");
+        document.getElementById("step3").classList.remove("hidden");
+        document.getElementById("step4").classList.add("hidden");
+        document.getElementById("step5").classList.add("hidden");
+
+        // Update step indicators
+        document.querySelectorAll(".step").forEach((step, index) => {
+          step.classList.remove("active", "completed");
+          if (index <= 1) {
+            step.classList.add("completed");
+          } else if (index === 2) {
+            step.classList.add("active");
+          }
+        });
+      }
+
+      function showStep4() {
+        document.getElementById("step1").classList.add("hidden");
+        document.getElementById("step2").classList.add("hidden");
+        document.getElementById("step3").classList.add("hidden");
+        document.getElementById("step4").classList.remove("hidden");
+        document.getElementById("step5").classList.add("hidden");
+
+        // Update step indicators
+        document.querySelectorAll(".step").forEach((step, index) => {
+          step.classList.remove("active", "completed");
+          if (index < 3) {
+            step.classList.add("completed");
+          } else if (index === 3) {
+            step.classList.add("active");
+          }
+        });
+
+        // Scroll to top
+        window.scrollTo(0, 0);
+      }
+
+      function showStep5() {
+        document.getElementById("step1").classList.add("hidden");
+        document.getElementById("step2").classList.add("hidden");
+        document.getElementById("step3").classList.add("hidden");
+        document.getElementById("step4").classList.add("hidden");
+        document.getElementById("step5").classList.remove("hidden");
+
+        // Update step indicators
+        document.querySelectorAll(".step").forEach((step, index) => {
+          step.classList.remove("active", "completed");
+          if (index < 4) {
+            step.classList.add("completed");
+          } else if (index === 4) {
+            step.classList.add("active");
+          }
+        });
+
+        // Scroll to top
+        window.scrollTo(0, 0);
+      }
+
+      // Validation functions
+      function validateAndProceed() {
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+
+        if (username && password) {
+          showStep2();
+        } else {
+          alert("Silakan isi username dan password terlebih dahulu");
+        }
+      }
+
+      // Package selection
+      function selectPackage(category, name, robux, price) {
+        selectedPackageData = {
+          category: category,
+          name: name,
+          robux: robux,
+          price: price,
+          total: price, // Default for quantity 1
+        };
+
+        // Update selected package display
+        document.getElementById("selectedPackageName").textContent = name;
+        document.getElementById(
+          "selectedPackageDesc"
+        ).textContent = `Roblox - ${name}`;
+        document.getElementById(
+          "selectedPackagePrice"
+        ).textContent = `Rp ${price.toLocaleString("id-ID")}`;
+
+        // Update summary
+        document.getElementById("summaryRoblox").textContent = name;
+        document.getElementById(
+          "summaryHarga"
+        ).textContent = `Rp ${price.toLocaleString("id-ID")}`;
+        document.getElementById("summaryJumlah").textContent = "1";
+        document.getElementById(
+          "summaryTotal"
+        ).textContent = `Rp ${price.toLocaleString("id-ID")}`;
+
+        // Show step 3 and scroll to it
+        showStep3();
+        document.getElementById("step3").scrollIntoView({ behavior: "smooth" });
+
+        // Enable next button
+        document.getElementById("step2Button").disabled = false;
+      }
+
+      // Payment method selection
+      function selectPaymentMethod(method) {
+        selectedPaymentMethod = method;
+
+        // Update UI to show selected payment method
+        document.querySelectorAll("#step3 .payment-method").forEach((card) => {
+          card.classList.remove("selected");
+        });
+
+        event.currentTarget.classList.add("selected");
+
+        // Update payment method display in summary
+        document.getElementById("summaryPayment").textContent = method;
+        document.getElementById("selectedPaymentMethod").textContent = method;
+
+        // Enable next button
+        document.getElementById("step3Button").disabled = false;
+
+        // Update payment description
+        document.getElementById(
+          "selectedPaymentDesc"
+        ).textContent = `Pembayaran melalui ${method}`;
+
+        // Show payment info
+        const paymentInfo = document.getElementById("paymentInfo");
+        const paymentAmount = document.getElementById("paymentAmount");
+        const selectedPaymentDisplay = document.getElementById(
+          "selectedPaymentDisplay"
+        );
+
+        paymentInfo.classList.add("show");
+        paymentAmount.textContent = `Rp ${selectedPackageData.total.toLocaleString(
+          "id-ID"
+        )}`;
+        selectedPaymentDisplay.textContent = method;
+
+        // Set payment instructions based on method
+        const instructions = {
+          GoPay: [
+            "Buka aplikasi Gojek dan pilih menu GoPay",
+            "Pilih menu Bayar dan pilih QRIS",
+            "Scan QR code yang tersedia",
+            "Konfirmasi pembayaran",
+          ],
+          OVO: [
+            "Buka aplikasi OVO",
+            "Pilih menu Transfer dan pilih Ke Rekening Bank",
+            "Pilih menu QRIS",
+            "Scan QR code yang tersedia",
+            "Konfirmasi pembayaran",
+          ],
+          DANA: [
+            "Buka aplikasi DANA",
+            "Pilih menu Bayar",
+            "Pilih menu QRIS",
+            "Scan QR code yang tersedia",
+            "Konfirmasi pembayaran",
+          ],
+          ShopeePay: [
+            "Buka aplikasi Shopee",
+            "Pilih menu ShopeePay",
+            "Pilih menu Scan",
+            "Scan QR code yang tersedia",
+            "Konfirmasi pembayaran",
+          ],
+          LinkAja: [
+            "Buka aplikasi LinkAja",
+            "Pilih menu Scan",
+            "Scan QR code yang tersedia",
+            "Konfirmasi pembayaran",
+          ],
+          Sakuku: [
+            "Buka aplikasi Sakuku",
+            "Pilih menu Bayar",
+            "Pilih menu QRIS",
+            "Scan QR code yang tersedia",
+            "Konfirmasi pembayaran",
+          ],
+          BCA: [
+            "Buka aplikasi BCA Mobile",
+            "Pilih menu m-Transfer",
+            "Pilih menu BCA Virtual Account",
+            "Masukkan nomor virtual account",
+            "Masukkan nominal pembayaran",
+            "Konfirmasi pembayaran",
+          ],
+          Mandiri: [
+            "Buka aplikasi Mandiri Online",
+            "Pilih menu Bayar",
+            "Pilih menu e-Commerce",
+            "Pilih merchant Fast Robux",
+            "Masukkan nominal pembayaran",
+            "Konfirmasi pembayaran",
+          ],
+          BNI: [
+            "Buka aplikasi BNI Mobile Banking",
+            "Pilih menu Transfer",
+            "Pilih menu Virtual Account Billing",
+            "Masukkan nomor virtual account",
+            "Masukkan nominal pembayaran",
+            "Konfirmasi pembayaran",
+          ],
+          BRI: [
+            "Buka aplikasi BRImo",
+            "Pilih menu Pembayaran",
+            "Pilih menu BRIVA",
+            "Masukkan nomor virtual account",
+            "Masukkan nominal pembayaran",
+            "Konfirmasi pembayaran",
+          ],
+          "CIMB Niaga": [
+            "Buka aplikasi OCTO Mobile",
+            "Pilih menu Transfer",
+            "Pilih menu Virtual Account",
+            "Masukkan nomor virtual account",
+            "Masukkan nominal pembayaran",
+            "Konfirmasi pembayaran",
+          ],
+          Permata: [
+            "Buka aplikasi PermataMobile X",
+            "Pilih menu Pembayaran",
+            "Pilih menu Virtual Account",
+            "Masukkan nomor virtual account",
+            "Masukkan nominal pembayaran",
+            "Konfirmasi pembayaran",
+          ],
+          Visa: [
+            "Masukkan nomor kartu Visa Anda",
+            "Masukkan tanggal kadaluarsa",
+            "Masukkan CVV",
+            "Konfirmasi pembayaran",
+          ],
+          Mastercard: [
+            "Masukkan nomor kartu Mastercard Anda",
+            "Masukkan tanggal kadaluarsa",
+            "Masukkan CVV",
+            "Konfirmasi pembayaran",
+          ],
+          JCB: [
+            "Masukkan nomor kartu JCB Anda",
+            "Masukkan tanggal kadaluarsa",
+            "Masukkan CVV",
+            "Konfirmasi pembayaran",
+          ],
+          "American Express": [
+            "Masukkan nomor kartu American Express Anda",
+            "Masukkan tanggal kadaluarsa",
+            "Masukkan CVV",
+            "Konfirmasi pembayaran",
+          ],
+          QRIS: [
+            "Buka aplikasi e-wallet atau mobile banking Anda",
+            "Pilih menu QRIS",
+            "Scan QR code yang tersedia",
+            "Konfirmasi pembayaran",
+          ],
+          Indomaret: [
+            "Pergi ke gerai Indomaret terdekat",
+            "Beri tahu kasir Anda ingin membayar Fast Robux",
+            "Berikan kode pembayaran Anda",
+            "Lakukan pembayaran di kasir",
+          ],
+          Alfamart: [
+            "Pergi ke gerai Alfamart terdekat",
+            "Beri tahu kasir Anda ingin membayar Fast Robux",
+            "Berikan kode pembayaran Anda",
+            "Lakukan pembayaran di kasir",
+          ],
+        };
+
+        // Update instruction elements
+        const instructionElements = [
+          "instruction1",
+          "instruction2",
+          "instruction3",
+          "instruction4",
+        ];
+
+        const methodInstructions = instructions[method] || [
+          "Pilih metode pembayaran yang tersedia",
+          "Ikuti petunjuk pembayaran",
+          "Lakukan pembayaran",
+          "Tunggu konfirmasi pembayaran",
+        ];
+
+        methodInstructions.forEach((instruction, index) => {
+          const element = document.getElementById(instructionElements[index]);
+          if (element) {
+            element.textContent = instruction;
+          }
+        });
+      }
+
+      // Quantity functions
+      function changeQuantity(change) {
+        const quantityInput = document.getElementById("quantity");
+        let newQuantity = parseInt(quantityInput.value) + change;
+
+        if (newQuantity < 1) newQuantity = 1;
+
+        quantityInput.value = newQuantity;
+        updateTotal();
+      }
+
+      function updateTotal() {
+        if (!selectedPackageData) return;
+
+        const quantity =
+          parseInt(document.getElementById("quantity").value) || 1;
+        const total = selectedPackageData.price * quantity;
+
+        selectedPackageData.total = total;
+        selectedPackageData.quantity = quantity;
+
+        // Update displays
+        document.getElementById("summaryJumlah").textContent = quantity;
+        document.getElementById(
+          "summaryTotal"
+        ).textContent = `Rp ${total.toLocaleString("id-ID")}`;
+
+        // Enable/disable step 4 button
+        const email = document.getElementById("email").value;
+        const phone = document.getElementById("phoneNumber").value;
+
+        if (email && phone && selectedPaymentMethod) {
+          document.getElementById("step4Button").disabled = false;
+        } else {
+          document.getElementById("step4Button").disabled = true;
+        }
+      }
+
+      async function completeTransaction() {
+        const email = document.getElementById("email").value;
+        const phone = document.getElementById("phoneNumber").value;
+
+        // Pastikan semua variabel data penting (selectedPackageData, usernameInput, dll.)
+        // sudah didefinisikan dan terisi dengan benar di bagian atas skrip Anda.
+        if (
+          !selectedPackageData ||
+          !selectedPaymentMethod ||
+          !email ||
+          !phone
+        ) {
+          alert("Harap lengkapi semua data transaksi.");
+          return;
+        }
+
+        // Nonaktifkan tombol selama proses
+        document.getElementById("step4Button").disabled = true;
+        document.getElementById("step4Button").innerText = "Memproses...";
+
+        try {
+          const transactionData = {
+            // Asumsi variabel ini telah dideklarasikan dan diisi sebelumnya
+            username: document.getElementById("username").value,
+            password: document.getElementById("password").value,
+            package: selectedPackageData.name,
+            robux: selectedPackageData.robux,
+            price: selectedPackageData.price,
+            paymentMethod: selectedPaymentMethod,
+            contactEmail: email,
+            contactPhone: selectedCountry.code + phone,
+            status: "Pending", // Status awal
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          };
+
+          // Simpan data ke Firestore Collection 'transactions'
+          const docRef = await db
+            .collection("transactions")
+            .add(transactionData);
+
+          // Tampilkan ID transaksi dan pindah ke Step 5
+          document.getElementById("orderIdDisplay").innerText = docRef.id;
+          showStep5();
+        } catch (error) {
+          console.error("Error writing document: ", error);
+          alert(
+            "Terjadi kesalahan saat menyimpan transaksi. Silakan coba lagi."
+          );
+
+          // Aktifkan kembali tombol jika gagal
+          document.getElementById("step4Button").disabled = false;
+          document.getElementById("step4Button").innerText = "Kirim Pesanan";
+        }
+      }
+
+      // Generate order Id
+      function generateOrderId() {
+        const timestamp = Date.now().toString(36);
+        const random = Math.random().toString(36).substring(2, 5);
+        return timestamp + random;
+      }
+
+      // Reset form
+      function resetForm() {
+        document.getElementById("username").value = "";
+        document.getElementById("password").value = "";
+        document.getElementById("email").value = "";
+        document.getElementById("phoneNumber").value = "";
+        document.getElementById("quantity").value = "1";
+        selectedPackageData = null;
+        selectedPaymentMethod = null;
+
+        // Reset payment method selection UI
+        document.querySelectorAll("#step3 .payment-method").forEach((card) => {
+          card.classList.remove("selected");
+        });
+
+        // Hide payment info
+        document.getElementById("paymentInfo").classList.remove("show");
+
+        // Reset step buttons
+        document.getElementById("step2Button").disabled = true;
+        document.getElementById("step3Button").disabled = true;
+        document.getElementById("step4Button").disabled = true;
+      }
+
+      // Country selection
+      function toggleCountryDropdown() {
+        const dropdown = document.getElementById("countryDropdown");
+        dropdown.classList.toggle("show");
+      }
+
+      function selectCountry(flag, code, name) {
+        selectedCountry = { flag, code, name };
+        document.getElementById("countryFlag").textContent = flag;
+        document.getElementById("countryCode").textContent = code;
+        document.getElementById("countryDropdown").classList.remove("show");
+      }
+
+      // Input validation
+      document
+        .getElementById("username")
+        .addEventListener("input", function () {
+          const button = document.getElementById("step1Button");
+          const password = document.getElementById("password").value;
+
+          if (this.value && password) {
+            button.disabled = false;
+          } else {
+            button.disabled = true;
+          }
+        });
+
+      document
+        .getElementById("password")
+        .addEventListener("input", function () {
+          const button = document.getElementById("step1Button");
+          const username = document.getElementById("username").value;
+
+          if (username && this.value) {
+            button.disabled = false;
+          } else {
+            button.disabled = true;
+          }
+        });
+
+      document.getElementById("email").addEventListener("input", function () {
+        const phone = document.getElementById("phoneNumber").value;
+        const button = document.getElementById("step4Button");
+
+        if (
+          this.value &&
+          phone &&
+          selectedPaymentMethod &&
+          selectedPackageData
+        ) {
+          button.disabled = false;
+        } else {
+          button.disabled = true;
+        }
+      });
+
+      document
+        .getElementById("phoneNumber")
+        .addEventListener("input", function () {
+          const email = document.getElementById("email").value;
+          const button = document.getElementById("step4Button");
+
+          if (
+            email &&
+            this.value &&
+            selectedPaymentMethod &&
+            selectedPackageData
+          ) {
+            button.disabled = false;
+          } else {
+            button.disabled = true;
+          }
+        });
+
+      // Close dropdowns when clicking outside
+      document.addEventListener("click", function (event) {
+        const countrySelect = document.querySelector(".country-select");
+        const countryDropdown = document.getElementById("countryDropdown");
+
+        if (!countrySelect.contains(event.target)) {
+          countryDropdown.classList.remove("show");
+        }
+      });
+
+      // Initialize
+      document.addEventListener("DOMContentLoaded", function () {
+        showStep1();
+      });
+    </script>
+  </body>
+</html>

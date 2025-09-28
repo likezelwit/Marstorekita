@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard - Robux Top Up</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #f3f4f6;
+      }
+      .status-badge {
+        padding: 4px 10px;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-block;
+      }
+      .status-Pending {
+        background-color: #fee2e2;
+        color: #ef4444;
+      }
+      .status-Diproses {
+        background-color: #bfdbfe;
+        color: #1d4ed8;
+      }
+      .status-Selesai {
+        background-color: #d1fae5;
+        color: #065f46;
+      }
+      .status-Failed {
+        background-color: #fef3c7;
+        color: #b45309;
+      }
+      .action-button:hover {
+        opacity: 0.8;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen">
+    <!-- LOGIN -->
+    <div
+      id="login-container"
+      class="min-h-screen flex items-center justify-center bg-gray-50 hidden"
+    >
+      <div class="w-full max-w-md">
+        <div class="bg-white shadow-xl rounded-2xl px-8 pt-6 pb-8 mb-4">
+          <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">
+            <i class="fas fa-lock text-red-600 mr-2"></i>Admin Login
+          </h2>
+          <div class="mb-4">
+            <label class="block text-gray-700 text-sm font-bold mb-2"
+              >Email</label
+            >
+            <input
+              id="adminEmail"
+              type="email"
+              placeholder="admin@domain.com"
+              class="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700"
+            />
+          </div>
+          <div class="mb-6">
+            <label class="block text-gray-700 text-sm font-bold mb-2"
+              >Password</label
+            >
+            <input
+              id="adminPassword"
+              type="password"
+              placeholder="********"
+              class="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 mb-3"
+            />
+            <p id="loginError" class="text-red-500 text-xs italic"></p>
+          </div>
+          <button
+            onclick="handleLogin()"
+            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg w-full"
+          >
+            <i class="fas fa-sign-in-alt mr-2"></i>Masuk
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dashboard-container" class="hidden">
+      <header class="bg-gray-800 text-white shadow-lg">
+        <div
+          class="container mx-auto px-4 py-4 flex justify-between items-center"
+        >
+          <h1 class="text-2xl font-bold">
+            <i class="fas fa-chart-line mr-2"></i>Admin Dashboard
+          </h1>
+          <button
+            onclick="handleLogout()"
+            class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg"
+          >
+            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+          </button>
+        </div>
+      </header>
+
+      <main class="container mx-auto px-4 py-8">
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+          <div class="flex justify-between items-center mb-6 border-b pb-4">
+            <h2 class="text-xl font-semibold text-gray-800">
+              Daftar Transaksi
+            </h2>
+            <button
+              onclick="fetchTransactions()"
+              class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition"
+            >
+              Refresh
+            </button>
+          </div>
+
+          <div id="loadingIndicator" class="text-center py-10 hidden">
+            <div
+              class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-3"
+            ></div>
+            <p class="text-gray-600">Memuat data transaksi...</p>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    ID
+                  </th>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Waktu
+                  </th>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Username
+                  </th>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Net Robux
+                  </th>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Gamepass
+                  </th>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Total IDR
+                  </th>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Status
+                  </th>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Aksi
+                  </th>
+                </tr>
+              </thead>
+              <tbody
+                id="transactionsTableBody"
+                class="bg-white divide-y divide-gray-200"
+              >
+                <tr>
+                  <td colspan="8" class="text-center py-4 text-gray-500">
+                    Memuat...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- SCRIPT FIREBASE -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+      import {
+        getFirestore,
+        collection,
+        onSnapshot,
+        doc,
+        updateDoc,
+        serverTimestamp,
+        query,
+        orderBy,
+      } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+      import {
+        getAuth,
+        signInWithEmailAndPassword,
+        signOut,
+        onAuthStateChanged,
+      } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+
+      const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_AUTH_DOMAIN",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_STORAGE_BUCKET",
+        messagingSenderId: "YOUR_SENDER_ID",
+        appId: "YOUR_APP_ID",
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+      const auth = getAuth(app);
+      const transactionsCol = collection(db, "transactions");
+
+      const loginContainer = document.getElementById("login-container");
+      const dashboardContainer = document.getElementById("dashboard-container");
+      const loginError = document.getElementById("loginError");
+
+      // --- LOGIN LOGIC ---
+      function showDashboard() {
+        loginContainer.classList.add("hidden");
+        dashboardContainer.classList.remove("hidden");
+        fetchTransactions();
+      }
+      function showLogin() {
+        dashboardContainer.classList.add("hidden");
+        loginContainer.classList.remove("hidden");
+      }
+
+      onAuthStateChanged(auth, (user) => {
+        if (user) showDashboard();
+        else showLogin();
+      });
+
+      window.handleLogin = async function () {
+        const email = document.getElementById("adminEmail").value;
+        const password = document.getElementById("adminPassword").value;
+        loginError.textContent = "";
+        if (!email || !password) {
+          loginError.textContent = "Email dan password harus diisi.";
+          return;
+        }
+        try {
+          await signInWithEmailAndPassword(auth, email, password);
+        } catch (err) {
+          console.error(err);
+          loginError.textContent = "Login gagal. Cek email/password.";
+        }
+      };
+
+      window.handleLogout = async function () {
+        if (confirm("Yakin ingin keluar?")) await signOut(auth);
+      };
+
+      // --- UTILS ---
+      function formatRupiah(num) {
+        return num ? "Rp " + Number(num).toLocaleString("id-ID") : "Rp 0";
+      }
+      function getStatusBadge(status) {
+        return `<span class="status-badge status-${status || "Pending"}">${
+          status || "Pending"
+        }</span>`;
+      }
+      function formatDate(ts) {
+        return ts?.toDate
+          ? ts
+              .toDate()
+              .toLocaleString("id-ID", {
+                day: "2-digit",
+                month: "short",
+                hour: "2-digit",
+                minute: "2-digit",
+              })
+          : "-";
+      }
+
+      let unsubscribe = null;
+      window.fetchTransactions = async function () {
+        const tableBody = document.getElementById("transactionsTableBody");
+        const loadingIndicator = document.getElementById("loadingIndicator");
+        loadingIndicator.classList.remove("hidden");
+        tableBody.innerHTML = "";
+        if (unsubscribe) unsubscribe();
+        const q = query(transactionsCol, orderBy("createdAt", "desc"));
+        unsubscribe = onSnapshot(
+          q,
+          (snapshot) => {
+            tableBody.innerHTML = "";
+            if (snapshot.empty) {
+              tableBody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-gray-500">Tidak ada transaksi.</td></tr>`;
+              loadingIndicator.classList.add("hidden");
+              return;
+            }
+            snapshot.forEach((docSnap) =>
+              renderTransactionRow(docSnap.id, docSnap.data())
+            );
+            loadingIndicator.classList.add("hidden");
+          },
+          (error) => {
+            console.error(error);
+            loadingIndicator.classList.add("hidden");
+          }
+        );
+      };
+
+      function renderTransactionRow(id, data) {
+        const tableBody = document.getElementById("transactionsTableBody");
+        const row = document.createElement("tr");
+        row.innerHTML = `
+      <td class="px-6 py-4 text-sm text-gray-900">${id.substring(0, 8)}...</td>
+      <td class="px-6 py-4 text-sm text-gray-500">${formatDate(
+        data.createdAt
+      )}</td>
+      <td class="px-6 py-4 text-sm text-gray-900 font-semibold">${
+        data.username || "-"
+      }</td>
+      <td class="px-6 py-4 text-sm text-green-600">${data.netRobux || 0} R$</td>
+      <td class="px-6 py-4 text-sm text-blue-700 font-medium">${
+        data.grossGamepassPrice || 0
+      } R$</td>
+      <td class="px-6 py-4 text-sm text-gray-900">${formatRupiah(
+        data.totalPriceIDR
+      )}</td>
+      <td class="px-6 py-4 text-sm">${getStatusBadge(
+        data.transactionStatus
+      )}</td>
+      <td class="px-6 py-4 text-sm font-medium">
+        <button onclick="updateStatus('${id}','Diproses')" class="action-button bg-yellow-500 text-white p-2 rounded mr-2">Diproses</button>
+        <button onclick="updateStatus('${id}','Selesai')" class="action-button bg-green-600 text-white p-2 rounded">Selesai</button>
+      </td>
+    `;
+        tableBody.appendChild(row);
+      }
+
+      window.updateStatus = async function (id, status) {
+        try {
+          const ref = doc(db, "transactions", id);
+          await updateDoc(ref, {
+            transactionStatus: status,
+            updatedAt: serverTimestamp(),
+          });
+          console.log(`Transaksi ${id} diupdate ke: ${status}`);
+        } catch (err) {
+          console.error("Gagal update status:", err);
+        }
+      };
+    </script>
+  </body>
+</html>

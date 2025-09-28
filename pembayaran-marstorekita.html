@@ -1,0 +1,1635 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pembayaran - Marstorekita</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link
+rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<!-- Google Apps Script API -->
+<script>
+// Konfigurasi Google Apps Script
+const GAS_CONFIG = {
+scriptUrl: "https://script.google.com/macros/s/AKfycbx5DV-HqFAvQjMZj4-IYUFv9k6XlfXxndh3ycO1fbpPMkVhoRD9xF5ihktFCBYAhA/exec",
+secretKey: "MARSTORE_KITA_2023"
+};
+// Fungsi untuk memanggil Google Apps Script
+async function callGoogleAppsScript(action, data = {}) {
+try {
+const params = new URLSearchParams({
+action: action,
+key: GAS_CONFIG.secretKey,
+...data
+});
+const response = await fetch(${GAS_CONFIG.scriptUrl}?${params}, {
+method: 'GET',
+redirect: 'follow'
+});
+if (!response.ok) {
+throw new Error(HTTP error! status: ${response.status});
+}
+const result = await response.json();
+return result;
+} catch (error) {
+console.error('Error calling Google Apps Script:', error);
+throw error;
+}
+}
+// Fungsi untuk mengirim data ke Google Apps Script (POST)
+async function postDataToGoogleAppsScript(action, data = {}) {
+try {
+const formData = new FormData();
+formData.append('action', action);
+formData.append('key', GAS_CONFIG.secretKey);
+// Tambahkan semua data ke form
+Object.keys(data).forEach(key => {
+formData.append(key, data[key]);
+});
+const response = await fetch(GAS_CONFIG.scriptUrl, {
+method: 'POST',
+body: formData,
+redirect: 'follow'
+});
+if (!response.ok) {
+throw new Error(HTTP error! status: ${response.status});
+}
+const result = await response.json();
+return result;
+} catch (error) {
+console.error('Error posting data to Google Apps Script:', error);
+throw error;
+}
+}
+</script>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
+body {
+font-family: "Inter", sans-serif;
+}
+.gradient-bg {
+background: linear-gradient(135deg, #00b4d8 0%, #0077b6 100%);
+}
+.payment-card {
+transition: all 0.3s ease;
+cursor: pointer;
+}
+.payment-card:hover {
+transform: translateY(-5px);
+box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+.payment-card.selected {
+border: 3px solid #00b4d8;
+background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+}
+.payment-card.disabled {
+opacity: 0.6;
+cursor: not-allowed;
+pointer-events: none;
+}
+.loading-spinner {
+border: 3px solid #f3f3f3;
+border-top: 3px solid #00b4d8;
+border-radius: 50%;
+width: 40px;
+height: 40px;
+animation: spin 1s linear infinite;
+}
+@keyframes spin {
+0% {
+transform: rotate(0deg);
+}
+100% {
+transform: rotate(360deg);
+}
+}
+.countdown {
+font-size: 1.5rem;
+font-weight: bold;
+color: #ff6b6b;
+}
+.success-animation {
+animation: successPulse 0.6s ease-in-out;
+}
+@keyframes successPulse {
+0% {
+transform: scale(1);
+}
+50% {
+transform: scale(1.1);
+}
+100% {
+transform: scale(1);
+}
+}
+.shake {
+animation: shake 0.5s;
+}
+@keyframes shake {
+0%,
+100% {
+transform: translateX(0);
+}
+10%,
+30%,
+50%,
+70%,
+90% {
+transform: translateX(-5px);
+}
+20%,
+40%,
+60%,
+80% {
+transform: translateX(5px);
+}
+}
+.payment-verification {
+position: relative;
+overflow: hidden;
+}
+.payment-verification::before {
+content: '';
+position: absolute;
+top: 0;
+left: -100%;
+width: 100%;
+height: 100%;
+background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+animation: shimmer 2s infinite;
+}
+@keyframes shimmer {
+100% {
+left: 100%;
+}
+}
+.qr-container {
+position: relative;
+display: inline-block;
+}
+.qr-overlay {
+position: absolute;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background-color: rgba(255, 255, 255, 0.8);
+display: flex;
+align-items: center;
+justify-content: center;
+border-radius: 8px;
+}
+.verification-steps {
+counter-reset: step;
+}
+.verification-step {
+position: relative;
+padding-left: 2rem;
+margin-bottom: 1.5rem;
+}
+.verification-step::before {
+counter-increment: step;
+content: counter(step);
+position: absolute;
+left: 0;
+top: 0;
+width: 1.5rem;
+height: 1.5rem;
+background-color: #3b82f6;
+color: white;
+border-radius: 50%;
+display: flex;
+align-items: center;
+justify-content: center;
+font-weight: bold;
+font-size: 0.875rem;
+}
+.verification-step.active::before {
+background-color: #10b981;
+}
+.verification-step.completed::before {
+background-color: #10b981;
+content: '✓';
+}
+.status-indicator {
+display: inline-block;
+width: 10px;
+height: 10px;
+border-radius: 50%;
+margin-right: 0.5rem;
+}
+.status-pending {
+background-color: #f59e0b;
+}
+.status-processing {
+background-color: #3b82f6;
+}
+.status-success {
+background-color: #10b981;
+}
+.status-failed {
+background-color: #ef4444;
+}
+.payment-proof-section {
+border: 2px dashed #d1d5db;
+border-radius: 0.5rem;
+padding: 1rem;
+margin-top: 1rem;
+}
+.file-upload-label {
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+padding: 2rem;
+border: 2px dashed #d1d5db;
+border-radius: 0.5rem;
+cursor: pointer;
+transition: all 0.3s ease;
+}
+.file-upload-label:hover {
+border-color: #3b82f6;
+background-color: #f0f9ff;
+}
+.file-upload-input {
+display: none;
+}
+.preview-image {
+max-width: 100%;
+max-height: 200px;
+border-radius: 0.5rem;
+margin-top: 1rem;
+}
+.deep-link-button {
+background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+color: white;
+font-weight: 600;
+padding: 0.75rem 1.5rem;
+border-radius: 0.5rem;
+transition: all 0.3s ease;
+display: inline-flex;
+align-items: center;
+}
+.deep-link-button:hover {
+transform: translateY(-2px);
+box-shadow: 0 10px 20px rgba(14, 165, 233, 0.3);
+}
+.deep-link-button i {
+margin-right: 0.5rem;
+}
+/* Toast notification styles */
+.toast {
+position: fixed;
+bottom: 20px;
+right: 20px;
+background-color: #333;
+color: white;
+padding: 12px 24px;
+border-radius: 4px;
+box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+z-index: 1000;
+display: flex;
+align-items: center;
+opacity: 0;
+transform: translateY(20px);
+transition: opacity 0.3s, transform 0.3s;
+}
+.toast.show {
+opacity: 1;
+transform: translateY(0);
+}
+.toast i {
+margin-right: 8px;
+}
+/* Tooltip styles */
+.tooltip {
+position: relative;
+display: inline-block;
+}
+.tooltip .tooltiptext {
+visibility: hidden;
+width: 200px;
+background-color: #555;
+color: #fff;
+text-align: center;
+border-radius: 6px;
+padding: 5px;
+position: absolute;
+z-index: 1;
+bottom: 125%;
+left: 50%;
+margin-left: -100px;
+opacity: 0;
+transition: opacity 0.3s;
+font-size: 12px;
+}
+.tooltip:hover .tooltiptext {
+visibility: visible;
+opacity: 1;
+}
+</style>
+</head>
+<body class="bg-gray-50">
+<!-- Header -->
+<header class="bg-white shadow-sm sticky top-0 z-50">
+<div class="container mx-auto px-4 py-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center space-x-4">
+<div
+class="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center"
+>
+<i class="fas fa-gamepad text-white text-xl"></i>
+</div>
+<h1 class="text-2xl font-bold text-gray-800">Robux Top Up</h1>
+</div>
+<nav class="hidden md:flex items-center space-x-6">
+<a
+href="index.html"
+class="text-gray-600 hover:text-blue-600 transition"
+>Beranda</a
+>
+<a
+href="#"
+onclick="showHowToTopUp()"
+class="text-gray-600 hover:text-blue-600 transition cursor-pointer"
+>Cara Top Up</a
+>
+<a
+href="#"
+onclick="showHelp()"
+class="text-gray-600 hover:text-blue-600 transition cursor-pointer"
+>Bantuan</a
+>
+</nav>
+<button class="md:hidden text-gray-600" onclick="toggleMobileMenu()">
+<i class="fas fa-bars text-2xl"></i>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="container mx-auto px-4 py-8">
+<div class="max-w-4xl mx-auto">
+<!-- Order Summary -->
+<div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+<h2 class="text-2xl font-bold text-gray-800 mb-6">
+Ringkasan Pesanan
+</h2>
+<div class="grid md:grid-cols-2 gap-6">
+<div>
+<div class="bg-gray-50 rounded-lg p-4 mb-4">
+<div class="flex justify-between items-center mb-2">
+<span class="text-gray-600">Username:</span>
+<span id="displayUsername" class="font-semibold text-gray-800"
+>-</span
+>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-gray-600">Nomor HP:</span>
+<span id="displayPhone" class="font-semibold text-gray-800"
+>-</span
+>
+</div>
+</div>
+<div class="bg-gray-50 rounded-lg p-4">
+<div class="flex justify-between items-center mb-2">
+<span class="text-gray-600">Paket:</span>
+<span id="selectedPackage" class="font-semibold text-gray-800"
+>-</span
+>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-gray-600">Jumlah Robux:</span>
+<span id="selectedRobux" class="font-semibold text-green-600"
+>-</span
+>
+</div>
+</div>
+</div>
+<div>
+<div class="bg-blue-50 rounded-lg p-4 mb-4">
+<div class="flex justify-between items-center mb-2">
+<span class="text-gray-700 font-medium"
+>Metode Pembayaran:</span
+>
+<span
+id="selectedPaymentMethod"
+class="font-semibold text-blue-700"
+>-</span
+>
+</div>
+</div>
+<div class="bg-gray-50 rounded-lg p-4">
+<div class="flex justify-between items-center mb-2">
+<span class="text-gray-600">Subtotal:</span>
+<span id="subtotal" class="font-medium">Rp 0</span>
+</div>
+<div class="flex justify-between items-center mb-2">
+<span class="text-gray-600">Admin Fee:</span>
+<span class="font-medium">Rp 0</span>
+</div>
+<div
+class="flex justify-between items-center text-lg font-bold"
+>
+<span>Total:</span>
+<span id="totalPayment" class="text-blue-600">Rp 0</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Payment Section -->
+<div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+<h2 class="text-2xl font-bold text-gray-800 mb-6">Pembayaran</h2>
+<!-- QRIS Payment -->
+<div id="qrisPayment" class="hidden">
+<div class="text-center mb-6">
+<p class="text-gray-600 mb-4">
+Scan kode QR di bawah ini untuk membayar
+</p>
+<div class="qr-container bg-gray-100 p-4 rounded-lg inline-block">
+<div id="qrcode"></div>
+<div id="qrOverlay" class="qr-overlay hidden">
+<div class="text-center">
+<div class="loading-spinner mx-auto mb-2"></div>
+<p class="text-gray-800 font-medium">Memverifikasi pembayaran...</p>
+</div>
+</div>
+</div>
+<p class="text-sm text-gray-500 mt-4">
+Kode QR berlaku selama
+<span id="countdown" class="countdown">15:00</span>
+</p>
+</div>
+<div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+<div class="flex">
+<div class="flex-shrink-0">
+<i class="fas fa-exclamation-triangle text-yellow-400"></i>
+</div>
+<div class="ml-3">
+<p class="text-sm text-yellow-700">
+Pastikan pembayaran selesai sebelum waktu habis. Jika waktu
+habis, silakan muat ulang halaman ini.
+</p>
+</div>
+</div>
+</div>
+<div class="flex justify-center space-x-4">
+<button
+id="qrisCheckPaymentBtn"
+onclick="checkPaymentStatus('qris')"
+class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
+>
+<i class="fas fa-check mr-2"></i>Saya Sudah Bayar
+</button>
+<button
+onclick="window.location.reload()"
+class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition"
+>
+<i class="fas fa-sync-alt mr-2"></i>Muat Ulang
+</button>
+</div>
+</div>
+<!-- E-Wallet Payment -->
+<div id="ewalletPayment" class="hidden">
+<div class="text-center mb-6">
+<p class="text-gray-600 mb-4">
+Pilih E-Wallet yang ingin Anda gunakan
+</p>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+<div
+class="payment-card disabled bg-white border-2 border-gray-200 rounded-xl p-4 text-center"
+>
+<div class="tooltip">
+<div
+class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3"
+>
+<i class="fas fa-wallet text-purple-600 text-2xl"></i>
+</div>
+<p class="font-medium text-gray-800">OVO</p>
+<span class="text-xs text-gray-500">Segera Hadir</span>
+<span class="tooltiptext">OVO sedang dalam pengembangan. Silakan gunakan metode pembayaran lainnya.</span>
+</div>
+</div>
+<div
+class="payment-card bg-white border-2 border-gray-200 rounded-xl p-4 text-center"
+onclick="selectEwallet('gopay')"
+>
+<div
+class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3"
+>
+<i class="fas fa-wallet text-blue-600 text-2xl"></i>
+</div>
+<p class="font-medium text-gray-800">GoPay</p>
+</div>
+<div
+class="payment-card bg-white border-2 border-gray-200 rounded-xl p-4 text-center"
+onclick="selectEwallet('dana')"
+>
+<div
+class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3"
+>
+<i class="fas fa-wallet text-blue-600 text-2xl"></i>
+</div>
+<p class="font-medium text-gray-800">DANA</p>
+</div>
+<div
+class="payment-card bg-white border-2 border-gray-200 rounded-xl p-4 text-center"
+onclick="selectEwallet('shopeepay')"
+>
+<div
+class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3"
+>
+<i class="fas fa-wallet text-orange-600 text-2xl"></i>
+</div>
+<p class="font-medium text-gray-800">ShopeePay</p>
+</div>
+</div>
+<!-- ShopeePay Web Payment -->
+<div id="shopeepayWebPayment" class="hidden">
+<div class="text-center mb-6">
+<p class="text-gray-600 mb-4">
+Anda akan diarahkan ke halaman pembayaran ShopeePay untuk menyelesaikan transaksi
+</p>
+<div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+<div class="flex">
+<div class="flex-shrink-0">
+<i class="fas fa-info-circle text-blue-400"></i>
+</div>
+<div class="ml-3">
+<p class="text-sm text-blue-700">
+<strong>Cara pembayaran:</strong> Klik tombol "Bayar dengan ShopeePay" di bawah, lalu ikuti instruksi di halaman ShopeePay untuk menyelesaikan pembayaran.
+</p>
+</div>
+</div>
+</div>
+<div class="bg-gray-50 rounded-lg p-6 mb-6 max-w-md mx-auto">
+<div class="flex justify-between items-center mb-4">
+<span class="text-gray-600">Nominal Pembayaran:</span>
+<span id="shopeepayAmount" class="font-semibold text-blue-600">Rp 0</span>
+</div>
+<div class="flex justify-between items-center mb-4">
+<span class="text-gray-600">Deskripsi:</span>
+<span class="font-semibold">Pembelian Robux</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-gray-600">Status:</span>
+<span class="font-semibold text-yellow-600">Menunggu Pembayaran</span>
+</div>
+</div>
+<div class="flex justify-center space-x-4">
+<button
+id="shopeepayPayButton"
+onclick="processShopeePayPayment()"
+class="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition"
+>
+<i class="fas fa-credit-card mr-2"></i>Bayar dengan ShopeePay
+</button>
+<button
+id="shopeepayCheckPaymentBtn"
+onclick="checkPaymentStatus('ewallet')"
+class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
+>
+<i class="fas fa-check mr-2"></i>Saya Sudah Bayar
+</button>
+</div>
+</div>
+<div
+id="ewalletInstructions"
+class="hidden bg-gray-50 rounded-lg p-4 text-left"
+>
+<h3 class="font-semibold text-gray-800 mb-2">
+Instruksi Pembayaran:
+</h3>
+<ol class="list-decimal pl-5 text-gray-600 space-y-1">
+<li>Klik tombol "Bayar Sekarang" di bawah</li>
+<li>
+Anda akan diarahkan ke aplikasi
+<span id="ewalletName"></span>
+</li>
+<li>
+Konfirmasi pembayaran dengan nominal yang telah ditentukan
+</li>
+<li>
+Setelah pembayaran berhasil, kembali ke halaman ini dan klik
+"Saya Sudah Bayar"
+</li>
+</ol>
+</div>
+<div
+id="ewalletButtons"
+class="hidden mt-6 flex justify-center space-x-4"
+>
+<button
+id="ewalletPayButton"
+onclick="processEwalletPayment()"
+class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
+>
+<i class="fas fa-credit-card mr-2"></i>Bayar Sekarang
+</button>
+<button
+id="ewalletCheckPaymentBtn"
+onclick="checkPaymentStatus('ewallet')"
+class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition"
+>
+<i class="fas fa-check mr-2"></i>Saya Sudah Bayar
+</button>
+</div>
+</div>
+</div>
+<!-- Bank Transfer Payment -->
+<div id="bankPayment" class="hidden">
+<div class="text-center mb-6">
+<p class="text-gray-600 mb-4">
+Silakan transfer ke rekening berikut:
+</p>
+<div class="bg-gray-50 rounded-lg p-6 mb-6 max-w-md mx-auto">
+<div class="flex justify-between items-center mb-4">
+<span class="text-gray-600">Bank:</span>
+<span class="font-semibold">BCA</span>
+</div>
+<div class="flex justify-between items-center mb-4">
+<span class="text-gray-600">No. Rekening:</span>
+<span class="font-semibold">1234567890</span>
+</div>
+<div class="flex justify-between items-center mb-4">
+<span class="text-gray-600">Atas Nama:</span>
+<span class="font-semibold">Marstorekita</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-gray-600">Jumlah:</span>
+<span id="bankAmount" class="font-semibold text-blue-600"
+>Rp 0</span
+>
+</div>
+</div>
+<div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+<div class="flex">
+<div class="flex-shrink-0">
+<i class="fas fa-exclamation-triangle text-yellow-400"></i>
+</div>
+<div class="ml-3">
+<p class="text-sm text-yellow-700">
+Pastikan jumlah transfer sesuai dengan yang tertera.
+Transfer dengan jumlah berbeda tidak akan diproses.
+</p>
+</div>
+</div>
+</div>
+<div class="flex justify-center space-x-4">
+<button
+onclick="copyBankDetails()"
+class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition"
+>
+<i class="fas fa-copy mr-2"></i>Salin Detail
+</button>
+<button
+id="bankCheckPaymentBtn"
+onclick="checkPaymentStatus('bank')"
+class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
+>
+<i class="fas fa-check mr-2"></i>Saya Sudah Bayar
+</button>
+</div>
+<!-- Payment Proof Section for Bank Transfer -->
+<div id="paymentProofSection" class="payment-proof-section hidden">
+<h3 class="text-lg font-semibold text-gray-800 mb-4">Upload Bukti Transfer</h3>
+<p class="text-gray-600 mb-4">Silakan upload bukti transfer Anda untuk mempercepat proses verifikasi:</p>
+<label for="paymentProof" class="file-upload-label">
+<i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2"></i>
+<span class="text-gray-600">Klik untuk upload bukti transfer</span>
+<span class="text-sm text-gray-500 mt-1">(JPG, PNG, PDF - Max 5MB)</span>
+<input type="file" id="paymentProof" class="file-upload-input" accept="image/*,.pdf" onchange="previewPaymentProof(this)">
+</label>
+<div id="proofPreview" class="hidden mt-4">
+<img id="previewImage" class="preview-image" alt="Preview bukti transfer">
+<div class="flex justify-center mt-4">
+<button onclick="uploadPaymentProof()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+<i class="fas fa-upload mr-2"></i>Upload Bukti
+</button>
+<button onclick="removePaymentProof()" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition">
+<i class="fas fa-trash mr-2"></i>Hapus
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Payment Verification Modal -->
+<div id="verificationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+<div class="bg-white rounded-xl p-8 max-w-md w-full mx-4 transform transition-all">
+<div class="text-center">
+<h3 class="text-xl font-bold text-gray-800 mb-4">Verifikasi Pembayaran</h3>
+<div class="verification-steps text-left mb-6">
+<div id="step1" class="verification-step">
+Memeriksa status pembayaran...
+</div>
+<div id="step2" class="verification-step">
+Memverifikasi data transaksi...
+</div>
+<div id="step3" class="verification-step">
+Memverifikasi bukti pembayaran...
+</div>
+<div id="step4" class="verification-step">
+Menyelesaikan transaksi...
+</div>
+</div>
+<div id="verificationStatus" class="mb-4">
+<span class="status-indicator status-pending"></span>
+<span id="statusText">Memproses verifikasi pembayaran...</span>
+</div>
+<button id="cancelVerificationBtn" onclick="cancelVerification()" class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition">
+Batal
+</button>
+</div>
+</div>
+</div>
+<!-- Loading Overlay -->
+<div
+id="loadingOverlay"
+class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50"
+>
+<div class="bg-white rounded-xl p-8 text-center">
+<div class="loading-spinner mx-auto mb-4"></div>
+<p class="text-gray-800 font-medium">Memproses pembayaran...</p>
+</div>
+</div>
+</div>
+</main>
+<!-- Success Modal -->
+<div
+id="successModal"
+class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50"
+>
+<div
+class="bg-white rounded-xl p-8 max-w-md w-full mx-4 transform transition-all"
+>
+<div class="text-center">
+<div
+class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 success-animation"
+>
+<i class="fas fa-check text-green-600 text-3xl"></i>
+</div>
+<h3 class="text-2xl font-bold text-gray-800 mb-2">
+Pembayaran Berhasil!
+</h3>
+<p class="text-gray-600 mb-6">Robux akan segera masuk ke akun Anda</p>
+<button
+onclick="closeModal()"
+class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
+>
+OK
+</button>
+</div>
+</div>
+</div>
+<!-- Error Modal -->
+<div
+id="errorModal"
+class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50"
+>
+<div
+class="bg-white rounded-xl p-8 max-w-md w-full mx-4 transform transition-all"
+>
+<div class="text-center">
+<div
+class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4"
+>
+<i class="fas fa-times text-red-600 text-3xl"></i>
+</div>
+<h3 class="text-2xl font-bold text-gray-800 mb-2">
+Pembayaran Gagal!
+</h3>
+<p id="errorMessage" class="text-gray-600 mb-6">
+Terjadi kesalahan dalam memproses pembayaran Anda
+</p>
+<button
+onclick="closeErrorModal()"
+class="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition"
+>
+Coba Lagi
+</button>
+</div>
+</div>
+</div>
+<!-- Info Modal -->
+<div
+id="infoModal"
+class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50"
+>
+<div
+class="bg-white rounded-xl p-8 max-w-md w-full mx-4 transform transition-all"
+>
+<div class="text-center">
+<div
+class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4"
+>
+<i class="fas fa-info text-blue-600 text-3xl"></i>
+</div>
+<h3 class="text-2xl font-bold text-gray-800 mb-2">
+Informasi Pembayaran
+</h3>
+<p id="infoMessage" class="text-gray-600 mb-6">
+</p>
+<button
+onclick="closeInfoModal()"
+class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
+>
+OK
+</button>
+</div>
+</div>
+</div>
+<script>
+// Global variables
+let orderData = null;
+let selectedEwallet = null;
+let countdownTimer = null;
+let paymentTimeout = null;
+let paymentVerificationActive = false;
+let paymentMethod = null;
+let paymentAttempts = 0;
+let paymentProofFile = null;
+let paymentPollingInterval = null;
+let shopeepayCountdownTimer = null;
+let shopeepayPaymentTimeout = null;
+const MAX_PAYMENT_ATTEMPTS = 3;
+// Initialize page
+document.addEventListener("DOMContentLoaded", function () {
+// Load order data from localStorage
+loadOrderData();
+// Initialize payment based on selected method
+initializePayment();
+// Add event listener for when user returns from e-wallet app
+document.addEventListener('visibilitychange', handleVisibilityChange);
+// Add cleanup event listener
+window.addEventListener('beforeunload', cleanupEventListeners);
+});
+// Handle visibility change (when user returns from e-wallet app)
+function handleVisibilityChange() {
+if (!document.hidden && selectedEwallet) {
+// User has returned to the page
+console.log('User returned from e-wallet app');
+// Show notification to check payment
+const ewalletNames = {
+ovo: "OVO",
+gopay: "GoPay",
+dana: "DANA",
+shopeepay: "ShopeePay",
+};
+// Show a toast notification instead of alert
+showToast(Silakan klik "Saya Sudah Bayar" untuk memverifikasi pembayaran ${ewalletNames[selectedEwallet]} Anda.);
+}
+}
+// Cleanup event listeners
+function cleanupEventListeners() {
+document.removeEventListener('visibilitychange', handleVisibilityChange);
+window.removeEventListener('beforeunload', cleanupEventListeners);
+}
+// Show toast notification
+function showToast(message) {
+let toast = document.getElementById('toast-notification');
+if (!toast) {
+toast = document.createElement('div');
+toast.id = 'toast-notification';
+toast.className = 'toast';
+toast.innerHTML = '<i class="fas fa-info-circle"></i> <span id="toast-message"></span>';
+document.body.appendChild(toast);
+}
+const toastMessage = document.getElementById('toast-message');
+if (toastMessage) {
+toastMessage.textContent = message;
+}
+toast.classList.add('show');
+// Hapus timer sebelumnya jika ada
+if (toast.hideTimeout) {
+clearTimeout(toast.hideTimeout);
+}
+// Sembunyikan setelah 5 detik
+toast.hideTimeout = setTimeout(() => {
+toast.classList.remove('show');
+}, 5000);
+}
+// Load order data from localStorage
+function loadOrderData() {
+// Get current transaction from localStorage
+orderData = JSON.parse(localStorage.getItem("currentTransaction"));
+if (orderData) {
+// Display order information
+document.getElementById("displayUsername").textContent =
+orderData.username;
+document.getElementById("displayPhone").textContent =
+orderData.phoneNumber;
+document.getElementById(
+"selectedPackage"
+).textContent = Paket ${orderData.package.robux} Robux;
+document.getElementById(
+"selectedRobux"
+).textContent = ${orderData.package.robux} Robux;
+document.getElementById(
+"subtotal"
+).textContent = `Rp ${orderData.package.price.toLocaleString(
+"id-ID"
+)}`;
+document.getElementById(
+"totalPayment"
+).textContent = `Rp ${orderData.package.price.toLocaleString(
+"id-ID"
+)}`;
+document.getElementById(
+"bankAmount"
+).textContent = `Rp ${orderData.package.price.toLocaleString(
+"id-ID"
+)}`;
+document.getElementById(
+"shopeepayAmount"
+).textContent = `Rp ${orderData.package.price.toLocaleString(
+"id-ID"
+)}`;
+// Display payment method
+const paymentMethodText = {
+qris: "QRIS",
+bank: "Transfer Bank",
+ewallet: "E-Wallet",
+};
+document.getElementById("selectedPaymentMethod").textContent =
+paymentMethodText[orderData.paymentMethod] || "-";
+} else {
+// If no order data found, redirect back to home page
+window.location.href = "index.html";
+}
+}
+// Initialize payment based on selected method
+function initializePayment() {
+if (!orderData) {
+showErrorModal("Data pesanan tidak ditemukan. Silakan mulai kembali dari halaman utama.");
+setTimeout(() => {
+window.location.href = "index.html";
+}, 3000);
+return;
+}
+// Hide all payment sections first
+document.getElementById("qrisPayment").classList.add("hidden");
+document.getElementById("ewalletPayment").classList.add("hidden");
+document.getElementById("bankPayment").classList.add("hidden");
+// Show the appropriate payment section based on the selected method
+switch (orderData.paymentMethod) {
+case "qris":
+paymentMethod = "qris";
+initializeQRISPayment();
+break;
+case "ewallet":
+paymentMethod = "ewallet";
+document
+.getElementById("ewalletPayment")
+.classList.remove("hidden");
+break;
+case "bank":
+paymentMethod = "bank";
+document.getElementById("bankPayment").classList.remove("hidden");
+// Show payment proof section for bank transfer
+document.getElementById("paymentProofSection").classList.remove("hidden");
+break;
+default:
+// Default to QRIS if no valid method is selected
+paymentMethod = "qris";
+initializeQRISPayment();
+}
+}
+// Initialize QRIS payment
+function initializeQRISPayment() {
+document.getElementById("qrisPayment").classList.remove("hidden");
+// Generate QR code for payment to 85711603847
+const qrcodeContainer = document.getElementById("qrcode");
+qrcodeContainer.innerHTML = ""; // Clear previous QR code
+// Create payment data for QRIS
+const paymentAmount = orderData.package.price;
+const paymentData = {
+merchantName: "Marstorekita",
+amount: paymentAmount,
+phone: "85711603847",
+description: Pembayaran Robux ${orderData.package.robux},
+transactionId: orderData.id,
+};
+// Generate QR code
+new QRCode(qrcodeContainer, {
+text: JSON.stringify(paymentData),
+width: 200,
+height: 200,
+colorDark: "#000000",
+colorLight: "#ffffff",
+correctLevel: QRCode.CorrectLevel.H,
+});
+// Start countdown timer (15 minutes)
+startCountdown(15 * 60); // 15 minutes in seconds
+// Set payment timeout (15 minutes)
+paymentTimeout = setTimeout(() => {
+showErrorModal(
+"Waktu pembayaran habis. Silakan muat ulang halaman ini."
+);
+}, 15 * 60 * 1000); // 15 minutes in milliseconds
+}
+// Start countdown timer
+function startCountdown(seconds) {
+let timeLeft = seconds;
+// Clear any existing countdown timer
+if (countdownTimer) {
+clearInterval(countdownTimer);
+}
+// Update countdown display
+updateCountdownDisplay(timeLeft);
+// Start countdown timer
+countdownTimer = setInterval(() => {
+timeLeft--;
+updateCountdownDisplay(timeLeft);
+// If time is up, clear the timer
+if (timeLeft <= 0) {
+clearInterval(countdownTimer);
+}
+}, 1000);
+}
+// Update countdown display
+function updateCountdownDisplay(seconds) {
+const minutes = Math.floor(seconds / 60);
+const secs = seconds % 60;
+document.getElementById("countdown").textContent = `${minutes
+.toString()
+.padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+// Change color if less than 5 minutes
+if (minutes < 5) {
+document.getElementById("countdown").classList.add("text-red-500");
+}
+}
+// Select E-Wallet
+function selectEwallet(ewallet) {
+// Skip OVO since it's disabled
+if (ewallet === 'ovo') {
+return;
+}
+// Remove previous selection
+document.querySelectorAll(".payment-card").forEach((card) => {
+card.classList.remove("selected");
+});
+// Add selection to clicked card
+event.currentTarget.classList.add("selected");
+selectedEwallet = ewallet;
+// Update E-Wallet name in instructions
+const ewalletNames = {
+ovo: "OVO",
+gopay: "GoPay",
+dana: "DANA",
+shopeepay: "ShopeePay",
+};
+document.getElementById("ewalletName").textContent =
+ewalletNames[ewallet];
+// Hide all ewallet sub-sections first
+document.getElementById("ewalletInstructions").classList.add("hidden");
+document.getElementById("ewalletButtons").classList.add("hidden");
+document.getElementById("shopeepayWebPayment").classList.add("hidden");
+// Show appropriate section based on selected e-wallet
+if (ewallet === 'shopeepay') {
+// Show ShopeePay web payment
+document.getElementById("shopeepayWebPayment").classList.remove("hidden");
+} else {
+// Show instructions and buttons for other e-wallets
+document.getElementById("ewalletInstructions").classList.remove("hidden");
+document.getElementById("ewalletButtons").classList.remove("hidden");
+}
+}
+// Process ShopeePay payment dengan web link
+function processShopeePayPayment() {
+// Get payment amount
+const paymentAmount = orderData.package.price;
+const transactionId = orderData.id;
+// Generate web link for ShopeePay
+const shopeepayLink = https://shopeepay.co.id/checkout/qr-landing?amount=${paymentAmount}&ref=${transactionId}&merchant=Marstorekita;
+// Open ShopeePay web link in new tab
+window.open(shopeepayLink, '_blank');
+// Show notification
+showToast(Anda akan diarahkan ke halaman pembayaran ShopeePay dengan nominal Rp ${paymentAmount.toLocaleString('id-ID')}. Setelah pembayaran berhasil, kembali ke halaman ini dan klik "Saya Sudah Bayar".);
+}
+// Process E-Wallet payment dengan integrasi deep link
+function processEwalletPayment() {
+if (!selectedEwallet) {
+showErrorModal("Silakan pilih E-Wallet terlebih dahulu");
+return;
+}
+// Show loading overlay
+document.getElementById("loadingOverlay").classList.remove("hidden");
+// Get payment amount
+const paymentAmount = orderData.package.price;
+const transactionId = orderData.id;
+// Generate deep link URLs for different e-wallets dengan format yang benar
+const deepLinks = {
+// OVO tidak digunakan karena dinonaktifkan
+gopay: gopay://topup?amount=${paymentAmount}&ref=${transactionId}&merchant=Marstorekita,
+dana: dana://pay?amount=${paymentAmount}&ref=${transactionId}&merchant=Marstorekita,
+};
+// Fallback web URLs jika aplikasi tidak terinstall
+const webLinks = {
+gopay: https://gopay.co.id/payment,
+dana: https://m.dana.id/n/link/pay,
+};
+// Simulate payment processing
+setTimeout(() => {
+// Hide loading overlay
+document.getElementById("loadingOverlay").classList.add("hidden");
+// Try to open the e-wallet app with deep link
+const deepLink = deepLinks[selectedEwallet];
+const webLink = webLinks[selectedEwallet];
+console.log("Opening deep link:", deepLink);
+// Coba buka aplikasi dengan deep link
+const appOpened = window.open(deepLink, '_self');
+// Jika deep link gagal, buka web link setelah delay
+setTimeout(() => {
+if (!appOpened || document.hidden || document.hasFocus()) {
+window.open(webLink, '_blank');
+}
+}, 1000);
+// Show notification based on selected e-wallet
+const ewalletNames = {
+gopay: "GoPay",
+dana: "DANA",
+};
+// Tampilkan notifikasi yang lebih baik
+showToast(Anda akan diarahkan ke aplikasi ${ewalletNames[selectedEwallet]} dengan nominal pembayaran Rp ${paymentAmount.toLocaleString('id-ID')}. Setelah pembayaran berhasil, kembali ke halaman ini dan klik "Saya Sudah Bayar".);
+}, 1000);
+}
+// Copy bank details
+function copyBankDetails() {
+const bankDetails = `Bank: BCA\nNo. Rekening: 1234567890\nAtas Nama: Marstorekita\nJumlah: Rp ${orderData.package.price.toLocaleString(
+"id-ID"
+)}`;
+// Copy to clipboard
+navigator.clipboard
+.writeText(bankDetails)
+.then(() => {
+showToast("Detail pembayaran telah disalin ke clipboard!");
+})
+.catch((err) => {
+console.error("Gagal menyalin detail pembayaran: ", err);
+showErrorModal(
+"Gagal menyalin detail pembayaran. Silakan salin manual."
+);
+});
+}
+// Preview payment proof
+function previewPaymentProof(input) {
+if (input.files && input.files[0]) {
+const file = input.files[0];
+// Validasi tipe file
+const validTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+if (!validTypes.includes(file.type)) {
+showErrorModal("Hanya file JPG, PNG, dan PDF yang diperbolehkan");
+input.value = '';
+return;
+}
+// Validasi ukuran file (max 5MB)
+if (file.size > 5 * 1024 * 1024) {
+showErrorModal("Ukuran file maksimal 5MB");
+input.value = '';
+return;
+}
+paymentProofFile = file;
+const reader = new FileReader();
+reader.onload = function(e) {
+document.getElementById("previewImage").src = e.target.result;
+document.getElementById("proofPreview").classList.remove("hidden");
+};
+reader.readAsDataURL(file);
+}
+}
+// Remove payment proof
+function removePaymentProof() {
+document.getElementById("paymentProof").value = "";
+document.getElementById("proofPreview").classList.add("hidden");
+paymentProofFile = null;
+}
+// Upload payment proof
+async function uploadPaymentProof() {
+if (!paymentProofFile) {
+showErrorModal("Silakan pilih bukti transfer terlebih dahulu");
+return;
+}
+document.getElementById("loadingOverlay").classList.remove("hidden");
+try {
+// Buat FormData untuk upload file
+const formData = new FormData();
+formData.append('action', 'uploadPaymentProof');
+formData.append('key', GAS_CONFIG.secretKey);
+formData.append('transactionId', orderData.id);
+formData.append('paymentProof', paymentProofFile);
+// Kirim ke Google Apps Script
+const response = await fetch(GAS_CONFIG.scriptUrl, {
+method: 'POST',
+body: formData,
+redirect: 'follow'
+});
+if (!response.ok) {
+throw new Error(HTTP error! status: ${response.status});
+}
+const result = await response.json();
+if (result.success) {
+showToast("Bukti transfer berhasil diupload! Admin akan memverifikasi pembayaran Anda dalam waktu maksimal 2x24 jam.");
+// Update transaction status to 'pending_verification'
+await updateTransactionStatus(orderData.id, 'pending_verification');
+} else {
+throw new Error(result.message || "Gagal mengupload bukti transfer");
+}
+} catch (error) {
+console.error('Error uploading payment proof:', error);
+showErrorModal("Gagal mengupload bukti transfer: " + error.message);
+} finally {
+document.getElementById("loadingOverlay").classList.add("hidden");
+}
+}
+// Check payment status dengan sistem verifikasi yang lebih baik
+async function checkPaymentStatus(method) {
+// Check if payment verification is already active
+if (paymentVerificationActive) {
+return;
+}
+// Check if maximum attempts reached
+if (paymentAttempts >= MAX_PAYMENT_ATTEMPTS) {
+showErrorModal(Anda telah mencoba verifikasi pembayaran ${MAX_PAYMENT_ATTEMPTS} kali. Silakan hubungi admin untuk bantuan.);
+return;
+}
+// Increment payment attempts
+paymentAttempts++;
+// Set payment verification as active
+paymentVerificationActive = true;
+// Disable check payment button
+disableCheckPaymentButton();
+// Show verification modal
+showVerificationModal();
+try {
+// Start payment verification process
+await verifyPaymentProcess(method);
+} catch (error) {
+console.error('Error checking payment status:', error);
+updateVerificationStep(4, false, 'Terjadi kesalahan: ' + error.message);
+setTimeout(() => {
+hideVerificationModal();
+enableCheckPaymentButton();
+paymentVerificationActive = false;
+}, 3000);
+}
+}
+// Verify payment process
+async function verifyPaymentProcess(method) {
+// Step 1: Memeriksa status pembayaran
+updateVerificationStep(1, true, 'Memeriksa status pembayaran...');
+await delay(1500);
+// Step 2: Memverifikasi data transaksi
+updateVerificationStep(2, true, 'Memverifikasi data transaksi...');
+await delay(1500);
+// Step 3: Memverifikasi pembayaran
+updateVerificationStep(3, true, 'Memverifikasi pembayaran...');
+await delay(1500);
+// Check transaction status from Google Sheets
+const transactionStatus = await checkTransactionStatus(orderData.id);
+if (transactionStatus === 'completed') {
+// If payment is already completed, show success
+updateVerificationStep(4, true, 'Pembayaran sudah diverifikasi');
+processSuccessfulPayment();
+return;
+}
+// Verify payment based on method
+let paymentVerified = false;
+switch(method) {
+case 'qris':
+paymentVerified = await verifyQRISPayment();
+break;
+case 'ewallet':
+paymentVerified = await verifyEwalletPayment();
+break;
+case 'bank':
+paymentVerified = await verifyBankPayment();
+break;
+}
+if (paymentVerified) {
+// Step 4: Menyelesaikan transaksi
+updateVerificationStep(4, true, 'Pembayaran berhasil diverifikasi');
+await delay(1000);
+// Update transaction status to 'cek' first
+await updateTransactionStatus(orderData.id, 'cek');
+// Wait a moment before updating to 'completed'
+setTimeout(async () => {
+await updateTransactionStatus(orderData.id, 'completed');
+processSuccessfulPayment();
+}, 2000);
+} else {
+// Payment verification failed
+updateVerificationStep(4, false, 'Pembayaran belum ditemukan atau gagal');
+setTimeout(() => {
+hideVerificationModal();
+enableCheckPaymentButton();
+paymentVerificationActive = false;
+}, 3000);
+}
+}
+// Verify QRIS Payment
+async function verifyQRISPayment() {
+try {
+// Simulasi pengecekan status QRIS
+// Dalam implementasi nyata, ini akan terhubung ke payment gateway seperti Midtrans
+console.log('Verifying QRIS payment for transaction:', orderData.id);
+// Simulasi delay untuk pengecekan
+await delay(2000);
+// Untuk keperluan demo, kita gunakan random success/failure
+// Dalam implementasi nyata, ini akan mengecek status dari payment gateway
+const paymentSuccess = Math.random() > 0.3; // 70% success rate untuk demo
+if (paymentSuccess) {
+console.log('QRIS payment verified successfully');
+return true;
+} else {
+console.log('QRIS payment verification failed');
+throw new Error('Pembayaran QRIS belum ditemukan atau masih dalam proses');
+}
+} catch (error) {
+console.error('QRIS verification error:', error);
+throw error;
+}
+}
+// Verify E-Wallet Payment
+async function verifyEwalletPayment() {
+try {
+// Simulasi pengecekan status E-Wallet
+// Dalam implementasi nyata, ini akan terhubung ke payment gateway seperti Xendit
+console.log('Verifying E-Wallet payment for transaction:', orderData.id);
+// Simulasi delay untuk pengecekan
+await delay(2000);
+// Untuk keperluan demo, kita gunakan random success/failure
+// Dalam implementasi nyata, ini akan mengecek status dari payment gateway
+const paymentSuccess = Math.random() > 0.3; // 70% success rate untuk demo
+if (paymentSuccess) {
+console.log('E-Wallet payment verified successfully');
+return true;
+} else {
+console.log('E-Wallet payment verification failed');
+throw new Error('Pembayaran E-Wallet belum ditemukan atau masih dalam proses');
+}
+} catch (error) {
+console.error('E-Wallet verification error:', error);
+throw error;
+}
+}
+// Verify Bank Payment
+async function verifyBankPayment() {
+try {
+// Simulasi pengecekan status Bank Transfer
+console.log('Verifying Bank Transfer payment for transaction:', orderData.id);
+// Simulasi delay untuk pengecekan
+await delay(2000);
+// Untuk keperluan demo, kita gunakan random success/failure
+// Dalam implementasi nyata, ini akan mengecek status dari payment gateway
+// atau admin akan memverifikasi bukti transfer yang diupload
+const paymentSuccess = Math.random() > 0.3; // 70% success rate untuk demo
+if (paymentSuccess) {
+console.log('Bank Transfer payment verified successfully');
+return true;
+} else {
+console.log('Bank Transfer payment verification failed');
+throw new Error('Pembayaran Bank Transfer belum ditemukan atau masih dalam proses verifikasi oleh admin');
+}
+} catch (error) {
+console.error('Bank Transfer verification error:', error);
+throw error;
+}
+}
+// Check transaction status from Google Sheets
+async function checkTransactionStatus(transactionId) {
+try {
+const response = await callGoogleAppsScript("getTransactionStatus", { id: transactionId });
+console.log("Transaction status response:", response);
+return response && response.status ? response.status : 'pending';
+} catch (error) {
+console.error('Error checking transaction status:', error);
+return 'error';
+}
+}
+// Update transaction status
+async function updateTransactionStatus(transactionId, status) {
+try {
+const result = await postDataToGoogleAppsScript("updateTransactionStatus", {
+id: transactionId,
+status: status
+});
+console.log("Update transaction status result:", result);
+// Also update in localStorage
+updateTransactionHistory(transactionId, status);
+return result;
+} catch (error) {
+console.error('Error updating transaction status:', error);
+throw error;
+}
+}
+// Update transaction history in localStorage
+function updateTransactionHistory(transactionId, status) {
+const history = JSON.parse(localStorage.getItem("transactionHistory") || "[]");
+const historyIndex = history.findIndex(t => t.id === transactionId);
+if (historyIndex !== -1) {
+history[historyIndex].status = status;
+localStorage.setItem("transactionHistory", JSON.stringify(history));
+}
+}
+// Process successful payment
+async function processSuccessfulPayment() {
+try {
+// Update transaction status in Google Sheets
+await updateTransactionStatus(orderData.id, "completed");
+// Update local data
+updateTransactionData("completed");
+// Clear timers
+clearAllTimers();
+// Show success modal
+document.getElementById("successModal").classList.remove("hidden");
+} catch (error) {
+console.error('Error updating transaction status:', error);
+// Fallback to localStorage only
+updateTransactionData("completed");
+// Clear timers
+clearAllTimers();
+// Show success modal
+document.getElementById("successModal").classList.remove("hidden");
+}
+}
+// Update transaction data in localStorage
+function updateTransactionData(status) {
+// Update current transaction
+orderData.status = status;
+localStorage.setItem('currentTransaction', JSON.stringify(orderData));
+// Update transaction history
+updateTransactionHistory(orderData.id, status);
+}
+// Clear all timers
+function clearAllTimers() {
+if (countdownTimer) {
+clearInterval(countdownTimer);
+}
+if (paymentTimeout) {
+clearTimeout(paymentTimeout);
+}
+if (paymentPollingInterval) {
+clearInterval(paymentPollingInterval);
+}
+if (shopeepayCountdownTimer) {
+clearInterval(shopeepayCountdownTimer);
+}
+if (shopeepayPaymentTimeout) {
+clearTimeout(shopeepayPaymentTimeout);
+}
+}
+// Show verification modal
+function showVerificationModal() {
+document.getElementById("verificationModal").classList.remove("hidden");
+// Reset verification steps
+for (let i = 1; i <= 4; i++) {
+const stepElement = document.getElementById(step${i});
+stepElement.classList.remove('active', 'completed');
+}
+// Reset status
+document.getElementById('verificationStatus').innerHTML = '<span class="status-indicator status-pending"></span><span id="statusText">Memproses verifikasi pembayaran...</span>';
+}
+// Hide verification modal
+function hideVerificationModal() {
+document.getElementById("verificationModal").classList.add("hidden");
+}
+// Cancel verification
+function cancelVerification() {
+hideVerificationModal();
+enableCheckPaymentButton();
+paymentVerificationActive = false;
+}
+// Update verification step
+function updateVerificationStep(stepNumber, success, message) {
+const stepElement = document.getElementById(step${stepNumber});
+const statusElement = document.getElementById('verificationStatus');
+const statusTextElement = document.getElementById('statusText');
+// Update step status
+if (success) {
+stepElement.classList.add('completed');
+} else {
+stepElement.classList.add('active');
+}
+// Update status
+statusTextElement.textContent = message;
+if (stepNumber === 4) {
+if (success) {
+statusElement.innerHTML = '<span class="status-indicator status-success"></span><span>Pembayaran berhasil diverifikasi</span>';
+} else {
+statusElement.innerHTML = '<span class="status-indicator status-failed"></span><span>Verifikasi pembayaran gagal</span>';
+}
+}
+}
+// Disable check payment button
+function disableCheckPaymentButton() {
+let buttonId;
+switch (paymentMethod) {
+case 'qris':
+buttonId = 'qrisCheckPaymentBtn';
+break;
+case 'ewallet':
+if (selectedEwallet === 'shopeepay') {
+buttonId = 'shopeepayCheckPaymentBtn';
+} else {
+buttonId = 'ewalletCheckPaymentBtn';
+}
+break;
+case 'bank':
+buttonId = 'bankCheckPaymentBtn';
+break;
+}
+const button = document.getElementById(buttonId);
+if (button) {
+button.disabled = true;
+button.classList.add('opacity-50', 'cursor-not-allowed');
+button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Memverifikasi...';
+}
+}
+// Enable check payment button
+function enableCheckPaymentButton() {
+let buttonId;
+switch (paymentMethod) {
+case 'qris':
+buttonId = 'qrisCheckPaymentBtn';
+break;
+case 'ewallet':
+if (selectedEwallet === 'shopeepay') {
+buttonId = 'shopeepayCheckPaymentBtn';
+} else {
+buttonId = 'ewalletCheckPaymentBtn';
+}
+break;
+case 'bank':
+buttonId = 'bankCheckPaymentBtn';
+break;
+}
+const button = document.getElementById(buttonId);
+if (button) {
+button.disabled = false;
+button.classList.remove('opacity-50', 'cursor-not-allowed');
+button.innerHTML = '<i class="fas fa-check mr-2"></i>Saya Sudah Bayar';
+}
+}
+// Delay function for async operations
+function delay(ms) {
+return new Promise(resolve => setTimeout(resolve, ms));
+}
+// Show error modal
+function showErrorModal(message) {
+document.getElementById("errorMessage").textContent = message;
+document.getElementById("errorModal").classList.remove("hidden");
+// Shake animation
+document
+.getElementById("errorModal")
+.querySelector(".bg-white")
+.classList.add("shake");
+setTimeout(() => {
+document
+.getElementById("errorModal")
+.querySelector(".bg-white")
+.classList.remove("shake");
+}, 500);
+}
+// Close modal
+function closeModal() {
+document.getElementById("successModal").classList.add("hidden");
+// Clear current transaction
+localStorage.removeItem('currentTransaction');
+// Redirect to home page
+window.location.href = "index.html";
+}
+// Close error modal
+function closeErrorModal() {
+document.getElementById("errorModal").classList.add("hidden");
+}
+// Show info modal
+function showInfoModal(message) {
+document.getElementById("infoMessage").textContent = message;
+document.getElementById("infoModal").classList.remove("hidden");
+}
+// Close info modal
+function closeInfoModal() {
+document.getElementById("infoModal").classList.add("hidden");
+}
+// Placeholder functions for mobile menu and help
+function toggleMobileMenu() {
+// Implementation for mobile menu toggle
+console.log("Toggle mobile menu");
+}
+function showHowToTopUp() {
+// Implementation for showing how to top up guide
+console.log("Show how to top up guide");
+}
+function showHelp() {
+// Implementation for showing help
+console.log("Show help");
+}
+</script>
+</body>
+</html>
