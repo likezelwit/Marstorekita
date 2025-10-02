@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Konfirmasi Avatar Roblox</title>
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Arial;padding:24px}
+    .row{display:flex;gap:12px;align-items:center}
+    input{padding:8px;font-size:16px}
+    button{padding:8px 12px;cursor:pointer}
+    img.avatar{width:120px;height:120px;object-fit:cover;border-radius:12px;border:1px solid #ddd}
+    .hint{color:#666;font-size:13px;margin-top:8px}
+  </style>
+</head>
+<body>
+  <h2>Masukkan Username Roblox untuk konfirmasi avatar</h2>
+  <div class="row">
+    <input id="username" placeholder="Contoh: builderman" />
+    <button id="check">Tampilkan Avatar</button>
+  </div>
+  <p class="hint">Klik di luar input atau tekan Enter untuk mencoba.</p>
+
+  <div id="result" style="margin-top:18px;display:none">
+    <p><strong>Hasil:</strong></p>
+    <div class="row">
+      <img id="avatarImg" class="avatar" src="" alt="avatar" />
+      <div>
+        <p id="displayName" style="margin:0;font-weight:600"></p>
+        <p id="userId" style="margin:0;color:#666"></p>
+        <p id="error" style="color:#c00;margin-top:8px"></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const usernameInput = document.getElementById('username');
+    const btn = document.getElementById('check');
+    const result = document.getElementById('result');
+    const avatarImg = document.getElementById('avatarImg');
+    const displayName = document.getElementById('displayName');
+    const userIdEl = document.getElementById('userId');
+    const errorEl = document.getElementById('error');
+
+    async function lookup(username) {
+      errorEl.textContent = '';
+      result.style.display = 'none';
+      if (!username || username.trim().length === 0) return;
+
+      try {
+        // 1) Dapatkan userId via RoProxy Users API
+        const usersResp = await fetch('https://users.roproxy.com/v1/usernames/users', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({usernames: [username], excludeBannedUsers: true})
+        });
+        if (!usersResp.ok) throw new Error('Gagal dapatkan user (users API)');
+
+        const usersJson = await usersResp.json();
+        if (!usersJson.data || usersJson.data.length === 0) {
+          throw new Error('Username tidak ditemukan');
+        }
+        const user = usersJson.data[0];
+        const id = user.id;
+
+        // 2) Dapatkan URL avatar headshot via RoProxy Thumbnails API
+        const thumbResp = await fetch(`https://thumbnails.roproxy.com/v1/users/avatar-headshot?userIds=${id}&size=420x420&format=Png&isCircular=false`);
+        if (!thumbResp.ok) throw new Error('Gagal dapatkan thumbnail');
+
+        const thumbJson = await thumbResp.json();
+        const thumb = thumbJson.data && thumbJson.data[0] && thumbJson.data[0].imageUrl;
+        if (!thumb) throw new Error('Thumbnail tidak tersedia');
+
+        // tampilkan hasil
+        avatarImg.src = thumb;
+        displayName.textContent = user.name ?? user.username ?? username;
+        userIdEl.textContent = 'UserId: ' + id;
+        result.style.display = 'block';
+
+      } catch (err) {
+        errorEl.textContent = err.message || 'Terjadi kesalahan';
+        result.style.display = 'block';
+        avatarImg.src = '';
+        displayName.textContent = '';
+        userIdEl.textContent = '';
+      }
+    }
+
+    btn.addEventListener('click', () => lookup(usernameInput.value.trim()));
+    usernameInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') lookup(usernameInput.value.trim()) });
+  </script>
+</body>
+</html>
+
+masih gak munculin gambarnya
