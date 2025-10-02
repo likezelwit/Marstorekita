@@ -48,8 +48,8 @@
       if (!username || username.trim().length === 0) return;
 
       try {
-        // 1) Dapatkan userId via RoProxy Users API
-        const usersResp = await fetch('https://users.roproxy.com/v1/usernames/users', {
+        // Gunakan proxy untuk API Roblox
+        const usersResp = await fetch('https://corsproxy.io/?https://users.roblox.com/v1/usernames/users', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({usernames: [username], excludeBannedUsers: true})
@@ -63,8 +63,8 @@
         const user = usersJson.data[0];
         const id = user.id;
 
-        // 2) Dapatkan URL avatar headshot via RoProxy Thumbnails API
-        const thumbResp = await fetch(`https://thumbnails.roproxy.com/v1/users/avatar-headshot?userIds=${id}&size=420x420&format=Png&isCircular=false`);
+        // Ambil avatar headshot pakai proxy juga
+        const thumbResp = await fetch(`https://corsproxy.io/?https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${id}&size=420x420&format=Png&isCircular=false`);
         if (!thumbResp.ok) throw new Error('Gagal dapatkan thumbnail');
 
         const thumbJson = await thumbResp.json();
@@ -73,7 +73,7 @@
 
         // tampilkan hasil
         avatarImg.src = thumb;
-        displayName.textContent = user.name ?? user.username ?? username;
+        displayName.textContent = user.displayName ?? user.name ?? user.username ?? username;
         userIdEl.textContent = 'UserId: ' + id;
         result.style.display = 'block';
 
@@ -91,5 +91,3 @@
   </script>
 </body>
 </html>
-
-masih gak munculin gambarnya
