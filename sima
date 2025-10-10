@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pencari Pengguna Roblox</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4">
+
+    <div class="w-full max-w-2xl mx-auto">
+        <div class="bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-center mb-2 bg-gradient-to-r from-purple-400 to-pink-500 text-transparent bg-clip-text">Pencari Pengguna Roblox</h1>
+            <p class="text-center text-gray-400 mb-6">Masukkan username untuk memulai pencarian.</p>
+
+            <!-- Input Form -->
+            <div class="flex flex-col sm:flex-row gap-3 mb-6">
+                <input type="text" id="usernameInput" placeholder="Contoh: Roblox" class="flex-grow bg-gray-700 text-white placeholder-gray-500 rounded-lg px-4 py-3 border-2 border-transparent focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition">
+                <button onclick="searchUser()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-transform transform hover:scale-105 shadow-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block mr-2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    Cari
+                </button>
+            </div>
+
+            <!-- Results -->
+            <div id="loading" class="text-center text-gray-400 hidden">
+                <p>Mencari...</p>
+            </div>
+            <div id="results" class="space-y-4">
+                <!-- Hasil pencarian akan ditampilkan di sini -->
+            </div>
+        </div>
+        <footer class="text-center text-gray-600 mt-6 text-sm">
+            Dibuat menggunakan API publik Roblox.
+        </footer>
+    </div>
+
+    <script>
+        // Menambahkan event listener untuk tombol Enter
+        document.getElementById('usernameInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Mencegah form submit default
+                searchUser();
+            }
+        });
+
+        async function searchUser() {
+            const username = document.getElementById('usernameInput').value;
+            const resultsDiv = document.getElementById('results');
+            const loadingDiv = document.getElementById('loading');
+            
+            if (!username) {
+                resultsDiv.innerHTML = `<div class="bg-red-900/50 text-red-300 p-4 rounded-lg text-center">Tolong masukkan username.</div>`;
+                return;
+            }
+
+            resultsDiv.innerHTML = '';
+            loadingDiv.classList.remove('hidden');
+
+            // Roblox memiliki API proxy yang sering digunakan untuk menghindari masalah CORS
+            const proxyUrl = 'https://api.roproxy.com'; 
+            const apiUrl = `${proxyUrl}/users/v1/users/search?keyword=${encodeURIComponent(username)}&limit=10`;
+
+            try {
+                // Melakukan request ke API Roblox
+                const response = await fetch(apiUrl);
+                
+                if (!response.ok) {
+                   throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                loadingDiv.classList.add('hidden');
+
+                if (data.data && data.data.length > 0) {
+                    displayResults(data.data);
+                } else {
+                    resultsDiv.innerHTML = `<div class="bg-gray-700 p-4 rounded-lg text-center">Pengguna tidak ditemukan.</div>`;
+                }
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                loadingDiv.classList.add('hidden');
+                resultsDiv.innerHTML = `<div class="bg-red-900/50 text-red-300 p-4 rounded-lg text-center">Gagal mengambil data. Mungkin API sedang sibuk. Coba lagi nanti.</div>`;
+            }
+        }
+
+        function displayResults(users) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = ''; // Bersihkan hasil sebelumnya
+
+            users.forEach(user => {
+                const hasVerifiedBadge = user.hasVerifiedBadge;
+                const userCard = `
+                    <div class="card bg-gray-700/50 p-4 rounded-lg flex items-center space-x-4">
+                        <div class="flex-shrink-0">
+                             <img src="https://placehold.co/60x60/1F2937/FFFFFF?text=${user.name.charAt(0)}" class="w-12 h-12 md:w-14 md:h-14 rounded-full object-cover" alt="Avatar">
+                        </div>
+                        <div class="flex-grow">
+                            <div class="flex items-center gap-2">
+                                <p class="font-bold text-lg text-white">${user.displayName}</p>
+                                ${hasVerifiedBadge ? '<svg class="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44-1.22a.75.75 0 00-1.06 0L8.16 6.84a.75.75 0 001.06 1.06l4.25-4.25a.75.75 0 000-1.06z" clip-rule="evenodd"></path></svg>' : ''}
+                            </div>
+                            <p class="text-sm text-gray-400">@${user.name}</p>
+                            <p class="text-xs text-gray-500 mt-1">ID: ${user.id}</p>
+                        </div>
+                        <a href="https://www.roblox.com/users/${user.id}/profile" target="_blank" rel="noopener noreferrer" class="bg-gray-600 hover:bg-gray-500 text-white text-xs font-semibold py-2 px-3 rounded-md transition">
+                            Lihat Profil
+                        </a>
+                    </div>
+                `;
+                resultsDiv.innerHTML += userCard;
+            });
+        }
+    </script>
+</body>
+</html>
