@@ -105,8 +105,12 @@
 </head>
 <body class="bg-gray-100">
     <div class="app-container bg-white">
+        <div id="loading-stage" class="stage active flex-col">
+            <i class="fas fa-sync fa-spin text-4xl text-kawanchat-blue mb-4"></i>
+            <p class="text-gray-600">Memuat KawanChat...</p>
+        </div>
 
-        <div id="welcome-stage" class="stage active flex-col justify-between">
+        <div id="welcome-stage" class="stage flex-col justify-between">
             <div class="flex-grow flex flex-col justify-center items-center">
                 <h2 class="text-3xl font-bold text-kawanchat-blue mb-6">👋 KawanChat</h2>
                 <div id="sapaan-content" class="text-lg text-gray-700 max-w-sm mb-10 min-h-[120px]">
@@ -141,7 +145,7 @@
                 </div>
 
                 <div id="input-phone-area" class="w-full max-w-xs space-y-4 hidden">
-                    <p class="text-gray-500 mb-2">🙍‍♂️</p>
+                    <p class="text-gray-500 mb-2" id="phone-icon">🙍‍♂️</p>
                     <div class="flex items-center border-b-2 border-gray-300 focus-within:border-kawanchat-blue rounded-t-lg bg-white">
                         <span class="p-3 text-lg text-gray-700">+62</span>
                         <input type="tel" id="reg-phone-number" placeholder="Nomor Telepon (ex: 812345678)" class="flex-grow p-3 text-lg focus:ring-0 border-none">
@@ -240,14 +244,13 @@
     </div>
 
     <script type="module">
-        // --- Firebase Imports ---
+        // --- Firebase Imports (Menggunakan CDN URL) ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, addDoc, serverTimestamp, updateDoc, doc, getDocs, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 
-        // --- Firebase Configuration ---
+        // --- Firebase Configuration (Sesuai yang Anda berikan) ---
         const firebaseConfig = {
-            // ... (gunakan config yang sama, saya hapus untuk singkat)
             apiKey: "AIzaSyD9tO94PdmXnqSH4cMVLPbgcEyY1J266mQ",
             authDomain: "whatsapp-clone-web-9418e.firebaseapp.com",
             projectId: "whatsapp-clone-web-9418e",
@@ -265,12 +268,13 @@
         // --- Global State ---
         let currentUserId = null;
         let currentUserName = null;
-        let currentChatContact = null; // ID kontak yang sedang aktif
-        let currentChatContactName = null; // Nama kontak yang sedang aktif
-        let unsubscribeMessages = null; // Untuk menghentikan listener pesan sebelumnya
-        const appId = 'kawanchat-v1'; // ID Aplikasi Unik
+        let currentChatContact = null; 
+        let currentChatContactName = null; 
+        let unsubscribeMessages = null; 
+        const appId = 'kawanchat-v1'; 
         
         // --- DOM Elements (Stages) ---
+        const loadingStage = document.getElementById('loading-stage'); // Tambahan loading
         const welcomeStage = document.getElementById('welcome-stage');
         const registrationStage = document.getElementById('registration-stage');
         const mainApp = document.getElementById('main-app');
@@ -291,10 +295,9 @@
         const nameFeedback = document.getElementById('name-feedback');
         const inputPhoneArea = document.getElementById('input-phone-area');
         const regPhoneNumber = document.getElementById('reg-phone-number');
-        const finalIdDisplay = document.getElementById('final-id-display');
+        const phoneIcon = document.getElementById('phone-icon'); // Icon Phone
         
         // Main App
-        const appTitle = document.getElementById('app-title');
         const userIdDisplay = document.getElementById('user-id-display');
         const tabLinks = document.querySelectorAll('.tab-link');
         const tabContents = document.querySelectorAll('.tab-content');
@@ -347,7 +350,7 @@
 
         /** Mengubah stage tampilan */
         const setStage = (stageId) => {
-            [welcomeStage, registrationStage, mainApp].forEach(stage => {
+            [loadingStage, welcomeStage, registrationStage, mainApp].forEach(stage => {
                 stage.classList.remove('active');
                 stage.classList.add('hidden');
             });
@@ -363,7 +366,7 @@
         let sapaanStep = 0;
         const sapaanTexts = [
             "Selamat datang di KawanChat! 👋",
-            "Di sini kamu bisa chat dengan teman lama maupun teman baru. Serasa gampang antar negara! 🌐",
+            "Di KawanChat kamu bisa chat dengan teman lama maupun teman baru. Serasa gampang antar negara! 🌐",
             "KawanChat adalah tempat yang aman untuk berbagi cerita. 🔒",
             "Persahabatan sejati dimulai dari pesan sederhana. Mari kita mulai! 💬"
         ];
@@ -404,6 +407,7 @@
         const regStep1_Name = async () => {
             inputNameArea.classList.add('hidden');
             inputPhoneArea.classList.add('hidden');
+            nextRegistrationButton.classList.remove('hidden');
             
             await new Promise(resolve => {
                 typeText(typingTextContainer, "Kita belum kenalan nih! Kenalan dulu yuk! 🙋", resolve);
@@ -414,7 +418,7 @@
             regFirstName.focus();
             regStep = 1;
 
-            regFirstName.addEventListener('input', () => {
+            const nameInputHandler = () => {
                 const name = regFirstName.value.trim();
                 if (name.length > 0) {
                     nameFeedback.textContent = "Hmm kalo nama belakang boleh tau? (opsional)";
@@ -423,7 +427,13 @@
                     nameFeedback.textContent = "";
                     nextRegistrationButton.disabled = true;
                 }
-            }, { once: true });
+            };
+            regFirstName.addEventListener('input', nameInputHandler);
+            // Hapus listener agar tidak menumpuk di next step
+            nextRegistrationButton.onclick = () => {
+                regFirstName.removeEventListener('input', nameInputHandler);
+                if (regFirstName.value.trim()) regStep2_Phone();
+            };
         };
 
         const regStep2_Phone = async () => {
@@ -437,7 +447,7 @@
             await new Promise(resolve => {
                 typeText(typingTextContainer, `Yey kita udh kenalan! Hi ${userName} 🙌`, resolve);
             });
-            await new Promise(resolve => setTimeout(resolve, 1500)); // Jeda animasi
+            await new Promise(resolve => setTimeout(resolve, 1500)); 
             
             await new Promise(resolve => {
                 typeText(typingTextContainer, "Hmm boleh minta nomor mu untuk masuk ke dalam KawanChat? 📞", resolve);
@@ -446,33 +456,40 @@
             inputPhoneArea.classList.remove('hidden');
             regStep = 2;
 
-            const phoneIcon = inputPhoneArea.querySelector('p');
             regPhoneNumber.addEventListener('focus', () => phoneIcon.textContent = '🤦‍♂️');
             regPhoneNumber.addEventListener('blur', () => phoneIcon.textContent = '🙍‍♂️');
-            regPhoneNumber.addEventListener('input', () => {
+            const phoneInputHandler = () => {
                 nextRegistrationButton.disabled = regPhoneNumber.value.length < 8; // Minimal 8 digit
-            });
+            };
+            regPhoneNumber.addEventListener('input', phoneInputHandler);
+            regPhoneNumber.focus();
+
+            nextRegistrationButton.onclick = () => {
+                regPhoneNumber.removeEventListener('input', phoneInputHandler);
+                if (regPhoneNumber.value.length >= 8) regStep3_Finalize();
+            };
         };
 
         const regStep3_Finalize = async () => {
             inputPhoneArea.classList.add('hidden');
             nextRegistrationButton.classList.add('hidden');
 
-            const fullPhoneNumber = '62' + regPhoneNumber.value.replace(/^0+|[^0-9]/g, ''); // Ambil nomor dari input
+            const fullPhoneNumber = '62' + regPhoneNumber.value.replace(/^0+|[^0-9]/g, ''); 
 
             await new Promise(resolve => {
                 typeText(typingTextContainer, `Nomormu cantik banget ✨ kita ambil dari depan nomor mu yah!`, resolve);
             });
             await new Promise(resolve => setTimeout(resolve, 1500)); 
 
-            const mockID = fullPhoneNumber.padEnd(11, '0'); // Simulasikan ID 11 digit
-
+            const mockID = fullPhoneNumber.padEnd(11, '0'); 
+            const prefix = mockID.substring(0, 5);
+            
             await new Promise(resolve => {
-                typeText(typingTextContainer, `Oke nomor depan mu ${mockID.substring(0, 5)} kita tambahin jadi ${mockID}!`, resolve);
+                typeText(typingTextContainer, `Oke nomor depan mu ${prefix} kita tambahin jadi ${mockID}!`, resolve);
             });
             await new Promise(resolve => setTimeout(resolve, 1500));
             
-            const finalID = mockID.substring(mockID.length - 6); // Ambil 6 digit terakhir sebagai ID internal
+            const finalID = mockID.substring(mockID.length - 6); 
             
             await new Promise(resolve => {
                 typeText(typingTextContainer, `Yey! ID mu udh di buat! Ini dia: ${finalID} 🎉`, resolve);
@@ -483,7 +500,7 @@
             await signInAndSetProfile(currentUserName, finalID);
 
             await new Promise(resolve => {
-                typeText(typingTextContainer, `Selamat datang di KawanChat, ${currentUserName}!`, resolve);
+                typeText(typingTextContainer, `Selamat datang di KawanChat, ${currentUserName.split(' ')[0]}!`, resolve);
             });
             await new Promise(resolve => setTimeout(resolve, 1000));
             
@@ -492,13 +509,17 @@
         };
 
         const signInAndSetProfile = async (displayName, chatID) => {
-            let userCredential = await signInAnonymously(auth);
-            const user = userCredential.user;
+            // Karena kita sudah signInAnonymously di tahap inisialisasi, kita gunakan user yang sudah ada
+            const user = auth.currentUser;
+            if (!user) {
+                // Should not happen if flow is correct, but safe check
+                throw new Error("User not authenticated.");
+            }
+            
             await updateProfile(user, {
                 displayName: displayName
             });
             
-            // Simpan data user tambahan di Firestore (Opsional tapi direkomendasikan)
             const userDocRef = doc(db, `/artifacts/${appId}/users/${user.uid}`);
             await setDoc(userDocRef, {
                 name: displayName,
@@ -509,37 +530,21 @@
             }, { merge: true });
             
             currentUserId = user.uid;
-            currentUserName = displayName;
-            
         };
 
-        nextRegistrationButton.addEventListener('click', async () => {
-            if (regStep === 1) {
-                if (regFirstName.value.trim()) {
-                    await regStep2_Phone();
-                }
-            } else if (regStep === 2) {
-                if (regPhoneNumber.value.length >= 8) {
-                    await regStep3_Finalize();
-                }
-            }
-        });
-
         // --- MAIN APP LOGIC (Chat) ---
-
+        // (Fungsi loadContacts, startPrivateChat, renderMessages, listenForMessages, sendMessage, addContact, dan event handlers tab di sini, tidak diubah dari versi sebelumnya)
+        
         const initializeMainApp = () => {
             // Tampilkan UI utama
             mainApp.classList.remove('hidden');
             userIdDisplay.textContent = `ID Anda: ${currentUserId.substring(0, 8)}`; // Tampilkan UID Firebase
             
-            // Panggil listener utama
             loadContacts();
             
-            // Set default tab ke CHAT
             document.querySelector('.tab-link[data-tab="chat"]').click();
         };
-
-        /** Memuat dan menampilkan daftar kontak pengguna untuk tab Kontak dan Chat List */
+        
         const loadContacts = async () => {
             if (!currentUserId) return;
             
@@ -566,25 +571,24 @@
                     const contactData = doc.data();
                     const contactName = contactData.name || contactId.substring(0, 8);
 
-                    // Buat item untuk tab KONTAK
-                    const contactItem = document.createElement('div');
-                    contactItem.className = 'contact-item flex items-center p-3 rounded-lg bg-white shadow-sm border border-gray-100';
-                    contactItem.innerHTML = `
-                        <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3 text-lg text-kawanchat-blue">
-                            <i class="fas fa-user"></i>
-                        </div>
-                        <div class="flex-grow">
-                            <p class="font-semibold text-gray-800">${contactName}</p>
-                            <p class="text-xs text-gray-500 truncate">ID: ${contactId}</p>
-                        </div>
-                    `;
-                    contactItem.addEventListener('click', () => startPrivateChat(contactId, contactName));
-                    contactList.appendChild(contactItem);
+                    const createContactItem = (isChatList = false) => {
+                        const item = document.createElement('div');
+                        item.className = 'contact-item flex items-center p-3 rounded-lg bg-white shadow-sm border border-gray-100 cursor-pointer hover:bg-gray-50 transition duration-100';
+                        item.innerHTML = `
+                            <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3 text-lg text-kawanchat-blue">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="flex-grow">
+                                <p class="font-semibold text-gray-800">${contactName}</p>
+                                <p class="text-xs text-gray-500 truncate">${isChatList ? 'Pesan terakhir...' : `ID: ${contactId}`}</p>
+                            </div>
+                        `;
+                        item.addEventListener('click', () => startPrivateChat(contactId, contactName));
+                        return item;
+                    };
 
-                    // Duplikat item untuk tab OBROLAN
-                    const chatItem = contactItem.cloneNode(true);
-                    chatItem.addEventListener('click', () => startPrivateChat(contactId, contactName));
-                    activeChatsList.appendChild(chatItem);
+                    contactList.appendChild(createContactItem(false));
+                    activeChatsList.appendChild(createContactItem(true));
                 });
                 
             } catch (error) {
@@ -594,37 +598,31 @@
             }
         };
 
-        /** Memulai sesi chat privat dan menampilkan Chat View */
         const startPrivateChat = (contactId, contactName) => {
             currentChatContact = contactId;
             currentChatContactName = contactName;
             
-            // 1. Tampilkan Chat View dan sembunyikan tampilan utama
             document.querySelector('#main-app > main').classList.add('hidden');
             newChatButton.classList.add('hidden');
             chatView.classList.remove('hidden');
-            chatMessageArea.style.display = 'flex'; // Tampilkan input pesan
+            chatMessageArea.style.display = 'flex'; 
 
-            // 2. Update Header Chat
             chatContactName.textContent = contactName;
             
-            // 3. Mulai listener untuk chat privat
-            unsubscribePreviousChat(); // Hentikan listener sebelumnya (jika ada)
+            unsubscribePreviousChat(); 
             unsubscribeMessages = listenForMessages(contactId);
         };
         
-        /** Kembali ke tampilan tab Obrolan utama */
         backToChats.addEventListener('click', () => {
             chatView.classList.add('hidden');
-            chatMessageArea.style.display = 'none'; // Sembunyikan input pesan
+            chatMessageArea.style.display = 'none'; 
             document.querySelector('#main-app > main').classList.remove('hidden');
             newChatButton.classList.remove('hidden');
             
-            unsubscribePreviousChat(); // Hentikan listener chat privat
+            unsubscribePreviousChat(); 
             currentChatContact = null;
             currentChatContactName = null;
 
-            // Pastikan tab OBROLAN aktif
             document.querySelector('.tab-link[data-tab="chat"]').click();
         });
 
@@ -638,7 +636,7 @@
             messages.forEach(msg => {
                 const isSentByMe = msg.senderId === currentUserId;
                 const alignmentClass = isSentByMe ? 'sent' : 'received';
-                const displayName = isSentByMe ? currentUserName.split(' ')[0] : currentChatContactName.split(' ')[0]; // Nama depan saja
+                const displayName = isSentByMe ? currentUserName.split(' ')[0] : currentChatContactName.split(' ')[0]; 
                 const nameColor = isSentByMe ? 'text-gray-700' : 'text-kawanchat-blue';
 
                 const messageDiv = document.createElement('div');
@@ -662,11 +660,9 @@
                 messagesContainer.appendChild(messageDiv);
             });
             
-            // Scroll ke bawah
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         };
 
-        /** Menyiapkan listener real-time untuk pesan (Hanya Private). */
         const listenForMessages = (contactId) => {
             const chatRoomId = [currentUserId, contactId].sort().join('_');
             const collectionPath = `/artifacts/${appId}/private/chats/${chatRoomId}/messages`;
@@ -714,15 +710,13 @@
             const newContactId = newContactIdInput.value.trim();
             if (!newContactId || !currentUserId) return;
 
+            // Logika sederhana: cek apakah ID yang dimasukkan cocok dengan 8 digit awal UID kita
             if (newContactId === currentUserId.substring(0, 8)) {
                  alert('Tidak bisa menambahkan ID Anda sendiri sebagai kontak!');
                  return;
             }
             
             try {
-                 // Di sini, kita asumsikan ID yang dimasukkan adalah Firebase UID untuk kemudahan.
-                 // Dalam aplikasi nyata, Anda akan mencari user berdasarkan ID Chat (misal: 452632).
-                 
                 const contactDocPath = `/artifacts/${appId}/users/${currentUserId}/contacts/${newContactId}`;
                 await setDoc(doc(db, contactDocPath), { 
                     name: newContactId.substring(0, 8), 
@@ -737,8 +731,6 @@
                 alert('Gagal menambahkan kontak. Pastikan ID benar.');
             }
         };
-
-        // --- Event Handlers (Main App) ---
         
         sendButton.addEventListener('click', () => sendMessage(messageInput.value));
         messageInput.addEventListener('keypress', (e) => {
@@ -748,7 +740,6 @@
         });
         addContactButton.addEventListener('click', addContact);
         newChatButton.addEventListener('click', () => {
-            // Pindah ke tab Kontak untuk memilih/menambah kontak baru
             document.querySelector('.tab-link[data-tab="contacts"]').click();
         });
 
@@ -756,11 +747,9 @@
             tab.addEventListener('click', (e) => {
                 const tabId = tab.getAttribute('data-tab');
                 
-                // Update active tab styling
                 tabLinks.forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
                 
-                // Update active content
                 tabContents.forEach(content => {
                     content.classList.add('hidden');
                     if (content.id === `${tabId}-tab`) {
@@ -768,14 +757,12 @@
                     }
                 });
                 
-                // Sembunyikan floating button saat di tab selain OBROLAN
                 if (tabId === 'chat') {
                     newChatButton.classList.remove('hidden');
                 } else {
                     newChatButton.classList.add('hidden');
                 }
                 
-                // Load kontak saat masuk ke tab kontak
                 if (tabId === 'contacts') {
                     loadContacts();
                 }
@@ -784,42 +771,47 @@
 
         // --- INITIALIZATION ---
         
-        // Coba otentikasi
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                // User sudah terautentikasi (mungkin dari sesi sebelumnya)
-                const userDocRef = doc(db, `/artifacts/${appId}/users/${user.uid}`);
-                const userDoc = await getDoc(userDocRef);
+        // Coba sign in secara anonim terlebih dahulu untuk mendapatkan UID
+        const initializeAuth = async () => {
+            try {
+                await signInAnonymously(auth);
+            } catch (error) {
+                console.error("Gagal memulai sesi anonim:", error);
+                setStage('welcome-stage');
+                sapaanContent.textContent = "Error: Gagal terhubung ke server Firebase.";
+                nextWelcomeButton.disabled = true;
+            }
+        };
 
-                if (userDoc.exists()) {
-                    // Data registrasi ditemukan, langsung ke Main App
-                    currentUserId = user.uid;
-                    currentUserName = user.displayName || userDoc.data().name;
-                    setStage('main-app');
-                    initializeMainApp();
-                } else {
-                    // User terautentikasi anonim, tapi belum menyelesaikan registrasi
-                    // Force ke welcome stage
-                    setStage('welcome-stage');
-                    nextSapaan(); // Mulai sapaan
-                }
+        // Otentikasi dan Cek Registrasi
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                // Jika belum ada user, coba sign in anonim
+                await initializeAuth();
+                return;
+            }
+            
+            // User sudah ada (baru atau lama)
+            currentUserId = user.uid;
+            
+            const userDocRef = doc(db, `/artifacts/${appId}/users/${user.uid}`);
+            const userDoc = await getDoc(userDocRef);
+
+            if (userDoc.exists()) {
+                // User sudah registrasi, langsung ke Main App
+                currentUserName = user.displayName || userDoc.data().name;
+                setStage('main-app');
+                initializeMainApp();
             } else {
-                // Belum ada user, mulai dari tahap sign in anonim dan sapaan
-                // Melakukan sign in anonim agar mendapat UID
-                signInAnonymously(auth).then(() => {
-                    setStage('welcome-stage');
-                    nextSapaan(); // Mulai sapaan
-                }).catch(error => {
-                    console.error("Gagal memulai sesi anonim:", error);
-                    sapaanContent.textContent = "Error: Gagal terhubung ke server. Cek konsol.";
-                    nextWelcomeButton.disabled = true;
-                });
+                // User baru terautentikasi (anonim), mulai alur sapaan/registrasi
+                setStage('welcome-stage');
+                nextSapaan();
             }
         });
 
         // Start welcome flow
         nextWelcomeButton.addEventListener('click', nextSapaan);
-
+        
     </script>
 </body>
 </html>
