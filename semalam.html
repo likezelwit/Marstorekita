@@ -1,817 +1,612 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KawanChat - Real-time Chat</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        /* Custom styles for KawanChat look and feel */
-        :root {
-            --kawanchat-blue: #0A5FAD; /* Warna Dominan */
-            --kawanchat-light-blue: #1C8EED;
-            --kawanchat-bubble-sent: #D1E7F9; /* Lebih soft dari WA */
-            --kawanchat-bg: #F0F2F5; /* Background aplikasi */
-        }
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--kawanchat-bg);
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-        .app-container {
-            height: 100vh;
-            max-width: 500px;
-            width: 100%;
-            margin: 0 auto;
-            box-shadow: 0 0 15px rgba(0,0,0,0.2);
-            display: flex;
-            flex-direction: column;
-            background-color: white;
-        }
-        /* Header */
-        .header {
-            background-color: var(--kawanchat-blue);
-        }
-        .tab-bar {
-            background-color: var(--kawanchat-light-blue);
-        }
-        .tab-bar button.active {
-            border-bottom: 3px solid white;
-            color: white;
-            font-weight: 600;
-        }
-
-        /* Message Bubbles */
-        .chat-bubble {
-            max-width: 80%;
-            padding: 8px 12px;
-            border-radius: 15px;
-            margin-bottom: 8px;
-            word-wrap: break-word;
-        }
-        .sent {
-            background-color: var(--kawanchat-bubble-sent);
-            align-self: flex-end;
-            border-bottom-right-radius: 4px;
-        }
-        .received {
-            background-color: #ffffff; /* Putih bersih untuk diterima */
-            border: 1px solid #ddd;
-            align-self: flex-start;
-            border-bottom-left-radius: 4px;
-        }
-
-        /* Stages (Welcome/Registration) */
-        .stage {
-            display: none;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            text-align: center;
-            padding: 20px;
-            height: 100%;
-        }
-        .stage.active {
-            display: flex;
-        }
-        
-        /* Typing Animation effect */
-        .typing-text-container {
-            min-height: 30px; /* Menghindari layout jump */
-        }
-        
-        /* Float button for new chat */
-        #new-chat-button {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            z-index: 10;
-        }
-
-        /* Hide message input initially */
-        #chat-message-area {
-            display: none;
-        }
-        #message-input:focus {
-             outline: none;
-             box-shadow: 0 0 0 2px var(--kawanchat-light-blue);
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>KawanChat — Real-time Chat</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
+  <style>
+    :root{
+      --kawanchat-blue:#0A5FAD;
+      --kawanchat-light:#1C8EED;
+      --kawanchat-bubble:#D1E7F9;
+      --kawanchat-bg:#F0F2F5;
+    }
+    body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial;background:var(--kawanchat-bg);margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;}
+    .app{width:100%;max-width:500px;height:100vh;background:white;box-shadow:0 8px 30px rgba(0,0,0,.15);display:flex;flex-direction:column;position:relative;overflow:hidden;}
+    .header{background:var(--kawanchat-blue);color:white;padding:14px}
+    .tabbar{display:flex;background:var(--kawanchat-light);color:#f0f6ff}
+    .tabbar button{flex:1;padding:10px;font-weight:600;border:none;background:transparent;color:rgba(255,255,255,.85)}
+    .tabbar button.active{border-bottom:3px solid white;color:white}
+    .stage{display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;height:100%}
+    .stage.active{display:flex}
+    .typing{min-height:44px}
+    .chat-list,.contacts-list{overflow:auto}
+    .chat-bubble{max-width:80%;padding:8px 12px;border-radius:15px;margin-bottom:8px;word-wrap:break-word}
+    .sent{background:var(--kawanchat-bubble);align-self:flex-end;border-bottom-right-radius:4px}
+    .recv{background:#fff;border:1px solid #eee;align-self:flex-start;border-bottom-left-radius:4px}
+    #new-chat-fab{position:absolute;right:18px;bottom:18px;z-index:30;display:none}
+    .notif{position:fixed;right:20px;bottom:20px;background:#16a34a;color:white;padding:10px 14px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.15);z-index:60}
+    /* simple scroll container heights */
+    .flex-grow-scroll{flex:1;display:flex;flex-direction:column;min-height:0}
+    .scroll{overflow:auto}
+  </style>
 </head>
-<body class="bg-gray-100">
-    <div class="app-container bg-white">
-        <div id="loading-stage" class="stage active flex-col">
-            <i class="fas fa-sync fa-spin text-4xl text-kawanchat-blue mb-4"></i>
-            <p class="text-gray-600">Memuat KawanChat...</p>
-        </div>
-
-        <div id="welcome-stage" class="stage flex-col justify-between">
-            <div class="flex-grow flex flex-col justify-center items-center">
-                <h2 class="text-3xl font-bold text-kawanchat-blue mb-6">👋 KawanChat</h2>
-                <div id="sapaan-content" class="text-lg text-gray-700 max-w-sm mb-10 min-h-[120px]">
-                    </div>
-                <div class="p-4 bg-gray-50 rounded-lg shadow-inner max-w-sm w-full hidden" id="tos-agreement">
-                    <label class="flex items-center space-x-2 cursor-pointer">
-                        <input type="checkbox" id="agree-tos" class="form-checkbox text-kawanchat-blue h-5 w-5 rounded">
-                        <span class="text-sm text-gray-600">Saya setuju dengan Persyaratan & Ketentuan KawanChat.</span>
-                    </label>
-                </div>
-            </div>
-            <button id="next-welcome" class="w-full py-3 bg-kawanchat-blue text-white font-bold rounded-lg shadow-xl mb-4 hover:bg-kawanchat-light-blue transition disabled:opacity-50" disabled>
-                Lanjut
-            </button>
-        </div>
-
-        <div id="registration-stage" class="stage">
-            <div class="flex-grow flex flex-col justify-center items-center">
-                <div class="typing-text-container text-xl font-bold text-gray-800 mb-6 min-h-[40px]">
-                    </div>
-                
-                <div id="input-name-area" class="w-full max-w-xs space-y-4 hidden">
-                    <input type="text" id="reg-first-name" placeholder="Nama Depan" class="w-full p-3 border-b-2 border-gray-300 focus:border-kawanchat-blue focus:ring-0 text-lg rounded-t-lg">
-                    <div id="name-feedback" class="text-md text-gray-600 mb-3 min-h-[25px]"></div>
-                    <input type="text" id="reg-last-name" placeholder="Nama Belakang (Opsional)" class="w-full p-3 border-b-2 border-gray-300 focus:border-kawanchat-blue focus:ring-0 text-lg rounded-t-lg">
-                    <select id="reg-gender" class="w-full p-3 border-b-2 border-gray-300 focus:border-kawanchat-blue focus:ring-0 text-lg bg-white rounded-t-lg">
-                        <option value="" disabled selected>Pilih Jenis Kelamin</option>
-                        <option value="L">Laki-laki</option>
-                        <option value="P">Perempuan</option>
-                        <option value="O">Lainnya</option>
-                    </select>
-                </div>
-
-                <div id="input-phone-area" class="w-full max-w-xs space-y-4 hidden">
-                    <p class="text-gray-500 mb-2" id="phone-icon">🙍‍♂️</p>
-                    <div class="flex items-center border-b-2 border-gray-300 focus-within:border-kawanchat-blue rounded-t-lg bg-white">
-                        <span class="p-3 text-lg text-gray-700">+62</span>
-                        <input type="tel" id="reg-phone-number" placeholder="Nomor Telepon (ex: 812345678)" class="flex-grow p-3 text-lg focus:ring-0 border-none">
-                    </div>
-                </div>
-
-                <div id="final-id-display" class="w-full max-w-xs space-y-4 hidden">
-                    <div class="text-lg font-semibold text-kawanchat-blue mt-5 min-h-[40px]"></div>
-                </div>
-
-            </div>
-            <button id="next-registration" class="w-full py-3 bg-kawanchat-blue text-white font-bold rounded-lg shadow-xl mb-4 hover:bg-kawanchat-light-blue transition disabled:opacity-50">
-                Selanjutnya
-            </button>
-        </div>
-
-        <div id="main-app" class="hidden flex-grow flex-col">
-            <header class="header text-white p-4 flex flex-col">
-                <div class="flex justify-between items-center mb-2">
-                    <h1 id="app-title" class="text-xl font-bold">KawanChat</h1>
-                    <div class="flex space-x-4 text-lg">
-                        <i class="fas fa-search"></i>
-                        <i class="fas fa-ellipsis-v"></i>
-                    </div>
-                </div>
-                <p id="user-id-display" class="text-xs text-gray-200"></p>
-            </header>
-
-            <nav class="tab-bar flex justify-between px-2 text-gray-300 shadow-md">
-                <button class="flex-1 py-3 text-sm tab-link active" data-tab="chat">OBROLAN</button>
-                <button class="flex-1 py-3 text-sm tab-link" data-tab="status">STATUS</button>
-                <button class="flex-1 py-3 text-sm tab-link" data-tab="calls">PANGGILAN</button>
-                <button class="flex-1 py-3 text-sm tab-link" data-tab="contacts">KONTAK</button>
-            </nav>
-
-            <main class="flex-grow relative overflow-y-auto">
-
-                <div id="chat-tab" class="tab-content active h-full flex flex-col">
-                    <div id="active-chats-list" class="scroll-container flex flex-col p-4 space-y-2 flex-grow bg-white">
-                        <div class="text-center text-gray-500 p-4">Klik tombol di bawah untuk memulai obrolan baru.</div>
-                    </div>
-                </div>
-
-                <button id="new-chat-button" class="w-14 h-14 bg-kawanchat-blue text-white rounded-full flex items-center justify-center shadow-2xl hover:bg-kawanchat-light-blue transition duration-150">
-                    <i class="fas fa-comment text-2xl"></i>
-                </button>
-                
-                <div id="contacts-tab" class="tab-content hidden h-full flex flex-col p-4 bg-gray-50">
-                    <h2 class="text-xl font-bold mb-4 text-kawanchat-blue">Daftar Kontak</h2>
-                    <div id="contact-list" class="flex flex-col space-y-2 mb-4 scroll-container flex-grow overflow-y-auto">
-                        <p class="text-gray-500 italic p-2">Memuat kontak...</p>
-                    </div>
-                    <div class="p-4 bg-white rounded-lg shadow-lg mt-4">
-                        <h3 class="text-lg font-semibold mb-3">Tambah Kontak Baru</h3>
-                        <input type="text" id="new-contact-id" placeholder="ID Pengguna (User ID) Kontak" class="w-full p-2 mb-2 rounded border border-gray-300 focus:ring-kawanchat-blue focus:border-kawanchat-blue">
-                        <button id="add-contact-button" class="w-full bg-kawanchat-blue text-white py-2 rounded-lg font-semibold hover:bg-kawanchat-light-blue transition duration-150">
-                            <i class="fas fa-user-plus mr-2"></i> Tambah
-                        </button>
-                    </div>
-                </div>
-                
-                <div id="status-tab" class="tab-content hidden text-center p-10 bg-white">
-                    <i class="fas fa-circle-notch text-4xl text-gray-400 mb-4"></i>
-                    <p class="text-gray-600">Fitur Status belum diimplementasikan.</p>
-                </div>
-                <div id="calls-tab" class="tab-content hidden text-center p-10 bg-white">
-                    <i class="fas fa-phone-alt text-4xl text-gray-400 mb-4"></i>
-                    <p class="text-gray-600">Fitur Panggilan belum diimplementasikan.</p>
-                </div>
-            </main>
-            
-            <div id="chat-view" class="hidden absolute top-0 left-0 w-full h-full bg-white flex flex-col">
-                <header id="chat-header" class="header text-white p-3 flex items-center shadow-md">
-                    <button id="back-to-chats" class="mr-3 text-lg"><i class="fas fa-arrow-left"></i></button>
-                    <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center mr-3 text-xl text-kawanchat-blue font-bold">
-                         <i class="fas fa-user"></i>
-                    </div>
-                    <span id="chat-contact-name" class="text-lg font-semibold flex-grow"></span>
-                    <i class="fas fa-ellipsis-v text-lg ml-4"></i>
-                </header>
-                
-                <div id="messages-container" class="scroll-container flex flex-col p-4 space-y-2 flex-grow overflow-y-auto bg-kawanchat-bg">
-                    </div>
-                
-                <div id="chat-message-area" class="p-3 flex items-center border-t border-gray-200">
-                    <button id="emoji-button" class="text-xl text-gray-600 mr-2"><i class="far fa-smile"></i></button>
-                    <input type="text" id="message-input" placeholder="Ketik pesan..." class="flex-grow p-3 rounded-full border bg-gray-100 focus:bg-white transition duration-150">
-                    <button id="send-button" class="ml-2 w-10 h-10 bg-kawanchat-blue text-white rounded-full flex items-center justify-center shadow-lg hover:bg-kawanchat-light-blue transition duration-150">
-                        <i class="fas fa-paper-plane"></i>
-                    </button>
-                </div>
-            </div>
-
-        </div>
-
+<body>
+  <div class="app" id="app">
+    <!-- STAGES -->
+    <div id="loading-stage" class="stage active">
+      <i class="fas fa-sync fa-spin text-3xl text-kawanchat-blue mb-4"></i>
+      <div class="text-gray-600">Memuat KawanChat...</div>
     </div>
 
-    <script type="module">
-        // --- Firebase Imports (Menggunakan CDN URL) ---
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, addDoc, serverTimestamp, updateDoc, doc, getDocs, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+    <div id="welcome-stage" class="stage">
+      <h2 class="text-3xl font-bold text-kawanchat-blue mb-4">👋 KawanChat</h2>
+      <div id="sapaan-content" class="typing text-lg text-gray-700 max-w-xs text-center mb-6"></div>
 
-        // --- Firebase Configuration (Sesuai yang Anda berikan) ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyD9tO94PdmXnqSH4cMVLPbgcEyY1J266mQ",
-            authDomain: "whatsapp-clone-web-9418e.firebaseapp.com",
-            projectId: "whatsapp-clone-web-9418e",
-            storageBucket: "whatsapp-clone-web-9418e.firebasestorage.app",
-            messagingSenderId: "31927689655",
-            appId: "1:31927689655:web:3e4da24d4237a7ffb08832",
-            measurementId: "G-5624HP8XEX"
-        };
-        
-        // Inisialisasi Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        
-        // --- Global State ---
-        let currentUserId = null;
-        let currentUserName = null;
-        let currentChatContact = null; 
-        let currentChatContactName = null; 
-        let unsubscribeMessages = null; 
-        const appId = 'kawanchat-v1'; 
-        
-        // --- DOM Elements (Stages) ---
-        const loadingStage = document.getElementById('loading-stage'); // Tambahan loading
-        const welcomeStage = document.getElementById('welcome-stage');
-        const registrationStage = document.getElementById('registration-stage');
-        const mainApp = document.getElementById('main-app');
+      <div id="tos" class="hidden w-full max-w-xs p-3 bg-gray-50 rounded">
+        <label class="flex items-center space-x-2 cursor-pointer">
+          <input id="agree-tos" type="checkbox" class="h-5 w-5 text-kawanchat-blue"/>
+          <span class="text-sm text-gray-600">Saya setuju Persyaratan & Ketentuan KawanChat.</span>
+        </label>
+      </div>
 
-        // Stage 1
-        const sapaanContent = document.getElementById('sapaan-content');
-        const nextWelcomeButton = document.getElementById('next-welcome');
-        const tosAgreement = document.getElementById('tos-agreement');
-        const agreeTos = document.getElementById('agree-tos');
-        
-        // Stage 2
-        const typingTextContainer = registrationStage.querySelector('.typing-text-container');
-        const nextRegistrationButton = document.getElementById('next-registration');
-        const inputNameArea = document.getElementById('input-name-area');
-        const regFirstName = document.getElementById('reg-first-name');
-        const regLastName = document.getElementById('reg-last-name');
-        const regGender = document.getElementById('reg-gender');
-        const nameFeedback = document.getElementById('name-feedback');
-        const inputPhoneArea = document.getElementById('input-phone-area');
-        const regPhoneNumber = document.getElementById('reg-phone-number');
-        const phoneIcon = document.getElementById('phone-icon'); // Icon Phone
-        
-        // Main App
-        const userIdDisplay = document.getElementById('user-id-display');
-        const tabLinks = document.querySelectorAll('.tab-link');
-        const tabContents = document.querySelectorAll('.tab-content');
-        const activeChatsList = document.getElementById('active-chats-list');
-        const contactList = document.getElementById('contact-list');
-        const newChatButton = document.getElementById('new-chat-button');
-        const newContactIdInput = document.getElementById('new-contact-id');
-        const addContactButton = document.getElementById('add-contact-button');
+      <button id="welcome-next" class="mt-6 w-full max-w-xs py-3 rounded text-white font-bold" style="background:var(--kawanchat-blue)" disabled>Lanjut</button>
+    </div>
 
-        // Chat View
-        const chatView = document.getElementById('chat-view');
-        const backToChats = document.getElementById('back-to-chats');
-        const chatContactName = document.getElementById('chat-contact-name');
-        const messagesContainer = document.getElementById('messages-container');
-        const messageInput = document.getElementById('message-input');
-        const sendButton = document.getElementById('send-button');
-        const chatMessageArea = document.getElementById('chat-message-area');
+    <div id="registration-stage" class="stage">
+      <div class="typing text-xl font-bold text-gray-800 mb-4" id="reg-typing"></div>
 
-        // --- Utility Functions ---
+      <div id="name-area" class="w-full max-w-xs hidden space-y-3">
+        <input id="reg-first" placeholder="Nama Depan" class="w-full p-3 border rounded" />
+        <div id="name-feedback" class="text-gray-600 text-sm min-h-[20px]"></div>
+        <input id="reg-last" placeholder="Nama Belakang (Opsional)" class="w-full p-3 border rounded" />
+        <select id="reg-gender" class="w-full p-3 border rounded">
+          <option value="">Pilih Jenis Kelamin</option>
+          <option value="L">Laki-laki</option>
+          <option value="P">Perempuan</option>
+          <option value="O">Lainnya</option>
+        </select>
+      </div>
 
-        /** Menampilkan teks dengan efek mengetik */
-        const typeText = (element, text, callback = () => {}) => {
-            element.innerHTML = '';
-            let i = 0;
-            const speed = 30; // Kecepatan mengetik
-            const timer = setInterval(() => {
-                if (i < text.length) {
-                    element.innerHTML += text.charAt(i);
-                    i++;
-                } else {
-                    clearInterval(timer);
-                    callback();
-                }
-            }, speed);
-        };
+      <div id="phone-area" class="w-full max-w-xs hidden space-y-3">
+        <div class="flex items-center">
+          <span id="phone-emoji" class="mr-3 text-2xl">🙍‍♂️</span>
+          <div class="flex-1">
+            <div class="flex border p-0 rounded overflow-hidden">
+              <span class="px-3 flex items-center">+62</span>
+              <input id="reg-phone" placeholder="812345678" class="flex-1 p-3 border-none outline-none" />
+            </div>
+            <div class="text-sm text-gray-500 mt-1">Contoh: 812345678 (tanpa 0 di depan)</div>
+          </div>
+        </div>
+      </div>
 
-        const formatTime = (timestamp) => {
-            if (!timestamp) return '...';
-            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-            return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-        };
-        
-        /** Menghapus listener pesan yang sedang berjalan */
-        const unsubscribePreviousChat = () => {
-            if (unsubscribeMessages) {
-                unsubscribeMessages();
-                unsubscribeMessages = null;
-            }
-        };
+      <div id="final-area" class="w-full max-w-xs hidden text-center text-kawanchat-blue font-semibold min-h-[44px]"></div>
 
-        /** Mengubah stage tampilan */
-        const setStage = (stageId) => {
-            [loadingStage, welcomeStage, registrationStage, mainApp].forEach(stage => {
-                stage.classList.remove('active');
-                stage.classList.add('hidden');
-            });
-            const target = document.getElementById(stageId);
-            if (target) {
-                target.classList.add('active');
-                target.classList.remove('hidden');
-            }
-        };
+      <button id="reg-next" class="mt-6 w-full max-w-xs py-3 rounded text-white font-bold" style="background:var(--kawanchat-blue)">Selanjutnya</button>
+    </div>
 
-        // --- STAGE 1 LOGIC (Welcome) ---
+    <!-- MAIN APP -->
+    <div id="main-app" class="hidden flex flex-col h-full">
+      <header class="header flex items-center justify-between">
+        <div>
+          <div class="text-sm opacity-75">KawanChat</div>
+          <div id="display-name" class="text-xs opacity-90"></div>
+        </div>
+        <div class="text-sm opacity-90">ID: <span id="display-id" class="font-mono"></span></div>
+      </header>
 
-        let sapaanStep = 0;
-        const sapaanTexts = [
-            "Selamat datang di KawanChat! 👋",
-            "Di KawanChat kamu bisa chat dengan teman lama maupun teman baru. Serasa gampang antar negara! 🌐",
-            "KawanChat adalah tempat yang aman untuk berbagi cerita. 🔒",
-            "Persahabatan sejati dimulai dari pesan sederhana. Mari kita mulai! 💬"
-        ];
+      <nav class="tabbar">
+        <button class="active" data-tab="chat-tab">OBROLAN</button>
+        <button data-tab="status-tab">STATUS</button>
+        <button data-tab="calls-tab">PANGGILAN</button>
+        <button data-tab="contacts-tab">KONTAK</button>
+      </nav>
 
-        const nextSapaan = () => {
-            nextWelcomeButton.disabled = true;
-            if (sapaanStep < sapaanTexts.length) {
-                typeText(sapaanContent, sapaanTexts[sapaanStep], () => {
-                    sapaanStep++;
-                    nextWelcomeButton.disabled = false;
-                });
-            } else if (sapaanStep === sapaanTexts.length) {
-                // Tahap Persyaratan
-                typeText(sapaanContent, "Satu langkah lagi! Silakan setujui persyaratan kami untuk melanjutkan:", () => {
-                    tosAgreement.classList.remove('hidden');
-                    nextWelcomeButton.disabled = !agreeTos.checked;
-                    sapaanStep++;
-                });
-            } else {
-                setStage('registration-stage');
-                startRegistrationStage();
-            }
-        };
+      <main class="flex-grow-scroll">
+        <!-- CHAT TAB -->
+        <section id="chat-tab" class="tab-content flex flex-col flex-1 p-3">
+          <div class="flex-1 flex overflow-hidden">
+            <div id="active-chats" class="w-1/3 bg-white rounded p-2 mr-2 scroll"></div>
+            <div class="flex-1 bg-kawanchat-bg p-3 rounded flex flex-col">
+              <div id="chat-header" class="flex items-center justify-between mb-3">
+                <div id="chat-with" class="font-semibold text-lg text-gray-700">Pilih kontak untuk mulai chat</div>
+                <div id="chat-actions" class="text-sm text-gray-500"></div>
+              </div>
+              <div id="messages" class="flex-1 scroll p-2 flex flex-col"></div>
+              <div id="message-area" class="mt-3 hidden items-center">
+                <input id="message-input" class="flex-1 p-3 rounded-full border bg-white outline-none" placeholder="Ketik pesan..." />
+                <button id="send-btn" class="ml-2 px-3 py-2 rounded-full text-white" style="background:var(--kawanchat-blue)"><i class="fas fa-paper-plane"></i></button>
+              </div>
+            </div>
+          </div>
+        </section>
 
-        agreeTos.addEventListener('change', () => {
-            nextWelcomeButton.disabled = !agreeTos.checked;
+        <!-- STATUS -->
+        <section id="status-tab" class="tab-content hidden p-6 text-center">
+          <i class="fas fa-circle-notch text-4xl text-gray-400 mb-4"></i>
+          <div class="text-gray-600">Fitur Status belum diimplementasikan.</div>
+        </section>
+
+        <!-- CALLS -->
+        <section id="calls-tab" class="tab-content hidden p-6 text-center">
+          <i class="fas fa-phone-alt text-4xl text-gray-400 mb-4"></i>
+          <div class="text-gray-600">Fitur Panggilan belum diimplementasikan.</div>
+        </section>
+
+        <!-- CONTACTS -->
+        <section id="contacts-tab" class="tab-content hidden p-4">
+          <h3 class="font-semibold text-kawanchat-blue mb-3">Tambah Kontak</h3>
+          <div class="flex mb-3">
+            <input id="new-contact-input" placeholder="Masukkan ID pengguna (8 char atau UID)" class="flex-1 p-2 border rounded-l" />
+            <button id="add-contact-btn" class="bg-kawanchat-blue text-white px-4 rounded-r">Tambah</button>
+          </div>
+          <h4 class="font-semibold mb-2">Daftar Kontak</h4>
+          <div id="contacts-list" class="contacts-list scroll h-72 p-2 bg-white rounded"></div>
+        </section>
+      </main>
+
+      <!-- Floating add-contact button on chat tab -->
+      <button id="new-chat-fab" title="Tambah kontak" class="bg-kawanchat-blue text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg">
+        <i class="fas fa-user-plus"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Firebase + App Script -->
+  <script type="module">
+    // Firebase imports (v12 modules via CDN)
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+    import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, serverTimestamp, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+
+    // --- Firebase Config (user provided) ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyD9tO94PdmXnqSH4cMVLPbgcEyY1J266mQ",
+      authDomain: "whatsapp-clone-web-9418e.firebaseapp.com",
+      projectId: "whatsapp-clone-web-9418e",
+      storageBucket: "whatsapp-clone-web-9418e.firebasestorage.app",
+      messagingSenderId: "31927689655",
+      appId: "1:31927689655:web:3e4da24d4237a7ffb08832",
+      measurementId: "G-5624HP8XEX"
+    };
+
+    // init
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // App state
+    const appId = 'kawanchat-v1';
+    let currentUserId = null;
+    let currentUserName = null;
+    let currentChatContact = null;
+    let unsubscribeMessages = null;
+    let contactsUnsub = null;
+
+    // DOM
+    const loadingStage = document.getElementById('loading-stage');
+    const welcomeStage = document.getElementById('welcome-stage');
+    const registrationStage = document.getElementById('registration-stage');
+    const mainApp = document.getElementById('main-app');
+
+    const sapaanContent = document.getElementById('sapaan-content');
+    const welcomeNextBtn = document.getElementById('welcome-next');
+    const tosBox = document.getElementById('tos');
+    const agreeTos = document.getElementById('agree-tos');
+
+    const regTyping = document.getElementById('reg-typing');
+    const nameArea = document.getElementById('name-area');
+    const regFirst = document.getElementById('reg-first');
+    const regLast = document.getElementById('reg-last');
+    const nameFeedback = document.getElementById('name-feedback');
+    const regGender = document.getElementById('reg-gender');
+
+    const phoneArea = document.getElementById('phone-area');
+    const phoneEmoji = document.getElementById('phone-emoji');
+    const regPhone = document.getElementById('reg-phone');
+
+    const finalArea = document.getElementById('final-area');
+    const regNextBtn = document.getElementById('reg-next');
+
+    const displayNameEl = document.getElementById('display-name');
+    const displayIdEl = document.getElementById('display-id');
+
+    const tabs = document.querySelectorAll('.tabbar button');
+    const tabContents = document.querySelectorAll('.tab-content');
+    const newChatFab = document.getElementById('new-chat-fab');
+
+    // Chat DOM
+    const activeChats = document.getElementById('active-chats');
+    const messagesEl = document.getElementById('messages');
+    const chatWithEl = document.getElementById('chat-with');
+    const messageArea = document.getElementById('message-area');
+    const messageInput = document.getElementById('message-input');
+    const sendBtn = document.getElementById('send-btn');
+
+    // Contacts
+    const contactsList = document.getElementById('contacts-list');
+    const newContactInput = document.getElementById('new-contact-input');
+    const addContactBtn = document.getElementById('add-contact-btn');
+
+    // onboarding texts
+    const sapaanTexts = [
+      "Selamat datang di KawanChat! 👋",
+      "Di KawanChat kamu bisa chat dengan teman lama maupun teman baru. Serasa gampang antar negara! 🌐",
+      "KawanChat adalah tempat yang aman untuk berbagi cerita. 🔒",
+      "Persahabatan sejati dimulai dari pesan sederhana. Mari kita mulai! 💬"
+    ];
+    let sapaanStep = 0;
+
+    // utilities
+    const setStage = (id) => {
+      [loadingStage, welcomeStage, registrationStage, mainApp].forEach(s => s.classList.remove('active'));
+      [loadingStage, welcomeStage, registrationStage, mainApp].forEach(s => s.classList.add('hidden'));
+      const target = document.getElementById(id);
+      if (target) { target.classList.remove('hidden'); target.classList.add('active'); }
+    };
+
+    const typeText = (el, text, speed = 30) => {
+      return new Promise(res => {
+        el.textContent = '';
+        let i = 0;
+        const t = setInterval(() => {
+          if (i < text.length) { el.textContent += text.charAt(i); i++; } else { clearInterval(t); res(); }
+        }, speed);
+      });
+    };
+
+    const showNotif = (txt) => {
+      const n = document.createElement('div'); n.className='notif'; n.textContent = txt;
+      document.body.appendChild(n);
+      setTimeout(()=> n.remove(), 3000);
+    };
+
+    // --- Onboarding flow handlers ---
+    const nextSapaan = async () => {
+      welcomeNextBtn.disabled = true;
+      if (sapaanStep < sapaanTexts.length) {
+        await typeText(sapaanContent, sapaanTexts[sapaanStep]);
+        sapaanStep++;
+        welcomeNextBtn.disabled = false;
+      } else if (sapaanStep === sapaanTexts.length) {
+        await typeText(sapaanContent, "Satu langkah lagi! Silakan setujui persyaratan kami untuk melanjutkan:");
+        tosBox.classList.remove('hidden');
+        welcomeNextBtn.disabled = !agreeTos.checked;
+        sapaanStep++;
+      } else {
+        // go register
+        setStage('registration-stage');
+        startRegistration();
+      }
+    };
+    agreeTos.addEventListener('change', () => welcomeNextBtn.disabled = !agreeTos.checked);
+    welcomeNextBtn.addEventListener('click', nextSapaan);
+
+    // Registration steps
+    let regStep = 1;
+    const startRegistration = async () => {
+      regNextBtn.disabled = true;
+      await regStep1();
+    };
+
+    const regStep1 = async () => {
+      nameArea.classList.add('hidden');
+      phoneArea.classList.add('hidden');
+      finalArea.classList.add('hidden');
+      await typeText(regTyping, "Kita belum kenalan nih! Kenalan dulu yuk! 🙋");
+      nameArea.classList.remove('hidden');
+      regFirst.focus();
+      regStep = 1;
+      const nameHandler = () => {
+        const name = regFirst.value.trim();
+        if (name.length > 0) {
+          nameFeedback.textContent = "Hmm kalo nama belakang boleh tau? (opsional)";
+          regNextBtn.disabled = false;
+        } else {
+          nameFeedback.textContent = "";
+          regNextBtn.disabled = true;
+        }
+      };
+      regFirst.addEventListener('input', nameHandler, { once: false });
+      regNextBtn.onclick = () => {
+        regFirst.removeEventListener('input', nameHandler);
+        if (regFirst.value.trim()) regStep2();
+      };
+    };
+
+    const regStep2 = async () => {
+      nameArea.classList.add('hidden');
+      regStep = 2;
+      currentUserName = (regFirst.value.trim() + (regLast.value.trim() ? ' '+regLast.value.trim() : '')).trim();
+      await typeText(regTyping, `Yey kita udh kenalan! Hi ${regFirst.value.trim()} 🙌`);
+      await new Promise(r => setTimeout(r, 800));
+      await typeText(regTyping, "Hmm boleh minta nomor mu untuk masuk ke dalam KawanChat? 📞");
+      phoneArea.classList.remove('hidden');
+      regPhone.focus();
+
+      const focusFn = () => phoneEmoji.textContent = '🤦‍♂️';
+      const blurFn = () => phoneEmoji.textContent = '🙍‍♂️';
+      regPhone.addEventListener('focus', focusFn);
+      regPhone.addEventListener('blur', blurFn);
+
+      const phoneHandler = () => regNextBtn.disabled = regPhone.value.replace(/\D/g,'').length < 8;
+      regPhone.addEventListener('input', phoneHandler);
+      regNextBtn.onclick = () => {
+        regPhone.removeEventListener('input', phoneHandler);
+        regPhone.removeEventListener('focus', focusFn);
+        regPhone.removeEventListener('blur', blurFn);
+        if (regPhone.value.replace(/\D/g,'').length >= 8) regStep3();
+      };
+    };
+
+    const signInAndSave = async (displayName, chatID, phoneVal) => {
+      // use anon user already signed in
+      const user = auth.currentUser;
+      if (!user) throw new Error('User not authenticated');
+      await updateProfile(user, { displayName });
+      const userDocRef = doc(db, `artifacts/${appId}/users/${user.uid}`);
+      await setDoc(userDocRef, {
+        name: displayName,
+        id: chatID,
+        phone: phoneVal,
+        gender: regGender.value || '',
+        createdAt: serverTimestamp()
+      }, { merge: true });
+      currentUserId = user.uid;
+      currentUserName = displayName;
+    };
+
+    const regStep3 = async () => {
+      phoneArea.classList.add('hidden');
+      regNextBtn.classList.add('hidden');
+
+      const phoneRaw = regPhone.value.replace(/[^0-9]/g,'');
+      const full = '62' + phoneRaw.replace(/^0+/, '');
+      await typeText(regTyping, `Nomormu cantik banget ✨ kita ambil dari depan nomor mu yah!`);
+      await new Promise(r => setTimeout(r,800));
+
+      const mockID = full.padEnd(11,'0');
+      const prefix = mockID.substring(0,5);
+      await typeText(regTyping, `Oke nomor depan mu ${prefix} kita tambahin jadi ${mockID}!`);
+      await new Promise(r => setTimeout(r,900));
+
+      const finalID = mockID.substring(mockID.length - 6);
+      await typeText(regTyping, `Yey! ID mu udh di buat! Ini dia: ${finalID} 🎉`);
+      await new Promise(r => setTimeout(r,900));
+
+      // sign in should already be done (anon), save profile
+      try {
+        await signInAndSave(currentUserName || regFirst.value.trim(), finalID, regPhone.value);
+      } catch (err) {
+        console.error('save profile err', err);
+      }
+
+      await typeText(regTyping, `Selamat datang di KawanChat, ${ (currentUserName||regFirst.value.trim()).split(' ')[0]}!`);
+      await new Promise(r => setTimeout(r,900));
+
+      // go main app
+      setStage('main-app');
+      initMainApp();
+    };
+
+    // --- Firebase Auth init & onAuthState ---
+    const initializeAuth = async () => {
+      try {
+        await signInAnonymously(auth);
+      } catch (err) {
+        console.error("Gagal signInAnon:", err);
+        setStage('welcome-stage');
+        sapaanContent.textContent = "Error: Gagal terhubung ke server Firebase.";
+        welcomeNextBtn.disabled = true;
+      }
+    };
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        await initializeAuth();
+        return;
+      }
+      // If user exists, check doc
+      const userDocRef = doc(db, `artifacts/${appId}/users/${user.uid}`);
+      const snap = await getDoc(userDocRef);
+      if (snap.exists()) {
+        // existing user -> go main
+        currentUserId = user.uid;
+        currentUserName = user.displayName || snap.data().name;
+        displayNameEl.textContent = currentUserName || 'Teman';
+        displayIdEl.textContent = currentUserId.substring(0,8);
+        setStage('main-app');
+        initMainApp();
+      } else {
+        // new -> start onboarding
+        setStage('welcome-stage');
+        // start first sapaan
+        sapaanStep = 0;
+        nextSapaan();
+      }
+    });
+
+    // --- MAIN APP functions ---
+    const initMainApp = async () => {
+      displayNameEl.textContent = currentUserName || 'Teman';
+      displayIdEl.textContent = currentUserId ? currentUserId.substring(0,8) : '';
+      bindTabs();
+      newChatFab.style.display = 'block';
+      loadContactsRealtime();
+      loadActiveChatsRealtime();
+    };
+
+    // Tabs
+    function bindTabs(){
+      tabs.forEach(btn => {
+        btn.addEventListener('click', () => {
+          tabs.forEach(b=>b.classList.remove('active'));
+          btn.classList.add('active');
+          tabContents.forEach(tc => tc.classList.add('hidden'));
+          const id = btn.getAttribute('data-tab');
+          document.getElementById(id).classList.remove('hidden');
+          // show/hide FAB & message area depending on tab
+          if (id === 'chat-tab') {
+            newChatFab.style.display = 'block';
+          } else {
+            newChatFab.style.display = 'none';
+          }
         });
+      });
+    }
 
-        // --- STAGE 2 LOGIC (Registration) ---
+    // Real-time contacts list
+    const loadContactsRealtime = async () => {
+      if (!currentUserId) return;
+      const cPath = collection(db, `artifacts/${appId}/users/${currentUserId}/contacts`);
+      if (contactsUnsub) contactsUnsub();
+      contactsUnsub = onSnapshot(cPath, (snap) => {
+        contactsList.innerHTML = '';
+        activeChats.innerHTML = '';
+        if (snap.empty) {
+          contactsList.innerHTML = '<div class="text-gray-500 p-2 italic">Belum ada kontak.</div>';
+          activeChats.innerHTML = '<div class="text-gray-500 p-2 italic">Klik tombol + untuk tambah kontak.</div>';
+        } else {
+          snap.forEach(docSnap => {
+            const id = docSnap.id;
+            const data = docSnap.data();
+            // contacts tab
+            const row = document.createElement('div');
+            row.className = 'p-2 border-b flex items-center justify-between';
+            const left = document.createElement('div');
+            left.innerHTML = `<div class="font-semibold">${data.name||id.substring(0,8)}</div><div class="text-xs text-gray-400">ID: ${id}</div>`;
+            const btn = document.createElement('button');
+            btn.className = 'text-sm bg-kawanchat-blue text-white px-3 py-1 rounded';
+            btn.textContent = 'Chat';
+            btn.onclick = () => startPrivateChat(id, data.name||id.substring(0,8));
+            row.appendChild(left);
+            row.appendChild(btn);
+            contactsList.appendChild(row);
 
-        let regStep = 1;
+            // active chats list
+            const ac = document.createElement('div');
+            ac.className = 'p-2 mb-2 bg-white rounded cursor-pointer';
+            ac.textContent = `${data.name||id.substring(0,8)} — ID:${id}`;
+            ac.onclick = () => startPrivateChat(id, data.name||id.substring(0,8));
+            activeChats.appendChild(ac);
+          });
+        }
+      }, (e) => console.error("contacts snapshot err", e));
+    };
 
-        const startRegistrationStage = async () => {
-            nextRegistrationButton.disabled = true;
-            await regStep1_Name();
-        };
+    // Active chats realtime: (list is populated from contacts above), so this is optional placeholder
+    const loadActiveChatsRealtime = () => {
+      // Already derived from contacts snapshot; additional last-message tracking can be added later
+    };
 
-        const regStep1_Name = async () => {
-            inputNameArea.classList.add('hidden');
-            inputPhoneArea.classList.add('hidden');
-            nextRegistrationButton.classList.remove('hidden');
-            
-            await new Promise(resolve => {
-                typeText(typingTextContainer, "Kita belum kenalan nih! Kenalan dulu yuk! 🙋", resolve);
-            });
+    // Start private chat (set up message listener)
+    const startPrivateChat = (contactId, contactName) => {
+      currentChatContact = contactId;
+      chatWithEl.textContent = contactName;
+      messagesEl.innerHTML = '';
+      messageArea.classList.remove('hidden');
+      messageInput.value = '';
+      // unsubscribe previous messages
+      if (unsubscribeMessages) unsubscribeMessages();
+      // messages stored at: /artifacts/kawanchat-v1/private/chats/<sorted a_b>/messages
+      const chatRoomId = [currentUserId, contactId].sort().join('_');
+      const messagesPath = collection(db, `artifacts/${appId}/private/chats/${chatRoomId}/messages`);
+      const q = query(messagesPath, orderBy('timestamp','asc'));
+      unsubscribeMessages = onSnapshot(q, (snap) => {
+        const msgs = [];
+        snap.forEach(d => msgs.push({ id: d.id, ...d.data() }));
+        renderMessages(msgs);
+      }, e => {
+        console.error("messages snapshot err", e);
+      });
+      // switch to chat tab (if not already)
+      document.querySelector('.tabbar button[data-tab="chat-tab"]').click();
+    };
 
-            inputNameArea.classList.remove('hidden');
-            nextRegistrationButton.disabled = true;
-            regFirstName.focus();
-            regStep = 1;
+    const renderMessages = (messages) => {
+      messagesEl.innerHTML = '';
+      if (!messages.length) {
+        messagesEl.innerHTML = `<div class="text-center text-gray-500 p-4">Awal dari obrolan dengan ${chatWithEl.textContent}.</div>`;
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+        return;
+      }
+      messages.forEach(m => {
+        const el = document.createElement('div');
+        el.className = 'chat-bubble ' + (m.senderId === currentUserId ? 'sent self-end' : 'recv self-start');
+        el.style.alignSelf = (m.senderId === currentUserId) ? 'flex-end' : 'flex-start';
+        el.innerHTML = `<div class="text-xs font-semibold ${m.senderId===currentUserId?'text-gray-700':'text-kawanchat-blue'} mb-1">${m.senderName|| (m.senderId===currentUserId?currentUserName:'Teman')}</div>
+                        <div class="text-sm">${m.text}</div>
+                        <div class="text-xs text-gray-400 mt-1" style="text-align:right">${m.timestamp ? new Date(m.timestamp.toDate ? m.timestamp.toDate() : m.timestamp).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}) : '...'}</div>`;
+        messagesEl.appendChild(el);
+      });
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    };
 
-            const nameInputHandler = () => {
-                const name = regFirstName.value.trim();
-                if (name.length > 0) {
-                    nameFeedback.textContent = "Hmm kalo nama belakang boleh tau? (opsional)";
-                    nextRegistrationButton.disabled = false;
-                } else {
-                    nameFeedback.textContent = "";
-                    nextRegistrationButton.disabled = true;
-                }
-            };
-            regFirstName.addEventListener('input', nameInputHandler);
-            // Hapus listener agar tidak menumpuk di next step
-            nextRegistrationButton.onclick = () => {
-                regFirstName.removeEventListener('input', nameInputHandler);
-                if (regFirstName.value.trim()) regStep2_Phone();
-            };
-        };
-
-        const regStep2_Phone = async () => {
-            inputNameArea.classList.add('hidden');
-            nextRegistrationButton.disabled = true;
-
-            const userName = regFirstName.value.trim();
-            const lastName = regLastName.value.trim() || '';
-            currentUserName = userName + (lastName ? ` ${lastName}` : '');
-            
-            await new Promise(resolve => {
-                typeText(typingTextContainer, `Yey kita udh kenalan! Hi ${userName} 🙌`, resolve);
-            });
-            await new Promise(resolve => setTimeout(resolve, 1500)); 
-            
-            await new Promise(resolve => {
-                typeText(typingTextContainer, "Hmm boleh minta nomor mu untuk masuk ke dalam KawanChat? 📞", resolve);
-            });
-
-            inputPhoneArea.classList.remove('hidden');
-            regStep = 2;
-
-            regPhoneNumber.addEventListener('focus', () => phoneIcon.textContent = '🤦‍♂️');
-            regPhoneNumber.addEventListener('blur', () => phoneIcon.textContent = '🙍‍♂️');
-            const phoneInputHandler = () => {
-                nextRegistrationButton.disabled = regPhoneNumber.value.length < 8; // Minimal 8 digit
-            };
-            regPhoneNumber.addEventListener('input', phoneInputHandler);
-            regPhoneNumber.focus();
-
-            nextRegistrationButton.onclick = () => {
-                regPhoneNumber.removeEventListener('input', phoneInputHandler);
-                if (regPhoneNumber.value.length >= 8) regStep3_Finalize();
-            };
-        };
-
-        const regStep3_Finalize = async () => {
-            inputPhoneArea.classList.add('hidden');
-            nextRegistrationButton.classList.add('hidden');
-
-            const fullPhoneNumber = '62' + regPhoneNumber.value.replace(/^0+|[^0-9]/g, ''); 
-
-            await new Promise(resolve => {
-                typeText(typingTextContainer, `Nomormu cantik banget ✨ kita ambil dari depan nomor mu yah!`, resolve);
-            });
-            await new Promise(resolve => setTimeout(resolve, 1500)); 
-
-            const mockID = fullPhoneNumber.padEnd(11, '0'); 
-            const prefix = mockID.substring(0, 5);
-            
-            await new Promise(resolve => {
-                typeText(typingTextContainer, `Oke nomor depan mu ${prefix} kita tambahin jadi ${mockID}!`, resolve);
-            });
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            
-            const finalID = mockID.substring(mockID.length - 6); 
-            
-            await new Promise(resolve => {
-                typeText(typingTextContainer, `Yey! ID mu udh di buat! Ini dia: ${finalID} 🎉`, resolve);
-            });
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            
-            // Lakukan Otentikasi dan Update Profile
-            await signInAndSetProfile(currentUserName, finalID);
-
-            await new Promise(resolve => {
-                typeText(typingTextContainer, `Selamat datang di KawanChat, ${currentUserName.split(' ')[0]}!`, resolve);
-            });
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            setStage('main-app');
-            initializeMainApp();
-        };
-
-        const signInAndSetProfile = async (displayName, chatID) => {
-            // Karena kita sudah signInAnonymously di tahap inisialisasi, kita gunakan user yang sudah ada
-            const user = auth.currentUser;
-            if (!user) {
-                // Should not happen if flow is correct, but safe check
-                throw new Error("User not authenticated.");
-            }
-            
-            await updateProfile(user, {
-                displayName: displayName
-            });
-            
-            const userDocRef = doc(db, `/artifacts/${appId}/users/${user.uid}`);
-            await setDoc(userDocRef, {
-                name: displayName,
-                id: chatID,
-                phone: regPhoneNumber.value,
-                gender: regGender.value,
-                createdAt: serverTimestamp()
-            }, { merge: true });
-            
-            currentUserId = user.uid;
-        };
-
-        // --- MAIN APP LOGIC (Chat) ---
-        // (Fungsi loadContacts, startPrivateChat, renderMessages, listenForMessages, sendMessage, addContact, dan event handlers tab di sini, tidak diubah dari versi sebelumnya)
-        
-        const initializeMainApp = () => {
-            // Tampilkan UI utama
-            mainApp.classList.remove('hidden');
-            userIdDisplay.textContent = `ID Anda: ${currentUserId.substring(0, 8)}`; // Tampilkan UID Firebase
-            
-            loadContacts();
-            
-            document.querySelector('.tab-link[data-tab="chat"]').click();
-        };
-        
-        const loadContacts = async () => {
-            if (!currentUserId) return;
-            
-            const contactsPath = `/artifacts/${appId}/users/${currentUserId}/contacts`;
-            const q = collection(db, contactsPath);
-            
-            try {
-                const querySnapshot = await getDocs(q);
-                
-                // 1. Render Contact List (Di tab KONTAK)
-                contactList.innerHTML = '';
-                if (querySnapshot.empty) {
-                    contactList.innerHTML = `<p class="text-gray-500 italic p-2">Belum ada kontak. Tambahkan ID teman Anda di bawah.</p>`;
-                }
-
-                // 2. Render Active Chats List (Di tab OBROLAN)
-                activeChatsList.innerHTML = '';
-                if (querySnapshot.empty) {
-                    activeChatsList.innerHTML = `<div class="text-center text-gray-500 p-4">Klik tombol di bawah untuk memulai obrolan baru.</div>`;
-                }
-
-                querySnapshot.forEach((doc) => {
-                    const contactId = doc.id;
-                    const contactData = doc.data();
-                    const contactName = contactData.name || contactId.substring(0, 8);
-
-                    const createContactItem = (isChatList = false) => {
-                        const item = document.createElement('div');
-                        item.className = 'contact-item flex items-center p-3 rounded-lg bg-white shadow-sm border border-gray-100 cursor-pointer hover:bg-gray-50 transition duration-100';
-                        item.innerHTML = `
-                            <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3 text-lg text-kawanchat-blue">
-                                <i class="fas fa-user"></i>
-                            </div>
-                            <div class="flex-grow">
-                                <p class="font-semibold text-gray-800">${contactName}</p>
-                                <p class="text-xs text-gray-500 truncate">${isChatList ? 'Pesan terakhir...' : `ID: ${contactId}`}</p>
-                            </div>
-                        `;
-                        item.addEventListener('click', () => startPrivateChat(contactId, contactName));
-                        return item;
-                    };
-
-                    contactList.appendChild(createContactItem(false));
-                    activeChatsList.appendChild(createContactItem(true));
-                });
-                
-            } catch (error) {
-                console.error("Gagal memuat kontak:", error);
-                contactList.innerHTML = `<p class="text-red-500 p-2">Error memuat kontak.</p>`;
-                activeChatsList.innerHTML = `<p class="text-red-500 p-2">Error memuat daftar obrolan.</p>`;
-            }
-        };
-
-        const startPrivateChat = (contactId, contactName) => {
-            currentChatContact = contactId;
-            currentChatContactName = contactName;
-            
-            document.querySelector('#main-app > main').classList.add('hidden');
-            newChatButton.classList.add('hidden');
-            chatView.classList.remove('hidden');
-            chatMessageArea.style.display = 'flex'; 
-
-            chatContactName.textContent = contactName;
-            
-            unsubscribePreviousChat(); 
-            unsubscribeMessages = listenForMessages(contactId);
-        };
-        
-        backToChats.addEventListener('click', () => {
-            chatView.classList.add('hidden');
-            chatMessageArea.style.display = 'none'; 
-            document.querySelector('#main-app > main').classList.remove('hidden');
-            newChatButton.classList.remove('hidden');
-            
-            unsubscribePreviousChat(); 
-            currentChatContact = null;
-            currentChatContactName = null;
-
-            document.querySelector('.tab-link[data-tab="chat"]').click();
+    // Send message
+    const sendMessage = async (text) => {
+      if (!text.trim() || !currentChatContact || !currentUserId) return;
+      try {
+        const chatRoomId = [currentUserId, currentChatContact].sort().join('_');
+        const path = collection(db, `artifacts/${appId}/private/chats/${chatRoomId}/messages`);
+        await addDoc(path, {
+          text: text.trim(),
+          timestamp: serverTimestamp(),
+          senderId: currentUserId,
+          senderName: currentUserName || '',
+          type: 'text'
         });
+        messageInput.value = '';
+      } catch (err) {
+        console.error('sendMessage err', err);
+      }
+    };
 
-        const renderMessages = (messages) => {
-            messagesContainer.innerHTML = ''; 
-            if (messages.length === 0) {
-                messagesContainer.innerHTML = `<div class="text-center text-gray-500 p-4">Awal dari obrolan dengan ${currentChatContactName}.</div>`;
-                return;
-            }
+    // Add contact (two-way)
+    addContactBtn.addEventListener('click', async () => {
+      const newId = newContactInput.value.trim();
+      if (!newId) return alert('Masukkan ID kontak.');
+      if (newId === currentUserId) return alert('Tidak bisa menambahkan diri sendiri.');
+      try {
+        const path1 = doc(db, `artifacts/${appId}/users/${currentUserId}/contacts/${newId}`);
+        const path2 = doc(db, `artifacts/${appId}/users/${newId}/contacts/${currentUserId}`);
+        await setDoc(path1, { name: newId.substring(0,8), addedAt: serverTimestamp() }, { merge: true });
+        await setDoc(path2, { name: currentUserId.substring(0,8), addedAt: serverTimestamp() }, { merge: true });
+        showNotif(`Kontak ${newId} berhasil ditambahkan!`);
+        newContactInput.value = '';
+      } catch (err) {
+        console.error('addContact err', err);
+        alert('Gagal menambahkan kontak. Pastikan ID benar & pengguna ada.');
+      }
+    });
 
-            messages.forEach(msg => {
-                const isSentByMe = msg.senderId === currentUserId;
-                const alignmentClass = isSentByMe ? 'sent' : 'received';
-                const displayName = isSentByMe ? currentUserName.split(' ')[0] : currentChatContactName.split(' ')[0]; 
-                const nameColor = isSentByMe ? 'text-gray-700' : 'text-kawanchat-blue';
+    // Floating FAB click -> go to contacts tab
+    newChatFab.addEventListener('click', () => {
+      document.querySelector('.tabbar button[data-tab="contacts-tab"]').click();
+      newContactInput.focus();
+    });
 
-                const messageDiv = document.createElement('div');
-                messageDiv.className = `chat-bubble ${alignmentClass} shadow-md flex flex-col`;
+    // send button & enter key
+    sendBtn.addEventListener('click', () => sendMessage(messageInput.value));
+    messageInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendMessage(messageInput.value);
+    });
 
-                const nameSpan = document.createElement('span');
-                nameSpan.className = `text-xs font-semibold mb-1 ${nameColor}`;
-                nameSpan.textContent = displayName;
-                messageDiv.appendChild(nameSpan);
+    // initial display: hide message area until a chat opened (already hidden by default)
 
-                const contentSpan = document.createElement('span');
-                contentSpan.className = 'text-sm text-black';
-                contentSpan.textContent = msg.text;
-                messageDiv.appendChild(contentSpan);
+    // On page load: start auth
+    window.addEventListener('load', () => {
+      // show loading briefly then init auth
+      setTimeout(() => {
+        setStage('loading-stage');
+        initializeAuth();
+      }, 300);
+    });
 
-                const timeSpan = document.createElement('span');
-                timeSpan.className = 'text-xs text-gray-500 self-end mt-1 ml-4';
-                timeSpan.textContent = formatTime(msg.timestamp);
-                messageDiv.appendChild(timeSpan);
-                
-                messagesContainer.appendChild(messageDiv);
-            });
-            
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        };
-
-        const listenForMessages = (contactId) => {
-            const chatRoomId = [currentUserId, contactId].sort().join('_');
-            const collectionPath = `/artifacts/${appId}/private/chats/${chatRoomId}/messages`;
-            const messagesQuery = collection(db, collectionPath);
-            
-            return onSnapshot(messagesQuery, (snapshot) => {
-                const messages = [];
-                snapshot.forEach(doc => {
-                    messages.push({ id: doc.id, ...doc.data() });
-                });
-                
-                messages.sort((a, b) => (a.timestamp?.toMillis() || 0) - (b.timestamp?.toMillis() || 0));
-                
-                renderMessages(messages);
-            }, (error) => {
-                console.error("Gagal mendengarkan pesan:", error);
-                messagesContainer.innerHTML = `<div class="text-center text-red-500 p-4">Gagal memuat pesan. Cek konsol.</div>`;
-            });
-        };
-
-        const sendMessage = async (text) => {
-            if (!text.trim() || !currentUserId || !currentChatContact) return;
-            
-            try {
-                const chatRoomId = [currentUserId, currentChatContact].sort().join('_');
-                const privateChatPath = `/artifacts/${appId}/private/chats/${chatRoomId}/messages`;
-                const messageRef = collection(db, privateChatPath);
-
-                const messageData = {
-                    text: text.trim(),
-                    timestamp: serverTimestamp(),
-                    senderId: currentUserId,
-                    senderName: currentUserName,
-                    type: 'text'
-                };
-
-                await addDoc(messageRef, messageData);
-                messageInput.value = ''; 
-            } catch (error) {
-                console.error("Gagal mengirim pesan: ", error);
-            }
-        };
-
-        const addContact = async () => {
-            const newContactId = newContactIdInput.value.trim();
-            if (!newContactId || !currentUserId) return;
-
-            // Logika sederhana: cek apakah ID yang dimasukkan cocok dengan 8 digit awal UID kita
-            if (newContactId === currentUserId.substring(0, 8)) {
-                 alert('Tidak bisa menambahkan ID Anda sendiri sebagai kontak!');
-                 return;
-            }
-            
-            try {
-                const contactDocPath = `/artifacts/${appId}/users/${currentUserId}/contacts/${newContactId}`;
-                await setDoc(doc(db, contactDocPath), { 
-                    name: newContactId.substring(0, 8), 
-                    addedAt: serverTimestamp() 
-                }, { merge: true });
-
-                newContactIdInput.value = '';
-                await loadContacts(); 
-                alert(`Kontak ${newContactId} berhasil ditambahkan!`);
-            } catch (error) {
-                console.error("Gagal menambahkan kontak: ", error);
-                alert('Gagal menambahkan kontak. Pastikan ID benar.');
-            }
-        };
-        
-        sendButton.addEventListener('click', () => sendMessage(messageInput.value));
-        messageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                sendMessage(messageInput.value);
-            }
-        });
-        addContactButton.addEventListener('click', addContact);
-        newChatButton.addEventListener('click', () => {
-            document.querySelector('.tab-link[data-tab="contacts"]').click();
-        });
-
-        tabLinks.forEach(tab => {
-            tab.addEventListener('click', (e) => {
-                const tabId = tab.getAttribute('data-tab');
-                
-                tabLinks.forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                
-                tabContents.forEach(content => {
-                    content.classList.add('hidden');
-                    if (content.id === `${tabId}-tab`) {
-                        content.classList.remove('hidden');
-                    }
-                });
-                
-                if (tabId === 'chat') {
-                    newChatButton.classList.remove('hidden');
-                } else {
-                    newChatButton.classList.add('hidden');
-                }
-                
-                if (tabId === 'contacts') {
-                    loadContacts();
-                }
-            });
-        });
-
-        // --- INITIALIZATION ---
-        
-        // Coba sign in secara anonim terlebih dahulu untuk mendapatkan UID
-        const initializeAuth = async () => {
-            try {
-                await signInAnonymously(auth);
-            } catch (error) {
-                console.error("Gagal memulai sesi anonim:", error);
-                setStage('welcome-stage');
-                sapaanContent.textContent = "Error: Gagal terhubung ke server Firebase.";
-                nextWelcomeButton.disabled = true;
-            }
-        };
-
-        // Otentikasi dan Cek Registrasi
-        onAuthStateChanged(auth, async (user) => {
-            if (!user) {
-                // Jika belum ada user, coba sign in anonim
-                await initializeAuth();
-                return;
-            }
-            
-            // User sudah ada (baru atau lama)
-            currentUserId = user.uid;
-            
-            const userDocRef = doc(db, `/artifacts/${appId}/users/${user.uid}`);
-            const userDoc = await getDoc(userDocRef);
-
-            if (userDoc.exists()) {
-                // User sudah registrasi, langsung ke Main App
-                currentUserName = user.displayName || userDoc.data().name;
-                setStage('main-app');
-                initializeMainApp();
-            } else {
-                // User baru terautentikasi (anonim), mulai alur sapaan/registrasi
-                setStage('welcome-stage');
-                nextSapaan();
-            }
-        });
-
-        // Start welcome flow
-        nextWelcomeButton.addEventListener('click', nextSapaan);
-        
-    </script>
+    // small helper: observe when main-app becomes active to ensure FAB visibility
+    // (no-op, UI already managed by tab clicks)
+  </script>
 </body>
 </html>
