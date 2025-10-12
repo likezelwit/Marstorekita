@@ -1,90 +1,81 @@
-// File: order.js - Menangani Pengiriman Pesanan Pelanggan ke koleksi transactions
+// File: order.js
 
-if (typeof db !== "undefined") {
-  // === A. Fungsi untuk Submission FAST ROBUX ===
-  const fastForm = document.getElementById("fastOrderForm");
-  if (fastForm) {
-    fastForm.addEventListener("submit", async function (e) {
-      e.preventDefault();
+// Pastikan firebase sudah di-init di HTML sebelum ini
+// const db = firebase.firestore();
 
-      const submitButton = document.getElementById("submitFastOrderBtn");
-      submitButton.textContent = "Memproses...";
-      submitButton.disabled = true;
+// Fungsi untuk submit order
+function submitOrder(orderData) {
+  // Standardisasi data
+  const data = {
+    tipeLayanan: orderData.tipeLayanan || "Fast Robux",
+    username: orderData.username || "User",
+    robux: orderData.nominalRobux || orderData.nominalPembelian || 0,
+    metodePembayaran: orderData.metodePembayaran || "QRIS",
+    emailPelanggan: orderData.email || "",
+    nomorTelepon: orderData.telepon || "",
+    tanggalOrder: firebase.firestore.FieldValue.serverTimestamp(),
+    status: "MENUNGGU PEMBAYARAN",
+  };
 
-      try {
-        const username = document.getElementById("usernameFast").value;
-        const nominalRobux = Number(document.getElementById("nominalFast").value);
+  // Simpan ke Firestore 'orders'
+  db.collection("orders")
+    .add(data)
+    .then((docRef) => {
+      console.log("Order berhasil disubmit:", docRef.id);
 
-        // Contoh perhitungan harga (bisa disesuaikan)
-        const grossGamepassPrice = nominalRobux * 100; // harga gamepass contoh
-        const totalPriceIDR = grossGamepassPrice; // bisa tambahkan fee
+      // Jika berhasil, tambahkan juga ke 'transactions' untuk carousel
+      db.collection("transactions")
+        .add(data)
+        .then(() => {
+          console.log("Transaksi ditambahkan ke carousel");
+        })
+        .catch((err) => console.error("Error tambah transaksi:", err));
 
-        const dataPesanan = {
-          username: username,
-          netRobux: nominalRobux,
-          grossGamepassPrice: grossGamepassPrice,
-          totalPriceIDR: totalPriceIDR,
-          transactionStatus: "Pending",
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-          tipeLayanan: "Fast Robux", // opsional untuk info tambahan
-        };
-
-        await db.collection("transactions").add(dataPesanan);
-
-        alert("Pesanan Fast Robux berhasil dibuat! Mohon tunggu konfirmasi.");
-        fastForm.reset();
-      } catch (error) {
-        console.error("Error Fast Robux: ", error);
-        alert("Terjadi kesalahan saat mengirim pesanan. Silakan coba lagi.");
-      } finally {
-        submitButton.textContent = "Kirim Pesanan Fast Robux";
-        submitButton.disabled = false;
-      }
+      alert("Order berhasil dikirim!");
+    })
+    .catch((error) => {
+      console.error("Error submit order:", error);
+      alert("Gagal submit order, silakan coba lagi.");
     });
-  }
+}
 
-  // === B. Fungsi untuk Submission GAMEPASS ROBUX ===
-  const gamepassForm = document.getElementById("gamepassOrderForm");
-  if (gamepassForm) {
-    gamepassForm.addEventListener("submit", async function (e) {
-      e.preventDefault();
+// Contoh penggunaan
+// Misal tombol submit di halaman Fast Robux
+const fastRobuxForm = document.getElementById("fastRobuxForm");
+if (fastRobuxForm) {
+  fastRobuxForm.addEventListener("submit", (e) => {
+    e.preventDefault();
 
-      const submitButton = document.getElementById("submitGamepassOrderBtn");
-      submitButton.textContent = "Memproses...";
-      submitButton.disabled = true;
+    const username = fastRobuxForm.username.value;
+    const nominalRobux = parseInt(fastRobuxForm.nominalRobux.value);
 
-      try {
-        const username = document.getElementById("usernameGamepass").value;
-        const nominalRobux = Number(document.getElementById("nominalGamepass").value);
-
-        // Contoh perhitungan harga
-        const grossGamepassPrice = nominalRobux * 120; // harga gamepass contoh
-        const totalPriceIDR = grossGamepassPrice; // bisa tambahkan fee
-
-        const dataPesanan = {
-          username: username,
-          netRobux: nominalRobux,
-          grossGamepassPrice: grossGamepassPrice,
-          totalPriceIDR: totalPriceIDR,
-          transactionStatus: "Pending",
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-          tipeLayanan: "Gamepass Robux",
-          linkGamepass: document.getElementById("linkGamepass").value,
-        };
-
-        await db.collection("transactions").add(dataPesanan);
-
-        alert("Pesanan Gamepass Robux berhasil dibuat! Mohon tunggu konfirmasi.");
-        gamepassForm.reset();
-      } catch (error) {
-        console.error("Error Gamepass Robux: ", error);
-        alert("Terjadi kesalahan saat mengirim pesanan. Silakan coba lagi.");
-      } finally {
-        submitButton.textContent = "Kirim Pesanan Gamepass";
-        submitButton.disabled = false;
-      }
+    submitOrder({
+      tipeLayanan: "Fast Robux",
+      username,
+      nominalRobux,
+      metodePembayaran: "QRIS",
     });
-  }
-} else {
-  console.error("Firebase Firestore (db) tidak terinisialisasi. Cek firebase-init.js.");
+
+    fastRobuxForm.reset();
+  });
+}
+
+// Misal tombol submit Gamepass
+const gamepassForm = document.getElementById("gamepassForm");
+if (gamepassForm) {
+  gamepassForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const username = gamepassForm.username.value;
+    const nominalPembelian = parseInt(gamepassForm.nominal.value);
+
+    submitOrder({
+      tipeLayanan: "Gamepass",
+      username,
+      nominalPembelian,
+      metodePembayaran: "QRIS",
+    });
+
+    gamepassForm.reset();
+  });
 }
