@@ -1,139 +1,85 @@
-// File: order-carousel.js
+// File: order.js
 
 // Pastikan firebase sudah di-init di HTML sebelum ini
 // const db = firebase.firestore();
 
-document.addEventListener("DOMContentLoaded", function () {
-  const carousel = document.getElementById('purchaseCarousel');
-  const emptyState = document.getElementById('emptyState');
-  const prevBtn = document.getElementById('prevBtn');
-  const nextBtn = document.getElementById('nextBtn');
-  let purchaseData = [];
-  let currentPosition = 0;
-  let autoSlideInterval;
-  let isAutoSliding = true;
+// Fungsi untuk submit order
+function submitOrder(orderData) {
+  const data = {
+    tipeLayanan: orderData.tipeLayanan || "Fast Robux",
+    username: orderData.username || "User",
+    robux: orderData.nominalRobux || orderData.nominalPembelian || 0,
+    metodePembayaran: orderData.metodePembayaran || "QRIS",
+    emailPelanggan: orderData.email || "",
+    nomorTelepon: orderData.telepon || "",
+    timestamp: firebase.firestore.FieldValue.serverTimestamp(), // <-- penting!
+    status: "MENUNGGU PEMBAYARAN",
+  };
 
-  // Fungsi untuk sensor username
-  function maskUsername(username) {
-    if (!username || username.length <= 3) return username || 'User';
-    const firstChar = username.charAt(0);
-    const lastChar = username.charAt(username.length - 1);
-    const maskedLength = username.length - 2;
-    return firstChar + '*'.repeat(maskedLength) + lastChar;
-  }
+  // Simpan ke Firestore 'orders'
+  db.collection("orders")
+    .add(data)
+    .then((docRef) => {
+      console.log("Order berhasil disubmit:", docRef.id);
 
-  // Fungsi membuat card pembelian
-  function createPurchaseCard(data) {
-    const card = document.createElement('div');
-    card.className = 'purchase-card';
+      // Simpan juga ke 'transactions' untuk carousel
+      const carouselData = {
+        username: data.username,
+        robux: data.robux,
+        timestamp: data.timestamp,
+      };
 
-    const maskedUsername = maskUsername(data.username);
-    const robuxAmount = data.robux || '0';
+      db.collection("transactions")
+        .add(carouselData)
+        .then(() => {
+          console.log("Transaksi ditambahkan ke carousel");
+        })
+        .catch((err) => console.error("Error tambah transaksi:", err));
 
-    card.innerHTML = `
-      <div class="flex items-center mb-4">
-        <div class="purchase-avatar">
-          <i class="fas fa-user"></i>
-        </div>
-        <div>
-          <h4 class="font-bold text-lg text-gray-800">${maskedUsername}</h4>
-          <p class="text-gray-500 text-sm">Baru saja</p>
-        </div>
-      </div>
-      <div class="flex items-center justify-between">
-        <div class="flex items-center">
-          <i class="fas fa-coins text-yellow-500 mr-2"></i>
-          <span class="font-semibold text-gray-800">${robuxAmount} R$</span>
-        </div>
-        <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">Berhasil</span>
-      </div>
-    `;
+      alert("Order berhasil dikirim!");
+    })
+    .catch((error) => {
+      console.error("Error submit order:", error);
+      alert("Gagal submit order, silakan coba lagi.");
+    });
+}
 
-    return card;
-  }
+// Event listener form Fast Robux
+const fastRobuxForm = document.getElementById("fastRobuxForm");
+if (fastRobuxForm) {
+  fastRobuxForm.addEventListener("submit", (e) => {
+    e.preventDefault();
 
-  // Update carousel
-  function updateCarousel() {
-    carousel.innerHTML = '';
+    const username = fastRobuxForm.username.value;
+    const nominalRobux = parseInt(fastRobuxForm.nominalRobux.value);
 
-    if (purchaseData.length === 0) {
-      carousel.style.display = 'none';
-      emptyState.style.display = 'block';
-      prevBtn.style.display = 'none';
-      nextBtn.style.display = 'none';
-      return;
-    }
-
-    carousel.style.display = 'flex';
-    emptyState.style.display = 'none';
-    prevBtn.style.display = 'flex';
-    nextBtn.style.display = 'flex';
-
-    const duplicatedData = [...purchaseData, ...purchaseData];
-
-    duplicatedData.forEach(data => {
-      const card = createPurchaseCard(data);
-      carousel.appendChild(card);
+    submitOrder({
+      tipeLayanan: "Fast Robux",
+      username,
+      nominalRobux,
+      metodePembayaran: "QRIS",
     });
 
-    currentPosition = 0;
-    updateCarouselPosition();
-    startAutoSlide();
-  }
-
-  function updateCarouselPosition() {
-    const cardWidth = 280 + 16; // lebar card + margin
-    carousel.style.transform = `translateX(-${currentPosition * cardWidth}px)`;
-  }
-
-  function navigateToPosition(position) {
-    const maxPosition = purchaseData.length - 1;
-    if (position < 0) currentPosition = maxPosition;
-    else if (position > maxPosition) currentPosition = 0;
-    else currentPosition = position;
-    updateCarouselPosition();
-  }
-
-  function startAutoSlide() {
-    if (autoSlideInterval) clearInterval(autoSlideInterval);
-    autoSlideInterval = setInterval(() => {
-      if (isAutoSliding) navigateToPosition(currentPosition + 1);
-    }, 3000);
-  }
-
-  // Load data dari Firestore
-  function loadPurchaseData() {
-    db.collection('transactions')
-      .orderBy('timestamp', 'desc')
-      .limit(10)
-      .onSnapshot(snapshot => {
-        purchaseData = [];
-        snapshot.forEach(doc => purchaseData.push(doc.data()));
-        updateCarousel();
-      }, error => {
-        console.error("Error getting transactions: ", error);
-        carousel.style.display = 'none';
-        emptyState.style.display = 'block';
-        prevBtn.style.display = 'none';
-        nextBtn.style.display = 'none';
-      });
-  }
-
-  // Event tombol navigasi
-  prevBtn.addEventListener('click', () => {
-    isAutoSliding = false;
-    navigateToPosition(currentPosition - 1);
-    setTimeout(() => { isAutoSliding = true; }, 5000);
+    fastRobuxForm.reset();
   });
+}
 
-  nextBtn.addEventListener('click', () => {
-    isAutoSliding = false;
-    navigateToPosition(currentPosition + 1);
-    setTimeout(() => { isAutoSliding = true; }, 5000);
+// Event listener form Gamepass
+const gamepassForm = document.getElementById("gamepassForm");
+if (gamepassForm) {
+  gamepassForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const username = gamepassForm.username.value;
+    const nominalPembelian = parseInt(gamepassForm.nominal.value);
+
+    submitOrder({
+      tipeLayanan: "Gamepass",
+      username,
+      nominalPembelian,
+      metodePembayaran: "QRIS",
+    });
+
+    gamepassForm.reset();
   });
-
-  carousel.addEventListener('mouseenter', () => { isAutoSliding = false; });
-  carousel.addEventListener('mouseleave', () => { isAutoSliding = true; });
-
-  loadPurchaseData();
-});
+}
