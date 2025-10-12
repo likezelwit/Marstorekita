@@ -3,102 +3,115 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>KawanChat — Real-time Chat</title>
+  <title>KawanChat — Deluxe</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
   <style>
     :root{
-      --kawanchat-blue:#0A5FAD;
-      --kawanchat-light:#1C8EED;
-      --kawanchat-bubble:#D1E7F9;
-      --kawanchat-bg:#F0F2F5;
+      --kc-green: #25D366;
+      --kc-dark: #075E32;
+      --kc-light: #dcf8c6;
+      --kc-bg: #f0f4f2;
     }
-    body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial;background:var(--kawanchat-bg);margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;}
-    .app{width:100%;max-width:500px;height:100vh;background:white;box-shadow:0 8px 30px rgba(0,0,0,.15);display:flex;flex-direction:column;position:relative;overflow:hidden;}
-    .header{background:var(--kawanchat-blue);color:white;padding:14px}
-    .tabbar{display:flex;background:var(--kawanchat-light);color:#f0f6ff}
-    .tabbar button{flex:1;padding:10px;font-weight:600;border:none;background:transparent;color:rgba(255,255,255,.85)}
-    .tabbar button.active{border-bottom:3px solid white;color:white}
+    body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial; background:var(--kc-bg); margin:0; display:flex; align-items:center; justify-content:center; min-height:100vh;}
+    .app{width:100%;max-width:540px;height:100vh;background:white;border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.12);overflow:hidden;display:flex;flex-direction:column;position:relative;}
+    header.app-header{background:var(--kc-dark);color:white;padding:14px;display:flex;justify-content:space-between;align-items:center;}
+    .tabs{display:flex;background:var(--kc-green);color:#053618}
+    .tabs button{flex:1;padding:12px;border:none;background:transparent;color:rgba(0,0,0,.6);font-weight:600}
+    .tabs button.active{background:rgba(255,255,255,.08);color:white;border-bottom:3px solid rgba(255,255,255,.9)}
+    /* stages */
     .stage{display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;height:100%}
     .stage.active{display:flex}
-    .typing{min-height:44px}
-    .chat-list,.contacts-list{overflow:auto}
-    .chat-bubble{max-width:80%;padding:8px 12px;border-radius:15px;margin-bottom:8px;word-wrap:break-word}
-    .sent{background:var(--kawanchat-bubble);align-self:flex-end;border-bottom-right-radius:4px}
-    .recv{background:#fff;border:1px solid #eee;align-self:flex-start;border-bottom-left-radius:4px}
-    #new-chat-fab{position:absolute;right:18px;bottom:18px;z-index:30;display:none}
-    .notif{position:fixed;right:20px;bottom:20px;background:#16a34a;color:white;padding:10px 14px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.15);z-index:60}
-    /* simple scroll container heights */
+    .card{background:white;border-radius:12px;padding:20px;box-shadow:0 8px 24px rgba(5,94,50,.08);max-width:460px;width:90%}
+    .typing{min-height:48px}
     .flex-grow-scroll{flex:1;display:flex;flex-direction:column;min-height:0}
     .scroll{overflow:auto}
+    .chat-bubble{max-width:78%;padding:10px 14px;border-radius:16px;margin-bottom:8px;word-wrap:break-word}
+    .sent{background:var(--kc-light);align-self:flex-end;border-bottom-right-radius:4px}
+    .recv{background:white;border:1px solid #eee;align-self:flex-start;border-bottom-left-radius:4px}
+    #fab-add{position:absolute;right:18px;bottom:18px;z-index:40;display:none}
+    .notif{position:fixed;right:20px;bottom:20px;background:#16a34a;color:white;padding:10px 14px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);z-index:60}
+    .muted{color:#6b7280}
+    .input-pill{border-radius:999px;padding:10px 14px;border:1px solid #e5e7eb}
+    .btn-green{background:var(--kc-dark);color:white;padding:8px 12px;border-radius:10px}
   </style>
 </head>
 <body>
   <div class="app" id="app">
-    <!-- STAGES -->
+    <!-- LOADING -->
     <div id="loading-stage" class="stage active">
-      <i class="fas fa-sync fa-spin text-3xl text-kawanchat-blue mb-4"></i>
-      <div class="text-gray-600">Memuat KawanChat...</div>
+      <div class="card text-center">
+        <div class="mb-4"><i class="fas fa-spinner fa-spin text-3xl" style="color:var(--kc-dark)"></i></div>
+        <div class="text-gray-600">Memuat KawanChat...</div>
+      </div>
     </div>
 
+    <!-- WELCOME (full-screen + card chat style) -->
     <div id="welcome-stage" class="stage">
-      <h2 class="text-3xl font-bold text-kawanchat-blue mb-4">👋 KawanChat</h2>
-      <div id="sapaan-content" class="typing text-lg text-gray-700 max-w-xs text-center mb-6"></div>
-
-      <div id="tos" class="hidden w-full max-w-xs p-3 bg-gray-50 rounded">
-        <label class="flex items-center space-x-2 cursor-pointer">
-          <input id="agree-tos" type="checkbox" class="h-5 w-5 text-kawanchat-blue"/>
-          <span class="text-sm text-gray-600">Saya setuju Persyaratan & Ketentuan KawanChat.</span>
-        </label>
-      </div>
-
-      <button id="welcome-next" class="mt-6 w-full max-w-xs py-3 rounded text-white font-bold" style="background:var(--kawanchat-blue)" disabled>Lanjut</button>
-    </div>
-
-    <div id="registration-stage" class="stage">
-      <div class="typing text-xl font-bold text-gray-800 mb-4" id="reg-typing"></div>
-
-      <div id="name-area" class="w-full max-w-xs hidden space-y-3">
-        <input id="reg-first" placeholder="Nama Depan" class="w-full p-3 border rounded" />
-        <div id="name-feedback" class="text-gray-600 text-sm min-h-[20px]"></div>
-        <input id="reg-last" placeholder="Nama Belakang (Opsional)" class="w-full p-3 border rounded" />
-        <select id="reg-gender" class="w-full p-3 border rounded">
-          <option value="">Pilih Jenis Kelamin</option>
-          <option value="L">Laki-laki</option>
-          <option value="P">Perempuan</option>
-          <option value="O">Lainnya</option>
-        </select>
-      </div>
-
-      <div id="phone-area" class="w-full max-w-xs hidden space-y-3">
-        <div class="flex items-center">
-          <span id="phone-emoji" class="mr-3 text-2xl">🙍‍♂️</span>
-          <div class="flex-1">
-            <div class="flex border p-0 rounded overflow-hidden">
-              <span class="px-3 flex items-center">+62</span>
-              <input id="reg-phone" placeholder="812345678" class="flex-1 p-3 border-none outline-none" />
-            </div>
-            <div class="text-sm text-gray-500 mt-1">Contoh: 812345678 (tanpa 0 di depan)</div>
-          </div>
+      <div class="card text-center">
+        <h2 class="text-2xl font-bold text-kc" style="color:var(--kc-dark)">👋 Selamat datang di KawanChat</h2>
+        <div id="sapaan-content" class="typing text-lg text-gray-700 mt-4 mb-4"> </div>
+        <div id="tos" class="hidden text-left bg-gray-50 p-3 rounded mb-3">
+          <label class="flex items-center space-x-2">
+            <input id="agree-tos" type="checkbox" />
+            <span class="text-sm muted">Saya setuju Persyaratan & Ketentuan KawanChat.</span>
+          </label>
+        </div>
+        <div class="mt-3">
+          <button id="welcome-next" class="btn-green" disabled>Lanjut</button>
         </div>
       </div>
+    </div>
 
-      <div id="final-area" class="w-full max-w-xs hidden text-center text-kawanchat-blue font-semibold min-h-[44px]"></div>
+    <!-- REGISTRATION -->
+    <div id="registration-stage" class="stage">
+      <div class="card">
+        <div id="reg-typing" class="typing text-xl font-bold text-gray-800 mb-4"></div>
 
-      <button id="reg-next" class="mt-6 w-full max-w-xs py-3 rounded text-white font-bold" style="background:var(--kawanchat-blue)">Selanjutnya</button>
+        <div id="name-area" class="hidden space-y-3">
+          <input id="reg-first" placeholder="Nama Depan" class="input-pill w-full" />
+          <div id="name-feedback" class="text-sm muted min-h-[20px]"> </div>
+          <input id="reg-last" placeholder="Nama Belakang (Opsional)" class="input-pill w-full" />
+          <select id="reg-gender" class="input-pill w-full">
+            <option value="">Pilih Jenis Kelamin</option>
+            <option value="L">Laki-laki</option>
+            <option value="P">Perempuan</option>
+            <option value="O">Lainnya</option>
+          </select>
+        </div>
+
+        <div id="phone-area" class="hidden space-y-3">
+          <div class="flex items-center">
+            <div id="phone-emoji" class="text-2xl mr-3">🙍‍♂️</div>
+            <div class="flex-1">
+              <div class="flex border rounded overflow-hidden">
+                <div class="px-3 flex items-center bg-white">+62</div>
+                <input id="reg-phone" placeholder="812345678" class="flex-1 p-3 border-none outline-none" />
+              </div>
+              <div class="text-sm muted mt-1">Contoh: 812345678 (tanpa 0 di depan)</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="final-area" class="hidden text-center text-green-700 font-semibold min-h-[44px]"></div>
+
+        <div class="mt-4 text-center">
+          <button id="reg-next" class="btn-green">Selanjutnya</button>
+        </div>
+      </div>
     </div>
 
     <!-- MAIN APP -->
-    <div id="main-app" class="hidden flex flex-col h-full">
-      <header class="header flex items-center justify-between">
-        <div>
-          <div class="text-sm opacity-75">KawanChat</div>
-          <div id="display-name" class="text-xs opacity-90"></div>
-        </div>
-        <div class="text-sm opacity-90">ID: <span id="display-id" class="font-mono"></span></div>
-      </header>
+    <header class="app-header" id="app-header" style="display:none">
+      <div>
+        <div class="text-sm muted">KawanChat</div>
+        <div id="display-name" class="text-xs"></div>
+      </div>
+      <div class="text-sm muted">ID: <span id="display-id" class="font-mono"></span></div>
+    </header>
 
-      <nav class="tabbar">
+    <div id="main-app" class="hidden flex flex-col h-full">
+      <nav class="tabs">
         <button class="active" data-tab="chat-tab">OBROLAN</button>
         <button data-tab="status-tab">STATUS</button>
         <button data-tab="calls-tab">PANGGILAN</button>
@@ -109,16 +122,16 @@
         <!-- CHAT TAB -->
         <section id="chat-tab" class="tab-content flex flex-col flex-1 p-3">
           <div class="flex-1 flex overflow-hidden">
-            <div id="active-chats" class="w-1/3 bg-white rounded p-2 mr-2 scroll"></div>
-            <div class="flex-1 bg-kawanchat-bg p-3 rounded flex flex-col">
+            <div id="active-chats" class="w-1/3 bg-white rounded p-2 mr-3 scroll h-full"></div>
+            <div class="flex-1 bg-[#f7fff5] p-3 rounded flex flex-col">
               <div id="chat-header" class="flex items-center justify-between mb-3">
-                <div id="chat-with" class="font-semibold text-lg text-gray-700">Pilih kontak untuk mulai chat</div>
-                <div id="chat-actions" class="text-sm text-gray-500"></div>
+                <div id="chat-with" class="font-semibold text-lg muted">Pilih kontak untuk mulai chat</div>
+                <div id="chat-actions" class="text-sm muted"></div>
               </div>
               <div id="messages" class="flex-1 scroll p-2 flex flex-col"></div>
               <div id="message-area" class="mt-3 hidden items-center">
                 <input id="message-input" class="flex-1 p-3 rounded-full border bg-white outline-none" placeholder="Ketik pesan..." />
-                <button id="send-btn" class="ml-2 px-3 py-2 rounded-full text-white" style="background:var(--kawanchat-blue)"><i class="fas fa-paper-plane"></i></button>
+                <button id="send-btn" class="ml-2 px-4 py-2 rounded-full text-white" style="background:var(--kc-dark)"><i class="fas fa-paper-plane"></i></button>
               </div>
             </div>
           </div>
@@ -126,43 +139,45 @@
 
         <!-- STATUS -->
         <section id="status-tab" class="tab-content hidden p-6 text-center">
-          <i class="fas fa-circle-notch text-4xl text-gray-400 mb-4"></i>
-          <div class="text-gray-600">Fitur Status belum diimplementasikan.</div>
+          <i class="fas fa-circle-notch text-4xl muted mb-4"></i>
+          <div class="muted">Fitur Status belum diimplementasikan.</div>
         </section>
 
         <!-- CALLS -->
         <section id="calls-tab" class="tab-content hidden p-6 text-center">
-          <i class="fas fa-phone-alt text-4xl text-gray-400 mb-4"></i>
-          <div class="text-gray-600">Fitur Panggilan belum diimplementasikan.</div>
+          <i class="fas fa-phone-alt text-4xl muted mb-4"></i>
+          <div class="muted">Fitur Panggilan belum diimplementasikan.</div>
         </section>
 
         <!-- CONTACTS -->
         <section id="contacts-tab" class="tab-content hidden p-4">
-          <h3 class="font-semibold text-kawanchat-blue mb-3">Tambah Kontak</h3>
-          <div class="flex mb-3">
-            <input id="new-contact-input" placeholder="Masukkan ID pengguna (8 char atau UID)" class="flex-1 p-2 border rounded-l" />
-            <button id="add-contact-btn" class="bg-kawanchat-blue text-white px-4 rounded-r">Tambah</button>
+          <div class="flex items-center mb-3">
+            <input id="search-contact" placeholder="Cari kontak..." class="input-pill flex-1 mr-2" />
+            <button id="btn-search" class="btn-green">Cari</button>
           </div>
-          <h4 class="font-semibold mb-2">Daftar Kontak</h4>
+          <div class="flex mb-3">
+            <input id="new-contact-input" placeholder="Masukkan ID pengguna (UID/8 char)" class="flex-1 p-2 border rounded-l" />
+            <button id="add-contact-btn" class="bg-[#0b8a3a] text-white px-4 rounded-r">Tambah</button>
+          </div>
+          <h4 class="font-semibold mb-2 muted">Daftar Kontak</h4>
           <div id="contacts-list" class="contacts-list scroll h-72 p-2 bg-white rounded"></div>
         </section>
       </main>
 
-      <!-- Floating add-contact button on chat tab -->
-      <button id="new-chat-fab" title="Tambah kontak" class="bg-kawanchat-blue text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg">
+      <button id="fab-add" title="Tambah kontak" style="display:none" class="btn-green" >
         <i class="fas fa-user-plus"></i>
       </button>
     </div>
   </div>
 
-  <!-- Firebase + App Script -->
+  <!-- SCRIPT: Firebase + App Logic -->
   <script type="module">
-    // Firebase imports (v12 modules via CDN)
+    // Firebase v12 imports
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
-    import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, serverTimestamp, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+    import { getFirestore, collection, doc, setDoc, getDoc, addDoc, serverTimestamp, onSnapshot, query, orderBy, where, getDocs } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 
-    // --- Firebase Config (user provided) ---
+    // --- Firebase config (user provided) ---
     const firebaseConfig = {
       apiKey: "AIzaSyD9tO94PdmXnqSH4cMVLPbgcEyY1J266mQ",
       authDomain: "whatsapp-clone-web-9418e.firebaseapp.com",
@@ -173,12 +188,12 @@
       measurementId: "G-5624HP8XEX"
     };
 
-    // init
+    // init firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // App state
+    // app state
     const appId = 'kawanchat-v1';
     let currentUserId = null;
     let currentUserName = null;
@@ -186,14 +201,15 @@
     let unsubscribeMessages = null;
     let contactsUnsub = null;
 
-    // DOM
+    // DOM refs
     const loadingStage = document.getElementById('loading-stage');
     const welcomeStage = document.getElementById('welcome-stage');
     const registrationStage = document.getElementById('registration-stage');
     const mainApp = document.getElementById('main-app');
+    const appHeader = document.getElementById('app-header');
 
     const sapaanContent = document.getElementById('sapaan-content');
-    const welcomeNextBtn = document.getElementById('welcome-next');
+    const welcomeNext = document.getElementById('welcome-next');
     const tosBox = document.getElementById('tos');
     const agreeTos = document.getElementById('agree-tos');
 
@@ -201,24 +217,23 @@
     const nameArea = document.getElementById('name-area');
     const regFirst = document.getElementById('reg-first');
     const regLast = document.getElementById('reg-last');
-    const nameFeedback = document.getElementById('name-feedback');
     const regGender = document.getElementById('reg-gender');
+    const nameFeedback = document.getElementById('name-feedback');
 
     const phoneArea = document.getElementById('phone-area');
-    const phoneEmoji = document.getElementById('phone-emoji');
     const regPhone = document.getElementById('reg-phone');
+    const phoneEmoji = document.getElementById('phone-emoji');
 
     const finalArea = document.getElementById('final-area');
-    const regNextBtn = document.getElementById('reg-next');
+    const regNext = document.getElementById('reg-next');
 
     const displayNameEl = document.getElementById('display-name');
     const displayIdEl = document.getElementById('display-id');
 
-    const tabs = document.querySelectorAll('.tabbar button');
+    const tabs = document.querySelectorAll('.tabs button');
     const tabContents = document.querySelectorAll('.tab-content');
-    const newChatFab = document.getElementById('new-chat-fab');
+    const fabAdd = document.getElementById('fab-add');
 
-    // Chat DOM
     const activeChats = document.getElementById('active-chats');
     const messagesEl = document.getElementById('messages');
     const chatWithEl = document.getElementById('chat-with');
@@ -226,10 +241,11 @@
     const messageInput = document.getElementById('message-input');
     const sendBtn = document.getElementById('send-btn');
 
-    // Contacts
     const contactsList = document.getElementById('contacts-list');
     const newContactInput = document.getElementById('new-contact-input');
     const addContactBtn = document.getElementById('add-contact-btn');
+    const searchContactInput = document.getElementById('search-contact');
+    const btnSearch = document.getElementById('btn-search');
 
     // onboarding texts
     const sapaanTexts = [
@@ -245,10 +261,12 @@
       [loadingStage, welcomeStage, registrationStage, mainApp].forEach(s => s.classList.remove('active'));
       [loadingStage, welcomeStage, registrationStage, mainApp].forEach(s => s.classList.add('hidden'));
       const target = document.getElementById(id);
-      if (target) { target.classList.remove('hidden'); target.classList.add('active'); }
+      if (target) target.classList.remove('hidden'), target.classList.add('active');
+      // header visibility
+      if (id === 'main-app') appHeader.style.display = 'flex'; else appHeader.style.display = 'none';
     };
 
-    const typeText = (el, text, speed = 30) => {
+    const typeText = (el, text, speed = 24) => {
       return new Promise(res => {
         el.textContent = '';
         let i = 0;
@@ -264,54 +282,43 @@
       setTimeout(()=> n.remove(), 3000);
     };
 
-    // --- Onboarding flow handlers ---
+    // Onboarding flow
     const nextSapaan = async () => {
-      welcomeNextBtn.disabled = true;
+      welcomeNext.disabled = true;
       if (sapaanStep < sapaanTexts.length) {
         await typeText(sapaanContent, sapaanTexts[sapaanStep]);
         sapaanStep++;
-        welcomeNextBtn.disabled = false;
+        welcomeNext.disabled = false;
       } else if (sapaanStep === sapaanTexts.length) {
         await typeText(sapaanContent, "Satu langkah lagi! Silakan setujui persyaratan kami untuk melanjutkan:");
         tosBox.classList.remove('hidden');
-        welcomeNextBtn.disabled = !agreeTos.checked;
+        welcomeNext.disabled = !agreeTos.checked;
         sapaanStep++;
       } else {
-        // go register
         setStage('registration-stage');
         startRegistration();
       }
     };
-    agreeTos.addEventListener('change', () => welcomeNextBtn.disabled = !agreeTos.checked);
-    welcomeNextBtn.addEventListener('click', nextSapaan);
+    agreeTos.addEventListener('change', () => welcomeNext.disabled = !agreeTos.checked);
+    welcomeNext.addEventListener('click', nextSapaan);
 
     // Registration steps
-    let regStep = 1;
+    let currentUserName = null;
     const startRegistration = async () => {
-      regNextBtn.disabled = true;
+      regNext.disabled = true;
       await regStep1();
     };
 
     const regStep1 = async () => {
-      nameArea.classList.add('hidden');
-      phoneArea.classList.add('hidden');
-      finalArea.classList.add('hidden');
+      nameArea.classList.add('hidden'); phoneArea.classList.add('hidden'); finalArea.classList.add('hidden');
       await typeText(regTyping, "Kita belum kenalan nih! Kenalan dulu yuk! 🙋");
       nameArea.classList.remove('hidden');
       regFirst.focus();
-      regStep = 1;
       const nameHandler = () => {
-        const name = regFirst.value.trim();
-        if (name.length > 0) {
-          nameFeedback.textContent = "Hmm kalo nama belakang boleh tau? (opsional)";
-          regNextBtn.disabled = false;
-        } else {
-          nameFeedback.textContent = "";
-          regNextBtn.disabled = true;
-        }
+        if (regFirst.value.trim().length > 0) { nameFeedback.textContent = "Hmm kalo nama belakang boleh tau? (opsional)"; regNext.disabled = false; } else { nameFeedback.textContent=''; regNext.disabled = true; }
       };
-      regFirst.addEventListener('input', nameHandler, { once: false });
-      regNextBtn.onclick = () => {
+      regFirst.addEventListener('input', nameHandler);
+      regNext.onclick = () => {
         regFirst.removeEventListener('input', nameHandler);
         if (regFirst.value.trim()) regStep2();
       };
@@ -319,10 +326,9 @@
 
     const regStep2 = async () => {
       nameArea.classList.add('hidden');
-      regStep = 2;
       currentUserName = (regFirst.value.trim() + (regLast.value.trim() ? ' '+regLast.value.trim() : '')).trim();
       await typeText(regTyping, `Yey kita udh kenalan! Hi ${regFirst.value.trim()} 🙌`);
-      await new Promise(r => setTimeout(r, 800));
+      await new Promise(r=>setTimeout(r,700));
       await typeText(regTyping, "Hmm boleh minta nomor mu untuk masuk ke dalam KawanChat? 📞");
       phoneArea.classList.remove('hidden');
       regPhone.focus();
@@ -332,9 +338,10 @@
       regPhone.addEventListener('focus', focusFn);
       regPhone.addEventListener('blur', blurFn);
 
-      const phoneHandler = () => regNextBtn.disabled = regPhone.value.replace(/\D/g,'').length < 8;
+      const phoneHandler = () => regNext.disabled = regPhone.value.replace(/\D/g,'').length < 8;
       regPhone.addEventListener('input', phoneHandler);
-      regNextBtn.onclick = () => {
+
+      regNext.onclick = () => {
         regPhone.removeEventListener('input', phoneHandler);
         regPhone.removeEventListener('focus', focusFn);
         regPhone.removeEventListener('blur', blurFn);
@@ -343,12 +350,11 @@
     };
 
     const signInAndSave = async (displayName, chatID, phoneVal) => {
-      // use anon user already signed in
       const user = auth.currentUser;
       if (!user) throw new Error('User not authenticated');
       await updateProfile(user, { displayName });
-      const userDocRef = doc(db, `artifacts/${appId}/users/${user.uid}`);
-      await setDoc(userDocRef, {
+      const userDoc = doc(db, `artifacts/${appId}/users/${user.uid}`);
+      await setDoc(userDoc, {
         name: displayName,
         id: chatID,
         phone: phoneVal,
@@ -361,59 +367,44 @@
 
     const regStep3 = async () => {
       phoneArea.classList.add('hidden');
-      regNextBtn.classList.add('hidden');
+      regNext.classList.add('hidden');
 
       const phoneRaw = regPhone.value.replace(/[^0-9]/g,'');
       const full = '62' + phoneRaw.replace(/^0+/, '');
       await typeText(regTyping, `Nomormu cantik banget ✨ kita ambil dari depan nomor mu yah!`);
-      await new Promise(r => setTimeout(r,800));
+      await new Promise(r=>setTimeout(r,700));
 
       const mockID = full.padEnd(11,'0');
       const prefix = mockID.substring(0,5);
       await typeText(regTyping, `Oke nomor depan mu ${prefix} kita tambahin jadi ${mockID}!`);
-      await new Promise(r => setTimeout(r,900));
+      await new Promise(r=>setTimeout(r,800));
 
       const finalID = mockID.substring(mockID.length - 6);
       await typeText(regTyping, `Yey! ID mu udh di buat! Ini dia: ${finalID} 🎉`);
-      await new Promise(r => setTimeout(r,900));
+      await new Promise(r=>setTimeout(r,800));
 
-      // sign in should already be done (anon), save profile
       try {
         await signInAndSave(currentUserName || regFirst.value.trim(), finalID, regPhone.value);
-      } catch (err) {
-        console.error('save profile err', err);
-      }
+      } catch(err){ console.error('save profile err', err); }
 
-      await typeText(regTyping, `Selamat datang di KawanChat, ${ (currentUserName||regFirst.value.trim()).split(' ')[0]}!`);
-      await new Promise(r => setTimeout(r,900));
+      await typeText(regTyping, `Selamat datang di KawanChat, ${(currentUserName||regFirst.value.trim()).split(' ')[0]}!`);
+      await new Promise(r=>setTimeout(r,800));
 
-      // go main app
       setStage('main-app');
       initMainApp();
     };
 
-    // --- Firebase Auth init & onAuthState ---
+    // Auth init
     const initializeAuth = async () => {
-      try {
-        await signInAnonymously(auth);
-      } catch (err) {
-        console.error("Gagal signInAnon:", err);
-        setStage('welcome-stage');
-        sapaanContent.textContent = "Error: Gagal terhubung ke server Firebase.";
-        welcomeNextBtn.disabled = true;
-      }
+      try { await signInAnonymously(auth); } catch(err){ console.error('signInAnon err', err); setStage('welcome-stage'); sapaanContent.textContent = "Error: Gagal terhubung ke server Firebase."; welcomeNext.disabled = true; }
     };
 
     onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        await initializeAuth();
-        return;
-      }
-      // If user exists, check doc
+      if (!user) { await initializeAuth(); return; }
+      // check if profile doc exists
       const userDocRef = doc(db, `artifacts/${appId}/users/${user.uid}`);
       const snap = await getDoc(userDocRef);
       if (snap.exists()) {
-        // existing user -> go main
         currentUserId = user.uid;
         currentUserName = user.displayName || snap.data().name;
         displayNameEl.textContent = currentUserName || 'Teman';
@@ -421,138 +412,125 @@
         setStage('main-app');
         initMainApp();
       } else {
-        // new -> start onboarding
         setStage('welcome-stage');
-        // start first sapaan
         sapaanStep = 0;
         nextSapaan();
       }
     });
 
-    // --- MAIN APP functions ---
-    const initMainApp = async () => {
+    // MAIN APP
+    const initMainApp = () => {
       displayNameEl.textContent = currentUserName || 'Teman';
       displayIdEl.textContent = currentUserId ? currentUserId.substring(0,8) : '';
       bindTabs();
-      newChatFab.style.display = 'block';
+      fabAdd.style.display = 'block';
+      document.getElementById('fab-add').style.display = 'block';
       loadContactsRealtime();
-      loadActiveChatsRealtime();
+      loadActiveChats();
     };
 
-    // Tabs
     function bindTabs(){
       tabs.forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.onclick = () => {
           tabs.forEach(b=>b.classList.remove('active'));
           btn.classList.add('active');
           tabContents.forEach(tc => tc.classList.add('hidden'));
           const id = btn.getAttribute('data-tab');
           document.getElementById(id).classList.remove('hidden');
-          // show/hide FAB & message area depending on tab
-          if (id === 'chat-tab') {
-            newChatFab.style.display = 'block';
-          } else {
-            newChatFab.style.display = 'none';
-          }
-        });
+          // toggle FAB / message area
+          if (id === 'chat-tab') { fabAdd.style.display = 'block'; } else { fabAdd.style.display = 'none'; }
+        };
       });
     }
 
-    // Real-time contacts list
+    // Contacts realtime + render
     const loadContactsRealtime = async () => {
       if (!currentUserId) return;
-      const cPath = collection(db, `artifacts/${appId}/users/${currentUserId}/contacts`);
+      const cRef = collection(db, `artifacts/${appId}/users/${currentUserId}/contacts`);
       if (contactsUnsub) contactsUnsub();
-      contactsUnsub = onSnapshot(cPath, (snap) => {
+      contactsUnsub = onSnapshot(cRef, (snap) => {
         contactsList.innerHTML = '';
         activeChats.innerHTML = '';
         if (snap.empty) {
-          contactsList.innerHTML = '<div class="text-gray-500 p-2 italic">Belum ada kontak.</div>';
-          activeChats.innerHTML = '<div class="text-gray-500 p-2 italic">Klik tombol + untuk tambah kontak.</div>';
-        } else {
-          snap.forEach(docSnap => {
-            const id = docSnap.id;
-            const data = docSnap.data();
-            // contacts tab
-            const row = document.createElement('div');
-            row.className = 'p-2 border-b flex items-center justify-between';
-            const left = document.createElement('div');
-            left.innerHTML = `<div class="font-semibold">${data.name||id.substring(0,8)}</div><div class="text-xs text-gray-400">ID: ${id}</div>`;
-            const btn = document.createElement('button');
-            btn.className = 'text-sm bg-kawanchat-blue text-white px-3 py-1 rounded';
-            btn.textContent = 'Chat';
-            btn.onclick = () => startPrivateChat(id, data.name||id.substring(0,8));
-            row.appendChild(left);
-            row.appendChild(btn);
-            contactsList.appendChild(row);
-
-            // active chats list
-            const ac = document.createElement('div');
-            ac.className = 'p-2 mb-2 bg-white rounded cursor-pointer';
-            ac.textContent = `${data.name||id.substring(0,8)} — ID:${id}`;
-            ac.onclick = () => startPrivateChat(id, data.name||id.substring(0,8));
-            activeChats.appendChild(ac);
-          });
+          contactsList.innerHTML = '<div class="muted p-2">Belum ada kontak.</div>';
+          activeChats.innerHTML = '<div class="muted p-2">Klik tombol + untuk tambah kontak.</div>';
+          return;
         }
-      }, (e) => console.error("contacts snapshot err", e));
+        snap.forEach(d => {
+          const id = d.id; const data = d.data();
+          // contacts list (tab)
+          const row = document.createElement('div'); row.className='p-2 border-b flex items-center justify-between';
+          row.innerHTML = `<div><div class="font-semibold">${data.name||id.substring(0,8)}</div><div class="text-xs muted">ID: ${id}</div></div>`;
+          const chatBtn = document.createElement('button'); chatBtn.className='btn-green text-sm'; chatBtn.textContent = 'Chat';
+          chatBtn.onclick = () => { startPrivateChat(id, data.name||id.substring(0,8)); };
+          row.appendChild(chatBtn);
+          contactsList.appendChild(row);
+
+          // active chats left column
+          const ac = document.createElement('div'); ac.className='p-2 mb-2 bg-white rounded cursor-pointer';
+          ac.textContent = `${data.name||id.substring(0,8)} — ID:${id}`;
+          ac.onclick = () => startPrivateChat(id, data.name||id.substring(0,8));
+          activeChats.appendChild(ac);
+        });
+      }, (e)=> console.error('contacts snapshot err', e));
     };
 
-    // Active chats realtime: (list is populated from contacts above), so this is optional placeholder
-    const loadActiveChatsRealtime = () => {
-      // Already derived from contacts snapshot; additional last-message tracking can be added later
+    // optional active chats loader (placeholder)
+    const loadActiveChats = () => {
+      // left column populated by contacts snapshot
     };
 
-    // Start private chat (set up message listener)
+    // Start private chat & messages listener
     const startPrivateChat = (contactId, contactName) => {
       currentChatContact = contactId;
       chatWithEl.textContent = contactName;
       messagesEl.innerHTML = '';
       messageArea.classList.remove('hidden');
       messageInput.value = '';
-      // unsubscribe previous messages
+      // unsubscribe previous
       if (unsubscribeMessages) unsubscribeMessages();
-      // messages stored at: /artifacts/kawanchat-v1/private/chats/<sorted a_b>/messages
+      // message path: artifacts/<appId>/private/chats/<sorted>/messages
       const chatRoomId = [currentUserId, contactId].sort().join('_');
-      const messagesPath = collection(db, `artifacts/${appId}/private/chats/${chatRoomId}/messages`);
-      const q = query(messagesPath, orderBy('timestamp','asc'));
+      const messagesRef = collection(db, `artifacts/${appId}/private/chats/${chatRoomId}/messages`);
+      const q = query(messagesRef, orderBy('timestamp','asc'));
       unsubscribeMessages = onSnapshot(q, (snap) => {
-        const msgs = [];
-        snap.forEach(d => msgs.push({ id: d.id, ...d.data() }));
+        const msgs = []; snap.forEach(d => msgs.push({ id: d.id, ...d.data() }));
         renderMessages(msgs);
-      }, e => {
-        console.error("messages snapshot err", e);
-      });
-      // switch to chat tab (if not already)
-      document.querySelector('.tabbar button[data-tab="chat-tab"]').click();
+      }, (e) => console.error('messages snapshot err', e));
+      // switch to chat tab UI
+      document.querySelector('.tabs button[data-tab="chat-tab"]').click();
+      // scroll left column to selected - optional
     };
 
     const renderMessages = (messages) => {
       messagesEl.innerHTML = '';
       if (!messages.length) {
-        messagesEl.innerHTML = `<div class="text-center text-gray-500 p-4">Awal dari obrolan dengan ${chatWithEl.textContent}.</div>`;
+        messagesEl.innerHTML = `<div class="muted text-center p-4">Awal dari obrolan dengan ${chatWithEl.textContent}.</div>`;
         messagesEl.scrollTop = messagesEl.scrollHeight;
         return;
       }
       messages.forEach(m => {
         const el = document.createElement('div');
-        el.className = 'chat-bubble ' + (m.senderId === currentUserId ? 'sent self-end' : 'recv self-start');
+        el.className = 'chat-bubble ' + (m.senderId === currentUserId ? 'sent' : 'recv');
         el.style.alignSelf = (m.senderId === currentUserId) ? 'flex-end' : 'flex-start';
-        el.innerHTML = `<div class="text-xs font-semibold ${m.senderId===currentUserId?'text-gray-700':'text-kawanchat-blue'} mb-1">${m.senderName|| (m.senderId===currentUserId?currentUserName:'Teman')}</div>
+        const name = m.senderId === currentUserId ? (currentUserName || 'Kamu') : (m.senderName || chatWithEl.textContent);
+        const time = m.timestamp ? new Date(m.timestamp.toDate ? m.timestamp.toDate() : m.timestamp).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' }) : '...';
+        el.innerHTML = `<div class="text-xs font-semibold ${m.senderId===currentUserId?'text-gray-700':'text-green-700'} mb-1">${name}</div>
                         <div class="text-sm">${m.text}</div>
-                        <div class="text-xs text-gray-400 mt-1" style="text-align:right">${m.timestamp ? new Date(m.timestamp.toDate ? m.timestamp.toDate() : m.timestamp).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}) : '...'}</div>`;
+                        <div class="text-xs muted mt-1" style="text-align:right">${time}</div>`;
         messagesEl.appendChild(el);
       });
       messagesEl.scrollTop = messagesEl.scrollHeight;
     };
 
-    // Send message
-    const sendMessage = async (text) => {
-      if (!text.trim() || !currentChatContact || !currentUserId) return;
+    // send message (ensure room exists)
+    const sendMessage = async (txt) => {
+      if (!txt.trim() || !currentChatContact || !currentUserId) return;
       try {
         const chatRoomId = [currentUserId, currentChatContact].sort().join('_');
-        const path = collection(db, `artifacts/${appId}/private/chats/${chatRoomId}/messages`);
-        await addDoc(path, {
-          text: text.trim(),
+        const messagesRef = collection(db, `artifacts/${appId}/private/chats/${chatRoomId}/messages`);
+        await addDoc(messagesRef, {
+          text: txt.trim(),
           timestamp: serverTimestamp(),
           senderId: currentUserId,
           senderName: currentUserName || '',
@@ -561,52 +539,64 @@
         messageInput.value = '';
       } catch (err) {
         console.error('sendMessage err', err);
+        showNotif('Gagal mengirim pesan');
       }
     };
 
-    // Add contact (two-way)
+    // add contact (two-way) with existence check
     addContactBtn.addEventListener('click', async () => {
       const newId = newContactInput.value.trim();
       if (!newId) return alert('Masukkan ID kontak.');
+      if (!currentUserId) return alert('Belum login.');
       if (newId === currentUserId) return alert('Tidak bisa menambahkan diri sendiri.');
       try {
+        // basic check: does user document exist for that ID? (we assume they must have UID)
+        const otherUserDoc = doc(db, `artifacts/${appId}/users/${newId}`);
+        const snapshot = await getDoc(otherUserDoc);
+        if (!snapshot.exists()) {
+          // allow adding anyway but warn
+          if (!confirm('Pengguna dengan ID ini belum terdaftar. Tetap tambah sebagai kontak?')) return;
+        }
         const path1 = doc(db, `artifacts/${appId}/users/${currentUserId}/contacts/${newId}`);
         const path2 = doc(db, `artifacts/${appId}/users/${newId}/contacts/${currentUserId}`);
         await setDoc(path1, { name: newId.substring(0,8), addedAt: serverTimestamp() }, { merge: true });
+        // attempt to write reverse (if user exists)
         await setDoc(path2, { name: currentUserId.substring(0,8), addedAt: serverTimestamp() }, { merge: true });
         showNotif(`Kontak ${newId} berhasil ditambahkan!`);
         newContactInput.value = '';
       } catch (err) {
         console.error('addContact err', err);
-        alert('Gagal menambahkan kontak. Pastikan ID benar & pengguna ada.');
+        alert('Gagal menambahkan kontak. Cek console.');
       }
     });
 
-    // Floating FAB click -> go to contacts tab
-    newChatFab.addEventListener('click', () => {
-      document.querySelector('.tabbar button[data-tab="contacts-tab"]').click();
+    // search contact (filter client-side by displayed contacts)
+    btnSearch.addEventListener('click', () => {
+      const q = searchContactInput.value.trim().toLowerCase();
+      const children = Array.from(contactsList.children);
+      if (!q) { children.forEach(c => c.style.display='flex'); return; }
+      children.forEach(c => {
+        const text = c.textContent.toLowerCase();
+        c.style.display = text.includes(q) ? 'flex' : 'none';
+      });
+    });
+    searchContactInput.addEventListener('keypress', (e) => { if (e.key==='Enter') btnSearch.click(); });
+
+    // FAB -> go to contacts tab
+    fabAdd.addEventListener('click', () => {
+      document.querySelector('.tabs button[data-tab="contacts-tab"]').click();
       newContactInput.focus();
     });
 
-    // send button & enter key
+    // send & enter
     sendBtn.addEventListener('click', () => sendMessage(messageInput.value));
-    messageInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') sendMessage(messageInput.value);
-    });
+    messageInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(messageInput.value); });
 
-    // initial display: hide message area until a chat opened (already hidden by default)
-
-    // On page load: start auth
+    // init on load
     window.addEventListener('load', () => {
-      // show loading briefly then init auth
-      setTimeout(() => {
-        setStage('loading-stage');
-        initializeAuth();
-      }, 300);
+      setTimeout(() => { setStage('loading-stage'); initializeAuth(); }, 300);
     });
 
-    // small helper: observe when main-app becomes active to ensure FAB visibility
-    // (no-op, UI already managed by tab clicks)
   </script>
 </body>
 </html>
