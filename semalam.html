@@ -3,35 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhatsApp Clone (Real-time Chat)</title>
-    <!-- Load Tailwind CSS -->
+    <title>KawanChat - Real-time Chat</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* Custom styles for WhatsApp look and feel */
+        /* Custom styles for KawanChat look and feel */
         :root {
-            --whatsapp-green: #075E54;
-            --whatsapp-light-green: #128C7E;
-            --whatsapp-bubble: #DCF8C6;
-            --whatsapp-bg: #ECE5DD;
+            --kawanchat-blue: #0A5FAD; /* Warna Dominan */
+            --kawanchat-light-blue: #1C8EED;
+            --kawanchat-bubble-sent: #D1E7F9; /* Lebih soft dari WA */
+            --kawanchat-bg: #F0F2F5; /* Background aplikasi */
         }
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--whatsapp-bg);
+            background-color: var(--kawanchat-bg);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
         }
+        .app-container {
+            height: 100vh;
+            max-width: 500px;
+            width: 100%;
+            margin: 0 auto;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            background-color: white;
+        }
+        /* Header */
         .header {
-            background-color: var(--whatsapp-green);
+            background-color: var(--kawanchat-blue);
         }
         .tab-bar {
-            background-color: var(--whatsapp-light-green);
+            background-color: var(--kawanchat-light-blue);
         }
         .tab-bar button.active {
             border-bottom: 3px solid white;
             color: white;
             font-weight: 600;
         }
-        .message-input-area {
-            background-color: #f0f0f0;
-        }
+
+        /* Message Bubbles */
         .chat-bubble {
             max-width: 80%;
             padding: 8px 12px;
@@ -40,121 +55,199 @@
             word-wrap: break-word;
         }
         .sent {
-            background-color: var(--whatsapp-bubble);
+            background-color: var(--kawanchat-bubble-sent);
             align-self: flex-end;
             border-bottom-right-radius: 4px;
         }
         .received {
-            background-color: #ffffff;
+            background-color: #ffffff; /* Putih bersih untuk diterima */
+            border: 1px solid #ddd;
             align-self: flex-start;
             border-bottom-left-radius: 4px;
         }
-        /* Mobile optimization */
-        .app-container {
-            height: 100vh;
-            max-width: 500px;
-            margin: 0 auto;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            display: flex;
+
+        /* Stages (Welcome/Registration) */
+        .stage {
+            display: none;
+            justify-content: center;
+            align-items: center;
             flex-direction: column;
+            text-align: center;
+            padding: 20px;
+            height: 100%;
         }
-        /* Style for the Contact ID list */
-        .contact-item {
-            cursor: pointer;
-            transition: background-color 0.2s;
+        .stage.active {
+            display: flex;
         }
-        .contact-item:hover {
-            background-color: #f5f5f5;
+        
+        /* Typing Animation effect */
+        .typing-text-container {
+            min-height: 30px; /* Menghindari layout jump */
         }
-        .scroll-container {
-            overflow-y: auto;
-            flex-grow: 1;
+        
+        /* Float button for new chat */
+        #new-chat-button {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            z-index: 10;
+        }
+
+        /* Hide message input initially */
+        #chat-message-area {
+            display: none;
+        }
+        #message-input:focus {
+             outline: none;
+             box-shadow: 0 0 0 2px var(--kawanchat-light-blue);
         }
     </style>
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body class="bg-gray-100">
     <div class="app-container bg-white">
-        <!-- HEADER -->
-        <header class="header text-white p-4 flex flex-col">
-            <div class="flex justify-between items-center mb-2">
-                <h1 id="app-title" class="text-xl font-bold">WhatsApp</h1>
-                <div class="flex space-x-4 text-lg">
-                    <i class="fas fa-search"></i>
-                    <i class="fas fa-ellipsis-v"></i>
+
+        <div id="welcome-stage" class="stage active flex-col justify-between">
+            <div class="flex-grow flex flex-col justify-center items-center">
+                <h2 class="text-3xl font-bold text-kawanchat-blue mb-6">👋 KawanChat</h2>
+                <div id="sapaan-content" class="text-lg text-gray-700 max-w-sm mb-10 min-h-[120px]">
+                    </div>
+                <div class="p-4 bg-gray-50 rounded-lg shadow-inner max-w-sm w-full hidden" id="tos-agreement">
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" id="agree-tos" class="form-checkbox text-kawanchat-blue h-5 w-5 rounded">
+                        <span class="text-sm text-gray-600">Saya setuju dengan Persyaratan & Ketentuan KawanChat.</span>
+                    </label>
                 </div>
             </div>
-            <p id="user-id-display" class="text-xs text-gray-200"></p>
-        </header>
+            <button id="next-welcome" class="w-full py-3 bg-kawanchat-blue text-white font-bold rounded-lg shadow-xl mb-4 hover:bg-kawanchat-light-blue transition disabled:opacity-50" disabled>
+                Lanjut
+            </button>
+        </div>
 
-        <!-- TAB NAVIGATION -->
-        <nav class="tab-bar flex justify-between px-2 text-gray-300 shadow-md">
-            <button class="flex-1 py-3 text-sm tab-link active" data-tab="chat">CHATS</button>
-            <button class="flex-1 py-3 text-sm tab-link" data-tab="status">STATUS</button>
-            <button class="flex-1 py-3 text-sm tab-link" data-tab="calls">PANGGILAN</button>
-            <button class="flex-1 py-3 text-sm tab-link" data-tab="contacts">KONTAK</button>
-        </nav>
+        <div id="registration-stage" class="stage">
+            <div class="flex-grow flex flex-col justify-center items-center">
+                <div class="typing-text-container text-xl font-bold text-gray-800 mb-6 min-h-[40px]">
+                    </div>
+                
+                <div id="input-name-area" class="w-full max-w-xs space-y-4 hidden">
+                    <input type="text" id="reg-first-name" placeholder="Nama Depan" class="w-full p-3 border-b-2 border-gray-300 focus:border-kawanchat-blue focus:ring-0 text-lg rounded-t-lg">
+                    <div id="name-feedback" class="text-md text-gray-600 mb-3 min-h-[25px]"></div>
+                    <input type="text" id="reg-last-name" placeholder="Nama Belakang (Opsional)" class="w-full p-3 border-b-2 border-gray-300 focus:border-kawanchat-blue focus:ring-0 text-lg rounded-t-lg">
+                    <select id="reg-gender" class="w-full p-3 border-b-2 border-gray-300 focus:border-kawanchat-blue focus:ring-0 text-lg bg-white rounded-t-lg">
+                        <option value="" disabled selected>Pilih Jenis Kelamin</option>
+                        <option value="L">Laki-laki</option>
+                        <option value="P">Perempuan</option>
+                        <option value="O">Lainnya</option>
+                    </select>
+                </div>
 
-        <!-- MAIN CONTENT AREA -->
-        <main class="flex-grow scroll-container p-4">
+                <div id="input-phone-area" class="w-full max-w-xs space-y-4 hidden">
+                    <p class="text-gray-500 mb-2">🙍‍♂️</p>
+                    <div class="flex items-center border-b-2 border-gray-300 focus-within:border-kawanchat-blue rounded-t-lg bg-white">
+                        <span class="p-3 text-lg text-gray-700">+62</span>
+                        <input type="tel" id="reg-phone-number" placeholder="Nomor Telepon (ex: 812345678)" class="flex-grow p-3 text-lg focus:ring-0 border-none">
+                    </div>
+                </div>
 
-            <!-- CHAT TAB CONTENT -->
-            <div id="chat-tab" class="tab-content active h-full flex flex-col">
-                <div id="messages-container" class="scroll-container flex flex-col p-2 space-y-2 mb-4 bg-gray-50 rounded-lg">
-                    <!-- Messages will be loaded here -->
-                    <div class="text-center text-gray-500 p-4">Memuat pesan...</div>
+                <div id="final-id-display" class="w-full max-w-xs space-y-4 hidden">
+                    <div class="text-lg font-semibold text-kawanchat-blue mt-5 min-h-[40px]"></div>
+                </div>
+
+            </div>
+            <button id="next-registration" class="w-full py-3 bg-kawanchat-blue text-white font-bold rounded-lg shadow-xl mb-4 hover:bg-kawanchat-light-blue transition disabled:opacity-50">
+                Selanjutnya
+            </button>
+        </div>
+
+        <div id="main-app" class="hidden flex-grow flex-col">
+            <header class="header text-white p-4 flex flex-col">
+                <div class="flex justify-between items-center mb-2">
+                    <h1 id="app-title" class="text-xl font-bold">KawanChat</h1>
+                    <div class="flex space-x-4 text-lg">
+                        <i class="fas fa-search"></i>
+                        <i class="fas fa-ellipsis-v"></i>
+                    </div>
+                </div>
+                <p id="user-id-display" class="text-xs text-gray-200"></p>
+            </header>
+
+            <nav class="tab-bar flex justify-between px-2 text-gray-300 shadow-md">
+                <button class="flex-1 py-3 text-sm tab-link active" data-tab="chat">OBROLAN</button>
+                <button class="flex-1 py-3 text-sm tab-link" data-tab="status">STATUS</button>
+                <button class="flex-1 py-3 text-sm tab-link" data-tab="calls">PANGGILAN</button>
+                <button class="flex-1 py-3 text-sm tab-link" data-tab="contacts">KONTAK</button>
+            </nav>
+
+            <main class="flex-grow relative overflow-y-auto">
+
+                <div id="chat-tab" class="tab-content active h-full flex flex-col">
+                    <div id="active-chats-list" class="scroll-container flex flex-col p-4 space-y-2 flex-grow bg-white">
+                        <div class="text-center text-gray-500 p-4">Klik tombol di bawah untuk memulai obrolan baru.</div>
+                    </div>
+                </div>
+
+                <button id="new-chat-button" class="w-14 h-14 bg-kawanchat-blue text-white rounded-full flex items-center justify-center shadow-2xl hover:bg-kawanchat-light-blue transition duration-150">
+                    <i class="fas fa-comment text-2xl"></i>
+                </button>
+                
+                <div id="contacts-tab" class="tab-content hidden h-full flex flex-col p-4 bg-gray-50">
+                    <h2 class="text-xl font-bold mb-4 text-kawanchat-blue">Daftar Kontak</h2>
+                    <div id="contact-list" class="flex flex-col space-y-2 mb-4 scroll-container flex-grow overflow-y-auto">
+                        <p class="text-gray-500 italic p-2">Memuat kontak...</p>
+                    </div>
+                    <div class="p-4 bg-white rounded-lg shadow-lg mt-4">
+                        <h3 class="text-lg font-semibold mb-3">Tambah Kontak Baru</h3>
+                        <input type="text" id="new-contact-id" placeholder="ID Pengguna (User ID) Kontak" class="w-full p-2 mb-2 rounded border border-gray-300 focus:ring-kawanchat-blue focus:border-kawanchat-blue">
+                        <button id="add-contact-button" class="w-full bg-kawanchat-blue text-white py-2 rounded-lg font-semibold hover:bg-kawanchat-light-blue transition duration-150">
+                            <i class="fas fa-user-plus mr-2"></i> Tambah
+                        </button>
+                    </div>
                 </div>
                 
-                <!-- MESSAGE INPUT AREA -->
-                <div class="message-input-area p-3 flex items-center rounded-2xl shadow-inner">
+                <div id="status-tab" class="tab-content hidden text-center p-10 bg-white">
+                    <i class="fas fa-circle-notch text-4xl text-gray-400 mb-4"></i>
+                    <p class="text-gray-600">Fitur Status belum diimplementasikan.</p>
+                </div>
+                <div id="calls-tab" class="tab-content hidden text-center p-10 bg-white">
+                    <i class="fas fa-phone-alt text-4xl text-gray-400 mb-4"></i>
+                    <p class="text-gray-600">Fitur Panggilan belum diimplementasikan.</p>
+                </div>
+            </main>
+            
+            <div id="chat-view" class="hidden absolute top-0 left-0 w-full h-full bg-white flex flex-col">
+                <header id="chat-header" class="header text-white p-3 flex items-center shadow-md">
+                    <button id="back-to-chats" class="mr-3 text-lg"><i class="fas fa-arrow-left"></i></button>
+                    <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center mr-3 text-xl text-kawanchat-blue font-bold">
+                         <i class="fas fa-user"></i>
+                    </div>
+                    <span id="chat-contact-name" class="text-lg font-semibold flex-grow"></span>
+                    <i class="fas fa-ellipsis-v text-lg ml-4"></i>
+                </header>
+                
+                <div id="messages-container" class="scroll-container flex flex-col p-4 space-y-2 flex-grow overflow-y-auto bg-kawanchat-bg">
+                    </div>
+                
+                <div id="chat-message-area" class="p-3 flex items-center border-t border-gray-200">
                     <button id="emoji-button" class="text-xl text-gray-600 mr-2"><i class="far fa-smile"></i></button>
-                    <input type="text" id="message-input" placeholder="Ketik pesan..." class="flex-grow p-3 rounded-full border-none focus:ring-green-500 focus:border-green-500">
-                    <button id="send-button" class="ml-2 w-10 h-10 bg-whatsapp-light-green text-white rounded-full flex items-center justify-center shadow-lg hover:bg-whatsapp-green transition duration-150">
+                    <input type="text" id="message-input" placeholder="Ketik pesan..." class="flex-grow p-3 rounded-full border bg-gray-100 focus:bg-white transition duration-150">
+                    <button id="send-button" class="ml-2 w-10 h-10 bg-kawanchat-blue text-white rounded-full flex items-center justify-center shadow-lg hover:bg-kawanchat-light-blue transition duration-150">
                         <i class="fas fa-paper-plane"></i>
                     </button>
                 </div>
             </div>
 
-            <!-- CONTACTS TAB CONTENT -->
-            <div id="contacts-tab" class="tab-content hidden h-full flex flex-col">
-                <h2 class="text-xl font-bold mb-4 text-whatsapp-green">Daftar Kontak</h2>
-                <div id="contact-list" class="flex flex-col space-y-2 mb-4">
-                    <!-- Contacts will be listed here -->
-                </div>
+        </div>
 
-                <div class="p-4 bg-gray-50 rounded-lg shadow-inner">
-                    <h3 class="text-lg font-semibold mb-3">Tambah Kontak Baru</h3>
-                    <input type="text" id="new-contact-id" placeholder="ID Pengguna (User ID) Kontak" class="w-full p-2 mb-2 rounded border border-gray-300 focus:ring-whatsapp-green focus:border-whatsapp-green">
-                    <button id="add-contact-button" class="w-full bg-whatsapp-green text-white py-2 rounded-lg font-semibold hover:bg-whatsapp-light-green transition duration-150">
-                        <i class="fas fa-user-plus mr-2"></i> Tambah
-                    </button>
-                </div>
-            </div>
-            
-            <!-- STATUS, CALLS, COMMUNITY (Placeholder Content) -->
-            <div id="status-tab" class="tab-content hidden text-center p-10">
-                <i class="fas fa-circle-notch text-4xl text-gray-400 mb-4"></i>
-                <p class="text-gray-600">Fitur Status belum diimplementasikan.</p>
-            </div>
-            <div id="calls-tab" class="tab-content hidden text-center p-10">
-                <i class="fas fa-phone-alt text-4xl text-gray-400 mb-4"></i>
-                <p class="text-gray-600">Fitur Panggilan belum diimplementasikan.</p>
-            </div>
-            
-        </main>
     </div>
 
-    <!-- JAVASCRIPT START -->
     <script type="module">
         // --- Firebase Imports ---
-        // Menggunakan CDN versi 12.4.0 untuk konsistensi dengan konfigurasi Anda
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
-        import { getFirestore, collection, query, where, onSnapshot, addDoc, serverTimestamp, updateDoc, doc, getDocs } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, addDoc, serverTimestamp, updateDoc, doc, getDocs, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 
-        // --- Firebase Configuration (Disediakan oleh Pengguna) ---
+        // --- Firebase Configuration ---
         const firebaseConfig = {
+            // ... (gunakan config yang sama, saya hapus untuk singkat)
             apiKey: "AIzaSyD9tO94PdmXnqSH4cMVLPbgcEyY1J266mQ",
             authDomain: "whatsapp-clone-web-9418e.firebaseapp.com",
             projectId: "whatsapp-clone-web-9418e",
@@ -171,69 +264,396 @@
         
         // --- Global State ---
         let currentUserId = null;
-        let currentChatContact = null; // null untuk Public Chat, string (ID) untuk Private Chat
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; // Wajib sesuai pedoman
+        let currentUserName = null;
+        let currentChatContact = null; // ID kontak yang sedang aktif
+        let currentChatContactName = null; // Nama kontak yang sedang aktif
+        let unsubscribeMessages = null; // Untuk menghentikan listener pesan sebelumnya
+        const appId = 'kawanchat-v1'; // ID Aplikasi Unik
         
-        // --- DOM Elements ---
-        const messagesContainer = document.getElementById('messages-container');
-        const messageInput = document.getElementById('message-input');
-        const sendButton = document.getElementById('send-button');
-        const userIdDisplay = document.getElementById('user-id-display');
+        // --- DOM Elements (Stages) ---
+        const welcomeStage = document.getElementById('welcome-stage');
+        const registrationStage = document.getElementById('registration-stage');
+        const mainApp = document.getElementById('main-app');
+
+        // Stage 1
+        const sapaanContent = document.getElementById('sapaan-content');
+        const nextWelcomeButton = document.getElementById('next-welcome');
+        const tosAgreement = document.getElementById('tos-agreement');
+        const agreeTos = document.getElementById('agree-tos');
+        
+        // Stage 2
+        const typingTextContainer = registrationStage.querySelector('.typing-text-container');
+        const nextRegistrationButton = document.getElementById('next-registration');
+        const inputNameArea = document.getElementById('input-name-area');
+        const regFirstName = document.getElementById('reg-first-name');
+        const regLastName = document.getElementById('reg-last-name');
+        const regGender = document.getElementById('reg-gender');
+        const nameFeedback = document.getElementById('name-feedback');
+        const inputPhoneArea = document.getElementById('input-phone-area');
+        const regPhoneNumber = document.getElementById('reg-phone-number');
+        const finalIdDisplay = document.getElementById('final-id-display');
+        
+        // Main App
         const appTitle = document.getElementById('app-title');
+        const userIdDisplay = document.getElementById('user-id-display');
         const tabLinks = document.querySelectorAll('.tab-link');
         const tabContents = document.querySelectorAll('.tab-content');
+        const activeChatsList = document.getElementById('active-chats-list');
         const contactList = document.getElementById('contact-list');
+        const newChatButton = document.getElementById('new-chat-button');
         const newContactIdInput = document.getElementById('new-contact-id');
         const addContactButton = document.getElementById('add-contact-button');
 
+        // Chat View
+        const chatView = document.getElementById('chat-view');
+        const backToChats = document.getElementById('back-to-chats');
+        const chatContactName = document.getElementById('chat-contact-name');
+        const messagesContainer = document.getElementById('messages-container');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        const chatMessageArea = document.getElementById('chat-message-area');
+
         // --- Utility Functions ---
 
-        /**
-         * Mengkonversi timestamp Firestore menjadi string waktu lokal (HH:MM).
-         * @param {Object} timestamp - Objek Firestore Timestamp.
-         * @returns {string} Waktu yang diformat.
-         */
+        /** Menampilkan teks dengan efek mengetik */
+        const typeText = (element, text, callback = () => {}) => {
+            element.innerHTML = '';
+            let i = 0;
+            const speed = 30; // Kecepatan mengetik
+            const timer = setInterval(() => {
+                if (i < text.length) {
+                    element.innerHTML += text.charAt(i);
+                    i++;
+                } else {
+                    clearInterval(timer);
+                    callback();
+                }
+            }, speed);
+        };
+
         const formatTime = (timestamp) => {
             if (!timestamp) return '...';
             const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
             return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
         };
+        
+        /** Menghapus listener pesan yang sedang berjalan */
+        const unsubscribePreviousChat = () => {
+            if (unsubscribeMessages) {
+                unsubscribeMessages();
+                unsubscribeMessages = null;
+            }
+        };
 
-        /**
-         * Merender pesan di kontainer chat.
-         * @param {Array<Object>} messages - Daftar objek pesan.
-         */
+        /** Mengubah stage tampilan */
+        const setStage = (stageId) => {
+            [welcomeStage, registrationStage, mainApp].forEach(stage => {
+                stage.classList.remove('active');
+                stage.classList.add('hidden');
+            });
+            const target = document.getElementById(stageId);
+            if (target) {
+                target.classList.add('active');
+                target.classList.remove('hidden');
+            }
+        };
+
+        // --- STAGE 1 LOGIC (Welcome) ---
+
+        let sapaanStep = 0;
+        const sapaanTexts = [
+            "Selamat datang di KawanChat! 👋",
+            "Di sini kamu bisa chat dengan teman lama maupun teman baru. Serasa gampang antar negara! 🌐",
+            "KawanChat adalah tempat yang aman untuk berbagi cerita. 🔒",
+            "Persahabatan sejati dimulai dari pesan sederhana. Mari kita mulai! 💬"
+        ];
+
+        const nextSapaan = () => {
+            nextWelcomeButton.disabled = true;
+            if (sapaanStep < sapaanTexts.length) {
+                typeText(sapaanContent, sapaanTexts[sapaanStep], () => {
+                    sapaanStep++;
+                    nextWelcomeButton.disabled = false;
+                });
+            } else if (sapaanStep === sapaanTexts.length) {
+                // Tahap Persyaratan
+                typeText(sapaanContent, "Satu langkah lagi! Silakan setujui persyaratan kami untuk melanjutkan:", () => {
+                    tosAgreement.classList.remove('hidden');
+                    nextWelcomeButton.disabled = !agreeTos.checked;
+                    sapaanStep++;
+                });
+            } else {
+                setStage('registration-stage');
+                startRegistrationStage();
+            }
+        };
+
+        agreeTos.addEventListener('change', () => {
+            nextWelcomeButton.disabled = !agreeTos.checked;
+        });
+
+        // --- STAGE 2 LOGIC (Registration) ---
+
+        let regStep = 1;
+
+        const startRegistrationStage = async () => {
+            nextRegistrationButton.disabled = true;
+            await regStep1_Name();
+        };
+
+        const regStep1_Name = async () => {
+            inputNameArea.classList.add('hidden');
+            inputPhoneArea.classList.add('hidden');
+            
+            await new Promise(resolve => {
+                typeText(typingTextContainer, "Kita belum kenalan nih! Kenalan dulu yuk! 🙋", resolve);
+            });
+
+            inputNameArea.classList.remove('hidden');
+            nextRegistrationButton.disabled = true;
+            regFirstName.focus();
+            regStep = 1;
+
+            regFirstName.addEventListener('input', () => {
+                const name = regFirstName.value.trim();
+                if (name.length > 0) {
+                    nameFeedback.textContent = "Hmm kalo nama belakang boleh tau? (opsional)";
+                    nextRegistrationButton.disabled = false;
+                } else {
+                    nameFeedback.textContent = "";
+                    nextRegistrationButton.disabled = true;
+                }
+            }, { once: true });
+        };
+
+        const regStep2_Phone = async () => {
+            inputNameArea.classList.add('hidden');
+            nextRegistrationButton.disabled = true;
+
+            const userName = regFirstName.value.trim();
+            const lastName = regLastName.value.trim() || '';
+            currentUserName = userName + (lastName ? ` ${lastName}` : '');
+            
+            await new Promise(resolve => {
+                typeText(typingTextContainer, `Yey kita udh kenalan! Hi ${userName} 🙌`, resolve);
+            });
+            await new Promise(resolve => setTimeout(resolve, 1500)); // Jeda animasi
+            
+            await new Promise(resolve => {
+                typeText(typingTextContainer, "Hmm boleh minta nomor mu untuk masuk ke dalam KawanChat? 📞", resolve);
+            });
+
+            inputPhoneArea.classList.remove('hidden');
+            regStep = 2;
+
+            const phoneIcon = inputPhoneArea.querySelector('p');
+            regPhoneNumber.addEventListener('focus', () => phoneIcon.textContent = '🤦‍♂️');
+            regPhoneNumber.addEventListener('blur', () => phoneIcon.textContent = '🙍‍♂️');
+            regPhoneNumber.addEventListener('input', () => {
+                nextRegistrationButton.disabled = regPhoneNumber.value.length < 8; // Minimal 8 digit
+            });
+        };
+
+        const regStep3_Finalize = async () => {
+            inputPhoneArea.classList.add('hidden');
+            nextRegistrationButton.classList.add('hidden');
+
+            const fullPhoneNumber = '62' + regPhoneNumber.value.replace(/^0+|[^0-9]/g, ''); // Ambil nomor dari input
+
+            await new Promise(resolve => {
+                typeText(typingTextContainer, `Nomormu cantik banget ✨ kita ambil dari depan nomor mu yah!`, resolve);
+            });
+            await new Promise(resolve => setTimeout(resolve, 1500)); 
+
+            const mockID = fullPhoneNumber.padEnd(11, '0'); // Simulasikan ID 11 digit
+
+            await new Promise(resolve => {
+                typeText(typingTextContainer, `Oke nomor depan mu ${mockID.substring(0, 5)} kita tambahin jadi ${mockID}!`, resolve);
+            });
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            const finalID = mockID.substring(mockID.length - 6); // Ambil 6 digit terakhir sebagai ID internal
+            
+            await new Promise(resolve => {
+                typeText(typingTextContainer, `Yey! ID mu udh di buat! Ini dia: ${finalID} 🎉`, resolve);
+            });
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            // Lakukan Otentikasi dan Update Profile
+            await signInAndSetProfile(currentUserName, finalID);
+
+            await new Promise(resolve => {
+                typeText(typingTextContainer, `Selamat datang di KawanChat, ${currentUserName}!`, resolve);
+            });
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            setStage('main-app');
+            initializeMainApp();
+        };
+
+        const signInAndSetProfile = async (displayName, chatID) => {
+            let userCredential = await signInAnonymously(auth);
+            const user = userCredential.user;
+            await updateProfile(user, {
+                displayName: displayName
+            });
+            
+            // Simpan data user tambahan di Firestore (Opsional tapi direkomendasikan)
+            const userDocRef = doc(db, `/artifacts/${appId}/users/${user.uid}`);
+            await setDoc(userDocRef, {
+                name: displayName,
+                id: chatID,
+                phone: regPhoneNumber.value,
+                gender: regGender.value,
+                createdAt: serverTimestamp()
+            }, { merge: true });
+            
+            currentUserId = user.uid;
+            currentUserName = displayName;
+            
+        };
+
+        nextRegistrationButton.addEventListener('click', async () => {
+            if (regStep === 1) {
+                if (regFirstName.value.trim()) {
+                    await regStep2_Phone();
+                }
+            } else if (regStep === 2) {
+                if (regPhoneNumber.value.length >= 8) {
+                    await regStep3_Finalize();
+                }
+            }
+        });
+
+        // --- MAIN APP LOGIC (Chat) ---
+
+        const initializeMainApp = () => {
+            // Tampilkan UI utama
+            mainApp.classList.remove('hidden');
+            userIdDisplay.textContent = `ID Anda: ${currentUserId.substring(0, 8)}`; // Tampilkan UID Firebase
+            
+            // Panggil listener utama
+            loadContacts();
+            
+            // Set default tab ke CHAT
+            document.querySelector('.tab-link[data-tab="chat"]').click();
+        };
+
+        /** Memuat dan menampilkan daftar kontak pengguna untuk tab Kontak dan Chat List */
+        const loadContacts = async () => {
+            if (!currentUserId) return;
+            
+            const contactsPath = `/artifacts/${appId}/users/${currentUserId}/contacts`;
+            const q = collection(db, contactsPath);
+            
+            try {
+                const querySnapshot = await getDocs(q);
+                
+                // 1. Render Contact List (Di tab KONTAK)
+                contactList.innerHTML = '';
+                if (querySnapshot.empty) {
+                    contactList.innerHTML = `<p class="text-gray-500 italic p-2">Belum ada kontak. Tambahkan ID teman Anda di bawah.</p>`;
+                }
+
+                // 2. Render Active Chats List (Di tab OBROLAN)
+                activeChatsList.innerHTML = '';
+                if (querySnapshot.empty) {
+                    activeChatsList.innerHTML = `<div class="text-center text-gray-500 p-4">Klik tombol di bawah untuk memulai obrolan baru.</div>`;
+                }
+
+                querySnapshot.forEach((doc) => {
+                    const contactId = doc.id;
+                    const contactData = doc.data();
+                    const contactName = contactData.name || contactId.substring(0, 8);
+
+                    // Buat item untuk tab KONTAK
+                    const contactItem = document.createElement('div');
+                    contactItem.className = 'contact-item flex items-center p-3 rounded-lg bg-white shadow-sm border border-gray-100';
+                    contactItem.innerHTML = `
+                        <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3 text-lg text-kawanchat-blue">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="flex-grow">
+                            <p class="font-semibold text-gray-800">${contactName}</p>
+                            <p class="text-xs text-gray-500 truncate">ID: ${contactId}</p>
+                        </div>
+                    `;
+                    contactItem.addEventListener('click', () => startPrivateChat(contactId, contactName));
+                    contactList.appendChild(contactItem);
+
+                    // Duplikat item untuk tab OBROLAN
+                    const chatItem = contactItem.cloneNode(true);
+                    chatItem.addEventListener('click', () => startPrivateChat(contactId, contactName));
+                    activeChatsList.appendChild(chatItem);
+                });
+                
+            } catch (error) {
+                console.error("Gagal memuat kontak:", error);
+                contactList.innerHTML = `<p class="text-red-500 p-2">Error memuat kontak.</p>`;
+                activeChatsList.innerHTML = `<p class="text-red-500 p-2">Error memuat daftar obrolan.</p>`;
+            }
+        };
+
+        /** Memulai sesi chat privat dan menampilkan Chat View */
+        const startPrivateChat = (contactId, contactName) => {
+            currentChatContact = contactId;
+            currentChatContactName = contactName;
+            
+            // 1. Tampilkan Chat View dan sembunyikan tampilan utama
+            document.querySelector('#main-app > main').classList.add('hidden');
+            newChatButton.classList.add('hidden');
+            chatView.classList.remove('hidden');
+            chatMessageArea.style.display = 'flex'; // Tampilkan input pesan
+
+            // 2. Update Header Chat
+            chatContactName.textContent = contactName;
+            
+            // 3. Mulai listener untuk chat privat
+            unsubscribePreviousChat(); // Hentikan listener sebelumnya (jika ada)
+            unsubscribeMessages = listenForMessages(contactId);
+        };
+        
+        /** Kembali ke tampilan tab Obrolan utama */
+        backToChats.addEventListener('click', () => {
+            chatView.classList.add('hidden');
+            chatMessageArea.style.display = 'none'; // Sembunyikan input pesan
+            document.querySelector('#main-app > main').classList.remove('hidden');
+            newChatButton.classList.remove('hidden');
+            
+            unsubscribePreviousChat(); // Hentikan listener chat privat
+            currentChatContact = null;
+            currentChatContactName = null;
+
+            // Pastikan tab OBROLAN aktif
+            document.querySelector('.tab-link[data-tab="chat"]').click();
+        });
+
         const renderMessages = (messages) => {
-            messagesContainer.innerHTML = ''; // Kosongkan kontainer
+            messagesContainer.innerHTML = ''; 
             if (messages.length === 0) {
-                messagesContainer.innerHTML = `<div class="text-center text-gray-500 p-4">Tidak ada pesan. Mulailah chat!</div>`;
+                messagesContainer.innerHTML = `<div class="text-center text-gray-500 p-4">Awal dari obrolan dengan ${currentChatContactName}.</div>`;
                 return;
             }
 
             messages.forEach(msg => {
                 const isSentByMe = msg.senderId === currentUserId;
                 const alignmentClass = isSentByMe ? 'sent' : 'received';
-                const displayName = isSentByMe ? 'Anda' : (msg.senderName || msg.senderId.substring(0, 8)); // Tampilkan 8 digit ID
-                const nameColor = isSentByMe ? 'text-gray-700' : 'text-blue-600';
+                const displayName = isSentByMe ? currentUserName.split(' ')[0] : currentChatContactName.split(' ')[0]; // Nama depan saja
+                const nameColor = isSentByMe ? 'text-gray-700' : 'text-kawanchat-blue';
 
                 const messageDiv = document.createElement('div');
                 messageDiv.className = `chat-bubble ${alignmentClass} shadow-md flex flex-col`;
 
-                // Tampilkan nama pengirim jika bukan pesan saya
-                if (!isSentByMe || currentChatContact) {
-                    const nameSpan = document.createElement('span');
-                    nameSpan.className = `text-xs font-semibold mb-1 ${nameColor}`;
-                    nameSpan.textContent = displayName;
-                    messageDiv.appendChild(nameSpan);
-                }
+                const nameSpan = document.createElement('span');
+                nameSpan.className = `text-xs font-semibold mb-1 ${nameColor}`;
+                nameSpan.textContent = displayName;
+                messageDiv.appendChild(nameSpan);
 
-                // Konten pesan
                 const contentSpan = document.createElement('span');
                 contentSpan.className = 'text-sm text-black';
                 contentSpan.textContent = msg.text;
                 messageDiv.appendChild(contentSpan);
 
-                // Waktu pesan
                 const timeSpan = document.createElement('span');
                 timeSpan.className = 'text-xs text-gray-500 self-end mt-1 ml-4';
                 timeSpan.textContent = formatTime(msg.timestamp);
@@ -246,74 +666,18 @@
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         };
 
-        /**
-         * Mengirim pesan ke koleksi yang sesuai (Public atau Private).
-         * @param {string} text - Teks pesan.
-         */
-        const sendMessage = async (text) => {
-            if (!text.trim() || !currentUserId) return;
+        /** Menyiapkan listener real-time untuk pesan (Hanya Private). */
+        const listenForMessages = (contactId) => {
+            const chatRoomId = [currentUserId, contactId].sort().join('_');
+            const collectionPath = `/artifacts/${appId}/private/chats/${chatRoomId}/messages`;
+            const messagesQuery = collection(db, collectionPath);
             
-            let messageRef;
-            
-            try {
-                const messageData = {
-                    text: text.trim(),
-                    timestamp: serverTimestamp(),
-                    senderId: currentUserId,
-                    senderName: currentUserId.substring(0, 8), // Nama singkat
-                    type: 'text'
-                };
-                
-                if (currentChatContact) {
-                    // PRIVATE CHAT
-                    // Koleksi diurutkan agar konsisten (misalnya: A_B atau B_A)
-                    const chatRoomId = [currentUserId, currentChatContact].sort().join('_');
-                    const privateChatPath = `/artifacts/${appId}/private/chats/${chatRoomId}/messages`;
-                    messageRef = collection(db, privateChatPath);
-
-                } else {
-                    // PUBLIC CHAT
-                    const publicChatPath = `/artifacts/${appId}/public/data/global_chat`;
-                    messageRef = collection(db, publicChatPath);
-                }
-
-                await addDoc(messageRef, messageData);
-                messageInput.value = ''; // Kosongkan input
-            } catch (error) {
-                console.error("Gagal mengirim pesan: ", error);
-            }
-        };
-        
-        /**
-         * Menyiapkan listener real-time untuk pesan (Public atau Private).
-         */
-        const listenForMessages = () => {
-            let messagesQuery;
-            let collectionPath;
-            
-            if (currentChatContact) {
-                // PRIVATE CHAT QUERY
-                const chatRoomId = [currentUserId, currentChatContact].sort().join('_');
-                collectionPath = `/artifacts/${appId}/private/chats/${chatRoomId}/messages`;
-            } else {
-                // PUBLIC CHAT QUERY
-                collectionPath = `/artifacts/${appId}/public/data/global_chat`;
-            }
-            
-            // Mengambil 50 pesan terakhir (tidak menggunakan orderBy untuk menghindari masalah index, diurutkan di client)
-            messagesQuery = collection(db, collectionPath); 
-
-            // Hapus listener lama jika ada (tidak diperlukan secara eksplisit di sini, karena onSnapshot mengembalikan fungsi unsubscribe)
-            // Namun, di aplikasi yang lebih besar, fungsi unsubscribe harus digunakan.
-
-            // Mulai listener baru
             return onSnapshot(messagesQuery, (snapshot) => {
                 const messages = [];
                 snapshot.forEach(doc => {
                     messages.push({ id: doc.id, ...doc.data() });
                 });
                 
-                // Urutkan di client side berdasarkan timestamp karena menghindari orderBy di query
                 messages.sort((a, b) => (a.timestamp?.toMillis() || 0) - (b.timestamp?.toMillis() || 0));
                 
                 renderMessages(messages);
@@ -322,178 +686,140 @@
                 messagesContainer.innerHTML = `<div class="text-center text-red-500 p-4">Gagal memuat pesan. Cek konsol.</div>`;
             });
         };
-        
-        /**
-         * Memuat dan menampilkan daftar kontak pengguna.
-         */
-        const loadContacts = async () => {
-            contactList.innerHTML = '';
-            if (!currentUserId) return;
+
+        const sendMessage = async (text) => {
+            if (!text.trim() || !currentUserId || !currentChatContact) return;
             
             try {
-                const contactsPath = `/artifacts/${appId}/users/${currentUserId}/contacts`;
-                const q = collection(db, contactsPath);
-                const querySnapshot = await getDocs(q);
-                
-                if (querySnapshot.empty) {
-                    contactList.innerHTML = `<p class="text-gray-500 italic p-2">Belum ada kontak. Tambahkan ID teman Anda di bawah.</p>`;
-                    return;
-                }
+                const chatRoomId = [currentUserId, currentChatContact].sort().join('_');
+                const privateChatPath = `/artifacts/${appId}/private/chats/${chatRoomId}/messages`;
+                const messageRef = collection(db, privateChatPath);
 
-                querySnapshot.forEach((doc) => {
-                    const contactData = doc.data();
-                    const contactId = doc.id;
-                    
-                    const contactItem = document.createElement('div');
-                    contactItem.className = 'contact-item flex items-center p-3 rounded-lg bg-white shadow-sm';
-                    contactItem.setAttribute('data-contact-id', contactId);
-                    
-                    contactItem.innerHTML = `
-                        <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3 text-lg text-whatsapp-green">
-                            <i class="fas fa-user"></i>
-                        </div>
-                        <div class="flex-grow">
-                            <p class="font-semibold text-gray-800">Kontak: ${contactData.name || contactId.substring(0, 8)}</p>
-                            <p class="text-xs text-gray-500 truncate">ID: ${contactId}</p>
-                        </div>
-                    `;
-                    
-                    contactItem.addEventListener('click', () => startPrivateChat(contactId, contactData.name));
-                    contactList.appendChild(contactItem);
-                });
-                
+                const messageData = {
+                    text: text.trim(),
+                    timestamp: serverTimestamp(),
+                    senderId: currentUserId,
+                    senderName: currentUserName,
+                    type: 'text'
+                };
+
+                await addDoc(messageRef, messageData);
+                messageInput.value = ''; 
             } catch (error) {
-                console.error("Gagal memuat kontak:", error);
-                contactList.innerHTML = `<p class="text-red-500 p-2">Error memuat kontak.</p>`;
+                console.error("Gagal mengirim pesan: ", error);
             }
         };
 
-        /**
-         * Memulai sesi chat privat dengan kontak.
-         * @param {string} contactId - ID pengguna kontak.
-         * @param {string} contactName - Nama kontak.
-         */
-        const startPrivateChat = (contactId, contactName) => {
-            currentChatContact = contactId;
-            appTitle.textContent = `Chat dengan ${contactName || contactId.substring(0, 8)}`;
-            
-            // Pindah ke tab chat
-            document.querySelector('.tab-link[data-tab="chat"]').click(); 
-            
-            // Mulai listener untuk chat privat
-            listenForMessages();
-        };
-
-        /**
-         * Menambahkan ID pengguna ke daftar kontak.
-         */
         const addContact = async () => {
             const newContactId = newContactIdInput.value.trim();
             if (!newContactId || !currentUserId) return;
 
-            if (newContactId === currentUserId) {
-                alert('Tidak bisa menambahkan diri sendiri sebagai kontak!');
-                return;
+            if (newContactId === currentUserId.substring(0, 8)) {
+                 alert('Tidak bisa menambahkan ID Anda sendiri sebagai kontak!');
+                 return;
             }
-
+            
             try {
+                 // Di sini, kita asumsikan ID yang dimasukkan adalah Firebase UID untuk kemudahan.
+                 // Dalam aplikasi nyata, Anda akan mencari user berdasarkan ID Chat (misal: 452632).
+                 
                 const contactDocPath = `/artifacts/${appId}/users/${currentUserId}/contacts/${newContactId}`;
-                await updateDoc(doc(db, contactDocPath), { 
-                    name: newContactId.substring(0, 8), // Default name
+                await setDoc(doc(db, contactDocPath), { 
+                    name: newContactId.substring(0, 8), 
                     addedAt: serverTimestamp() 
                 }, { merge: true });
 
                 newContactIdInput.value = '';
-                await loadContacts(); // Refresh daftar kontak
-                alert('Kontak berhasil ditambahkan!');
+                await loadContacts(); 
+                alert(`Kontak ${newContactId} berhasil ditambahkan!`);
             } catch (error) {
                 console.error("Gagal menambahkan kontak: ", error);
                 alert('Gagal menambahkan kontak. Pastikan ID benar.');
             }
         };
-        
-        // --- Initialization and Event Handlers ---
-        
-        /**
-         * Menginisialisasi otentikasi dan menyiapkan listener.
-         */
-        const initializeAppAndListeners = () => {
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    currentUserId = user.uid;
-                    userIdDisplay.textContent = `ID Anda: ${currentUserId}`;
-                    
-                    // Set up initial listeners
-                    listenForMessages(); // Mulai Public Chat secara default
-                    loadContacts();
-                } else {
-                    // Coba sign in secara anonim jika belum ada user
-                    signInAnonymously(auth)
-                        .catch((error) => {
-                            console.error("Gagal sign in anonim:", error);
-                            userIdDisplay.textContent = "Gagal terhubung ke server.";
-                        });
-                }
-            });
-            
-            // Event listener untuk tombol kirim
-            sendButton.addEventListener('click', () => sendMessage(messageInput.value));
-            
-            // Event listener untuk tombol Enter di input
-            messageInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    sendMessage(messageInput.value);
-                }
-            });
-            
-            // Event listener untuk tombol tambah kontak
-            addContactButton.addEventListener('click', addContact);
 
-            // Tab navigation handler
-            tabLinks.forEach(tab => {
-                tab.addEventListener('click', (e) => {
-                    const tabId = tab.getAttribute('data-tab');
-                    
-                    // 1. Update active tab styling
-                    tabLinks.forEach(t => t.classList.remove('active'));
-                    tab.classList.add('active');
-                    
-                    // 2. Update active content
-                    tabContents.forEach(content => {
-                        content.classList.add('hidden');
-                        content.classList.remove('active');
-                        if (content.id === `${tabId}-tab`) {
-                            content.classList.remove('hidden');
-                            content.classList.add('active');
-                        }
-                    });
-                    
-                    // 3. LOGIKA UNTUK CHAT: Reset ke public chat/load kontak
-                    if (tabId === 'chat') {
-                        // Reset state chat ke Public/Group Chat jika tidak ada chat privat yang sedang aktif
-                        if (currentChatContact) {
-                            // Jika ada chat privat aktif, biarkan
-                        } else {
-                            appTitle.textContent = 'WhatsApp';
-                            listenForMessages(); 
-                        }
-                    } else if (tabId === 'contacts') {
-                        loadContacts();
-                        // Reset judul kembali ke default agar tidak menampilkan nama kontak
-                        appTitle.textContent = 'WhatsApp';
-                        currentChatContact = null; // Pastikan chat direset saat pindah ke kontak
-                    } else {
-                        appTitle.textContent = 'WhatsApp';
-                        currentChatContact = null; // Pastikan chat direset saat pindah ke tab lain
+        // --- Event Handlers (Main App) ---
+        
+        sendButton.addEventListener('click', () => sendMessage(messageInput.value));
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage(messageInput.value);
+            }
+        });
+        addContactButton.addEventListener('click', addContact);
+        newChatButton.addEventListener('click', () => {
+            // Pindah ke tab Kontak untuk memilih/menambah kontak baru
+            document.querySelector('.tab-link[data-tab="contacts"]').click();
+        });
+
+        tabLinks.forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                const tabId = tab.getAttribute('data-tab');
+                
+                // Update active tab styling
+                tabLinks.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                // Update active content
+                tabContents.forEach(content => {
+                    content.classList.add('hidden');
+                    if (content.id === `${tabId}-tab`) {
+                        content.classList.remove('hidden');
                     }
                 });
+                
+                // Sembunyikan floating button saat di tab selain OBROLAN
+                if (tabId === 'chat') {
+                    newChatButton.classList.remove('hidden');
+                } else {
+                    newChatButton.classList.add('hidden');
+                }
+                
+                // Load kontak saat masuk ke tab kontak
+                if (tabId === 'contacts') {
+                    loadContacts();
+                }
             });
-        };
+        });
 
-        // Mulai aplikasi
-        initializeAppAndListeners();
+        // --- INITIALIZATION ---
         
+        // Coba otentikasi
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // User sudah terautentikasi (mungkin dari sesi sebelumnya)
+                const userDocRef = doc(db, `/artifacts/${appId}/users/${user.uid}`);
+                const userDoc = await getDoc(userDocRef);
+
+                if (userDoc.exists()) {
+                    // Data registrasi ditemukan, langsung ke Main App
+                    currentUserId = user.uid;
+                    currentUserName = user.displayName || userDoc.data().name;
+                    setStage('main-app');
+                    initializeMainApp();
+                } else {
+                    // User terautentikasi anonim, tapi belum menyelesaikan registrasi
+                    // Force ke welcome stage
+                    setStage('welcome-stage');
+                    nextSapaan(); // Mulai sapaan
+                }
+            } else {
+                // Belum ada user, mulai dari tahap sign in anonim dan sapaan
+                // Melakukan sign in anonim agar mendapat UID
+                signInAnonymously(auth).then(() => {
+                    setStage('welcome-stage');
+                    nextSapaan(); // Mulai sapaan
+                }).catch(error => {
+                    console.error("Gagal memulai sesi anonim:", error);
+                    sapaanContent.textContent = "Error: Gagal terhubung ke server. Cek konsol.";
+                    nextWelcomeButton.disabled = true;
+                });
+            }
+        });
+
+        // Start welcome flow
+        nextWelcomeButton.addEventListener('click', nextSapaan);
+
     </script>
-    <!-- JAVASCRIPT END -->
 </body>
 </html>
