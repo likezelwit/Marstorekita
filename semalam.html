@@ -1,602 +1,1100 @@
 <!DOCTYPE html>
 <html lang="id">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>KawanChat — Deluxe</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
-  <style>
-    :root{
-      --kc-green: #25D366;
-      --kc-dark: #075E32;
-      --kc-light: #dcf8c6;
-      --kc-bg: #f0f4f2;
-    }
-    body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial; background:var(--kc-bg); margin:0; display:flex; align-items:center; justify-content:center; min-height:100vh;}
-    .app{width:100%;max-width:540px;height:100vh;background:white;border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.12);overflow:hidden;display:flex;flex-direction:column;position:relative;}
-    header.app-header{background:var(--kc-dark);color:white;padding:14px;display:flex;justify-content:space-between;align-items:center;}
-    .tabs{display:flex;background:var(--kc-green);color:#053618}
-    .tabs button{flex:1;padding:12px;border:none;background:transparent;color:rgba(0,0,0,.6);font-weight:600}
-    .tabs button.active{background:rgba(255,255,255,.08);color:white;border-bottom:3px solid rgba(255,255,255,.9)}
-    /* stages */
-    .stage{display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;height:100%}
-    .stage.active{display:flex}
-    .card{background:white;border-radius:12px;padding:20px;box-shadow:0 8px 24px rgba(5,94,50,.08);max-width:460px;width:90%}
-    .typing{min-height:48px}
-    .flex-grow-scroll{flex:1;display:flex;flex-direction:column;min-height:0}
-    .scroll{overflow:auto}
-    .chat-bubble{max-width:78%;padding:10px 14px;border-radius:16px;margin-bottom:8px;word-wrap:break-word}
-    .sent{background:var(--kc-light);align-self:flex-end;border-bottom-right-radius:4px}
-    .recv{background:white;border:1px solid #eee;align-self:flex-start;border-bottom-left-radius:4px}
-    #fab-add{position:absolute;right:18px;bottom:18px;z-index:40;display:none}
-    .notif{position:fixed;right:20px;bottom:20px;background:#16a34a;color:white;padding:10px 14px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);z-index:60}
-    .muted{color:#6b7280}
-    .input-pill{border-radius:999px;padding:10px 14px;border:1px solid #e5e7eb}
-    .btn-green{background:var(--kc-dark);color:white;padding:8px 12px;border-radius:10px}
-  </style>
-</head>
-<body>
-  <div class="app" id="app">
-    <!-- LOADING -->
-    <div id="loading-stage" class="stage active">
-      <div class="card text-center">
-        <div class="mb-4"><i class="fas fa-spinner fa-spin text-3xl" style="color:var(--kc-dark)"></i></div>
-        <div class="text-gray-600">Memuat KawanChat...</div>
-      </div>
-    </div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Robux Top Up - Platform Resmi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&display=swap");
 
-    <!-- WELCOME (full-screen + card chat style) -->
-    <div id="welcome-stage" class="stage">
-      <div class="card text-center">
-        <h2 class="text-2xl font-bold text-kc" style="color:var(--kc-dark)">👋 Selamat datang di KawanChat</h2>
-        <div id="sapaan-content" class="typing text-lg text-gray-700 mt-4 mb-4"> </div>
-        <div id="tos" class="hidden text-left bg-gray-50 p-3 rounded mb-3">
-          <label class="flex items-center space-x-2">
-            <input id="agree-tos" type="checkbox" />
-            <span class="text-sm muted">Saya setuju Persyaratan & Ketentuan KawanChat.</span>
-          </label>
-        </div>
-        <div class="mt-3">
-          <button id="welcome-next" class="btn-green" disabled>Lanjut</button>
-        </div>
-      </div>
-    </div>
+      :root {
+        --roblox-red: #ff6b6b;
+        --roblox-blue: #0084ff;
+        --roblox-yellow: #ffd93d;
+        --roblox-green: #6bcf7f;
+        --roblox-purple: #a78bfa;
+      }
 
-    <!-- REGISTRATION -->
-    <div id="registration-stage" class="stage">
-      <div class="card">
-        <div id="reg-typing" class="typing text-xl font-bold text-gray-800 mb-4"></div>
+      body {
+        font-family: "Fredoka", sans-serif;
+        background-color: #f8f9fa;
+      }
 
-        <div id="name-area" class="hidden space-y-3">
-          <input id="reg-first" placeholder="Nama Depan" class="input-pill w-full" />
-          <div id="name-feedback" class="text-sm muted min-h-[20px]"> </div>
-          <input id="reg-last" placeholder="Nama Belakang (Opsional)" class="input-pill w-full" />
-          <select id="reg-gender" class="input-pill w-full">
-            <option value="">Pilih Jenis Kelamin</option>
-            <option value="L">Laki-laki</option>
-            <option value="P">Perempuan</option>
-            <option value="O">Lainnya</option>
-          </select>
-        </div>
+      .roblox-gradient {
+        background: linear-gradient(
+          135deg,
+          var(--roblox-red) 0%,
+          var(--roblox-blue) 100%
+        );
+      }
 
-        <div id="phone-area" class="hidden space-y-3">
-          <div class="flex items-center">
-            <div id="phone-emoji" class="text-2xl mr-3">🙍‍♂️</div>
-            <div class="flex-1">
-              <div class="flex border rounded overflow-hidden">
-                <div class="px-3 flex items-center bg-white">+62</div>
-                <input id="reg-phone" placeholder="812345678" class="flex-1 p-3 border-none outline-none" />
-              </div>
-              <div class="text-sm muted mt-1">Contoh: 812345678 (tanpa 0 di depan)</div>
+      .roblox-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .roblox-card::before {
+        content: "";
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(
+          45deg,
+          var(--roblox-red),
+          var(--roblox-blue),
+          var(--roblox-yellow),
+          var(--roblox-green)
+        );
+        border-radius: 20px;
+        opacity: 0;
+        z-index: -1;
+        transition: opacity 0.3s ease;
+      }
+
+      .roblox-card:hover::before {
+        opacity: 1;
+      }
+
+      .roblox-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .roblox-button {
+        background: var(--roblox-red);
+        color: white;
+        border-radius: 50px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .roblox-button::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+      }
+
+      .roblox-button:hover::after {
+        width: 300px;
+        height: 300px;
+      }
+
+      .roblox-button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+      }
+
+      /* Style untuk tombol disabled */
+      .roblox-button:disabled {
+        background: #cccccc;
+        cursor: not-allowed;
+        opacity: 0.7;
+      }
+
+      .roblox-button:disabled:hover {
+        transform: none;
+        box-shadow: none;
+      }
+
+      .feature-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        animation: float 3s ease-in-out infinite;
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0px);
+        }
+        50% {
+          transform: translateY(-15px);
+        }
+      }
+
+      .feature-icon:nth-child(1) {
+        animation-delay: 0s;
+        background: linear-gradient(135deg, #ff6b6b, #ff8787);
+      }
+      .feature-icon:nth-child(2) {
+        animation-delay: 0.5s;
+        background: linear-gradient(135deg, #0084ff, #4da3ff);
+      }
+      .feature-icon:nth-child(3) {
+        animation-delay: 1s;
+        background: linear-gradient(135deg, #6bcf7f, #8fe5a1);
+      }
+      .feature-icon:nth-child(4) {
+        animation-delay: 1.5s;
+        background: linear-gradient(135deg, #ffd93d, #ffed4e);
+      }
+
+      .header-icon {
+        animation: bounce 2s infinite;
+      }
+
+      @keyframes bounce {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-10px);
+        }
+      }
+
+      .pulse {
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      .gamepass-card {
+        background: linear-gradient(135deg, #a78bfa 0%, #c4b5fd 100%);
+        border: 3px solid var(--roblox-purple);
+        position: relative;
+        /* Efek cahaya tambahan */
+        box-shadow: 0 0 20px rgba(167, 139, 250, 0.6),
+          0 0 40px rgba(167, 139, 250, 0.4), 0 10px 30px rgba(0, 0, 0, 0.15);
+      }
+
+      .gamepass-card::after {
+        content: "★";
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 1.5rem;
+        color: var(--roblox-yellow);
+        animation: rotate 10s linear infinite;
+      }
+
+      /* Badge Work! untuk gamepass card */
+      .work-badge {
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        background: var(--roblox-yellow);
+        color: #333;
+        font-weight: 700;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        box-shadow: 0 3px 10px rgba(255, 217, 61, 0.5);
+        z-index: 10;
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes rotate {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .roblox-badge {
+        background: var(--roblox-yellow);
+        color: #333;
+        font-weight: 700;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        box-shadow: 0 3px 10px rgba(255, 217, 61, 0.3);
+      }
+
+      .roblox-badge.popular {
+        background: var(--roblox-red);
+        color: white;
+      }
+
+      .roblox-badge.exclusive {
+        background: var(--roblox-purple);
+        color: white;
+      }
+
+      .header {
+        background: white;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        position: sticky;
+        top: 0;
+        z-index: 50;
+      }
+
+      .hero-bg {
+        background: linear-gradient(
+          135deg,
+          var(--roblox-red) 0%,
+          var(--roblox-blue) 100%
+        );
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero-bg::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.1) 0%,
+          transparent 70%
+        );
+        animation: pulse-bg 15s ease-in-out infinite;
+      }
+
+      @keyframes pulse-bg {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 0.5;
+        }
+        50% {
+          transform: scale(1.1);
+          opacity: 0.7;
+        }
+      }
+
+      .section-title {
+        position: relative;
+        display: inline-block;
+      }
+
+      .section-title::after {
+        content: "";
+        position: absolute;
+        bottom: -5px;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: var(--roblox-red);
+        border-radius: 2px;
+      }
+
+      /* Style untuk pembelian terakhir */
+      .purchase-container {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .purchase-carousel {
+        display: flex;
+        transition: transform 0.5s ease;
+      }
+
+      .purchase-card {
+        min-width: 280px;
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        margin-right: 16px;
+      }
+
+      .purchase-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+      }
+
+      .purchase-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--roblox-blue), var(--roblox-purple));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        margin-right: 16px;
+      }
+
+      .carousel-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: white;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        cursor: pointer;
+        z-index: 10;
+        transition: all 0.3s ease;
+      }
+
+      .carousel-nav:hover {
+        background: var(--roblox-red);
+        color: white;
+      }
+
+      .carousel-nav.prev {
+        left: 10px;
+      }
+
+      .carousel-nav.next {
+        right: 10px;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #6b7280;
+      }
+
+      .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: #d1d5db;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50">
+    <header class="header">
+      <div class="container mx-auto px-4 py-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-4">
+            <div
+              class="w-14 h-14 bg-gradient-to-br from-red-500 to-blue-500 rounded-2xl flex items-center justify-center header-icon"
+            >
+              <i class="fas fa-gamepad text-white text-2xl"></i>
             </div>
+            <h1
+              class="text-3xl font-bold bg-gradient-to-r from-red-500 to-blue-500 bg-clip-text text-transparent"
+            >
+              Robux Top Up
+            </h1>
           </div>
-        </div>
-
-        <div id="final-area" class="hidden text-center text-green-700 font-semibold min-h-[44px]"></div>
-
-        <div class="mt-4 text-center">
-          <button id="reg-next" class="btn-green">Selanjutnya</button>
+          <nav class="hidden md:flex items-center space-x-8">
+            <a
+              href="#"
+              class="text-gray-600 hover:text-red-500 transition font-medium"
+              >Beranda</a
+            >
+            <a
+              href="#"
+              class="text-gray-600 hover:text-red-500 transition font-medium"
+              >Riwayat Transaksi</a
+            >
+            <a
+              href="#"
+              class="text-gray-600 hover:text-red-500 transition font-medium"
+              >Cara Top Up</a
+            >
+            <a
+              href="#"
+              class="text-gray-600 hover:text-red-500 transition font-medium"
+              >Bantuan</a
+            >
+            <div class="relative">
+              <button
+                class="flex items-center text-gray-600 hover:text-red-500 transition font-medium"
+              >
+                <i class="fas fa-globe mr-2"></i>
+                <span>ID</span>
+                <i class="fas fa-chevron-down text-xs ml-1"></i>
+              </button>
+              <div
+                class="absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-lg py-2 z-10 hidden"
+              >
+                <a
+                  href="#"
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >Indonesia</a
+                >
+                <a
+                  href="#"
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >English</a
+                >
+              </div>
+            </div>
+            <button class="roblox-button px-6 py-3">
+              <i class="fas fa-user mr-2"></i>Masuk
+            </button>
+          </nav>
+          <button class="md:hidden text-gray-600">
+            <i class="fas fa-bars text-2xl"></i>
+          </button>
         </div>
       </div>
-    </div>
-
-    <!-- MAIN APP -->
-    <header class="app-header" id="app-header" style="display:none">
-      <div>
-        <div class="text-sm muted">KawanChat</div>
-        <div id="display-name" class="text-xs"></div>
-      </div>
-      <div class="text-sm muted">ID: <span id="display-id" class="font-mono"></span></div>
     </header>
 
-    <div id="main-app" class="hidden flex flex-col h-full">
-      <nav class="tabs">
-        <button class="active" data-tab="chat-tab">OBROLAN</button>
-        <button data-tab="status-tab">STATUS</button>
-        <button data-tab="calls-tab">PANGGILAN</button>
-        <button data-tab="contacts-tab">KONTAK</button>
-      </nav>
+    <section class="hero-bg text-white py-20">
+      <div class="container mx-auto px-4 relative z-10">
+        <div class="text-center mb-12">
+          <h2 class="text-5xl md:text-6xl font-bold mb-4 animate-pulse">
+            Top Up Robux dengan Mudah!
+          </h2>
+          <p class="text-2xl mb-8 opacity-90 max-w-2xl mx-auto">
+            Platform resmi untuk pembelian Robux aman dan cepat
+          </p>
+          <div class="flex justify-center space-x-4 mb-8">
+            <span
+              class="bg-white bg-opacity-20 px-4 py-2 rounded-full font-medium"
+              >100% Aman</span
+            >
+            <span
+              class="bg-white bg-opacity-20 px-4 py-2 rounded-full font-medium"
+              >Proses Cepat</span
+            >
+            <span
+              class="bg-white bg-opacity-20 px-4 py-2 rounded-full font-medium"
+              >Harga Terbaik</span
+            >
+          </div>
+        </div>
 
-      <main class="flex-grow-scroll">
-        <!-- CHAT TAB -->
-        <section id="chat-tab" class="tab-content flex flex-col flex-1 p-3">
-          <div class="flex-1 flex overflow-hidden">
-            <div id="active-chats" class="w-1/3 bg-white rounded p-2 mr-3 scroll h-full"></div>
-            <div class="flex-1 bg-[#f7fff5] p-3 rounded flex flex-col">
-              <div id="chat-header" class="flex items-center justify-between mb-3">
-                <div id="chat-with" class="font-semibold text-lg muted">Pilih kontak untuk mulai chat</div>
-                <div id="chat-actions" class="text-sm muted"></div>
+        <div class="grid md:grid-cols-2 gap-10 max-w-5xl mx-auto">
+          <div class="roblox-card p-8">
+            <div class="flex justify-between items-start mb-6">
+              <div
+                class="w-16 h-16 bg-gradient-to-br from-red-500 to-orange-500 rounded-2xl flex items-center justify-center"
+              >
+                <i class="fas fa-bolt text-white text-2xl"></i>
               </div>
-              <div id="messages" class="flex-1 scroll p-2 flex flex-col"></div>
-              <div id="message-area" class="mt-3 hidden items-center">
-                <input id="message-input" class="flex-1 p-3 rounded-full border bg-white outline-none" placeholder="Ketik pesan..." />
-                <button id="send-btn" class="ml-2 px-4 py-2 rounded-full text-white" style="background:var(--kc-dark)"><i class="fas fa-paper-plane"></i></button>
+              <span class="roblox-badge popular">POPULER</span>
+            </div>
+            <h3 class="text-3xl font-bold mb-4 text-gray-800">Fast Robux</h3>
+            <p class="text-gray-600 mb-6 text-lg">
+              Dapatkan Robux dalam hitungan menit dengan proses yang cepat dan
+              aman. Pilih paket sesuai kebutuhan Anda.
+            </p>
+            <ul class="space-y-3 mb-8">
+              <li class="flex items-center text-gray-700">
+                <i class="fas fa-check-circle text-green-500 mr-3 text-xl"></i>
+                <span class="font-medium">Proses dalam 1-10 menit</span>
+              </li>
+              <li class="flex items-center text-gray-700">
+                <i class="fas fa-check-circle text-green-500 mr-3 text-xl"></i>
+                <span class="font-medium">Harga terbaik di Indonesia</span>
+              </li>
+              <li class="flex items-center text-gray-700">
+                <i class="fas fa-check-circle text-green-500 mr-3 text-xl"></i>
+                <span class="font-medium">100% aman dan terpercaya</span>
+              </li>
+            </ul>
+            <button
+              disabled
+              class="roblox-button w-full py-4 text-center block"
+            >
+              Development
+            </button>
+          </div>
+
+          <div class="gamepass-card roblox-card p-8 text-gray-800">
+            <!-- Badge Work! -->
+            <div class="work-badge">Work!</div>
+
+            <div class="flex justify-between items-start mb-6">
+              <div
+                class="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center"
+              >
+                <i class="fas fa-star text-white text-2xl"></i>
               </div>
+              <span class="roblox-badge exclusive">EXCLUSIF</span>
+            </div>
+            <h3 class="text-3xl font-bold mb-4">Gamepass Robux</h3>
+            <p class="text-gray-700 mb-6 text-lg">
+              Beli Robux lebih murah, dengan memilih paket dan membuat gamepass
+              kamu sudah bisa meningkatkan akun Roblox mu!
+            </p>
+            <ul class="space-y-3 mb-8">
+              <li class="flex items-center">
+                <i class="fas fa-check-circle text-purple-600 mr-3 text-xl"></i>
+                <span class="font-medium"
+                  >Pendapatan 70% dari setiap pembelian</span
+                >
+              </li>
+              <li class="flex items-center">
+                <i class="fas fa-check-circle text-purple-600 mr-3 text-xl"></i>
+                <span class="font-medium">Statistik penjualan real-time</span>
+              </li>
+              <li class="flex items-center">
+                <i class="fas fa-check-circle text-purple-600 mr-3 text-xl"></i>
+                <span class="font-medium"
+                  >Gamepass wajib dibuat sesuai nominal</span
+                >
+              </li>
+            </ul>
+            <a
+              href="gamepass-robux_marstorekita.html"
+              class="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white text-center py-4 rounded-full font-semibold hover:from-purple-700 hover:to-pink-700 transition-all transform hover:scale-105"
+            >
+              Top Up Sekarang
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="py-20 bg-white">
+      <div class="container mx-auto px-4">
+        <h3
+          class="text-4xl font-bold text-center text-gray-800 mb-16 section-title"
+        >
+          Mengapa Memilih Kami?
+        </h3>
+        <div class="grid md:grid-cols-4 gap-8">
+          <div class="text-center">
+            <div class="feature-icon mx-auto">
+              <i class="fas fa-bolt text-white"></i>
+            </div>
+            <h4 class="font-bold text-xl text-gray-800 mb-2">Proses Cepat</h4>
+            <p class="text-gray-600">Robux masuk dalam hitungan menit</p>
+          </div>
+
+          <div class="text-center">
+            <div class="feature-icon mx-auto">
+              <i class="fas fa-shield-alt text-white"></i>
+            </div>
+            <h4 class="font-bold text-xl text-gray-800 mb-2">100% Legal</h4>
+            <p class="text-gray-600">Platform resmi dan terpercaya</p>
+          </div>
+
+          <div class="text-center">
+            <div class="feature-icon mx-auto">
+              <i class="fas fa-headset text-white"></i>
+            </div>
+            <h4 class="font-bold text-xl text-gray-800 mb-2">Support 24/7</h4>
+            <p class="text-gray-600">Tim siap membantu kapan saja</p>
+          </div>
+
+          <div class="text-center">
+            <div class="feature-icon mx-auto">
+              <i class="fas fa-gift text-white"></i>
+            </div>
+            <h4 class="font-bold text-xl text-gray-800 mb-2">Bonus Menarik</h4>
+            <p class="text-gray-600">Dapatkan bonus setiap pembelian</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bagian Pembelian Terakhir -->
+    <section class="py-16 bg-gray-100">
+      <div class="container mx-auto px-4">
+        <div class="flex justify-between items-center mb-8">
+          <h3 class="text-3xl font-bold text-gray-800 section-title">Pembelian Terakhir</h3>
+          <a href="#" class="text-red-500 hover:text-red-700 font-medium flex items-center">
+            Lihat Semua <i class="fas fa-arrow-right ml-2"></i>
+          </a>
+        </div>
+        
+        <div class="purchase-container">
+          <div class="carousel-nav prev" id="prevBtn">
+            <i class="fas fa-chevron-left"></i>
+          </div>
+          <div class="carousel-nav next" id="nextBtn">
+            <i class="fas fa-chevron-right"></i>
+          </div>
+          
+          <div class="scroll-container overflow-hidden">
+            <div id="purchaseCarousel" class="purchase-carousel">
+              <!-- Data akan diisi oleh JavaScript -->
+            </div>
+            <div id="emptyState" class="empty-state" style="display: none;">
+              <i class="fas fa-shopping-cart"></i>
+              <h3 class="text-xl font-semibold mb-2">Belum Ada Pembelian</h3>
+              <p>Belum ada transaksi yang dilakukan saat ini.</p>
             </div>
           </div>
-        </section>
+        </div>
+      </div>
+    </section>
 
-        <!-- STATUS -->
-        <section id="status-tab" class="tab-content hidden p-6 text-center">
-          <i class="fas fa-circle-notch text-4xl muted mb-4"></i>
-          <div class="muted">Fitur Status belum diimplementasikan.</div>
-        </section>
-
-        <!-- CALLS -->
-        <section id="calls-tab" class="tab-content hidden p-6 text-center">
-          <i class="fas fa-phone-alt text-4xl muted mb-4"></i>
-          <div class="muted">Fitur Panggilan belum diimplementasikan.</div>
-        </section>
-
-        <!-- CONTACTS -->
-        <section id="contacts-tab" class="tab-content hidden p-4">
-          <div class="flex items-center mb-3">
-            <input id="search-contact" placeholder="Cari kontak..." class="input-pill flex-1 mr-2" />
-            <button id="btn-search" class="btn-green">Cari</button>
+    <section class="py-20 bg-gradient-to-br from-blue-50 to-purple-50">
+      <div class="container mx-auto px-4">
+        <div class="grid md:grid-cols-3 gap-8">
+          <div class="roblox-card p-6">
+            <div class="flex items-center mb-4">
+              <div
+                class="w-14 h-14 bg-gradient-to-br from-red-500 to-orange-500 rounded-2xl flex items-center justify-center mr-4"
+              >
+                <i class="fas fa-lock text-white text-xl"></i>
+              </div>
+              <h4 class="text-2xl font-bold text-gray-800">
+                Keamanan Terjamin
+              </h4>
+            </div>
+            <p class="text-gray-600 text-lg">
+              Sistem enkripsi tingkat tinggi melindungi data dan transaksi Anda
+            </p>
           </div>
-          <div class="flex mb-3">
-            <input id="new-contact-input" placeholder="Masukkan ID pengguna (UID/8 char)" class="flex-1 p-2 border rounded-l" />
-            <button id="add-contact-btn" class="bg-[#0b8a3a] text-white px-4 rounded-r">Tambah</button>
+
+          <div class="roblox-card p-6">
+            <div class="flex items-center mb-4">
+              <div
+                class="w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mr-4"
+              >
+                <i class="fas fa-credit-card text-white text-xl"></i>
+              </div>
+              <h4 class="text-2xl font-bold text-gray-800">
+                Metode Pembayaran Lengkap
+              </h4>
+            </div>
+            <p class="text-gray-600 text-lg">
+              QRIS, Transfer Bank, E-Wallet - semua metode pembayaran tersedia
+            </p>
           </div>
-          <h4 class="font-semibold mb-2 muted">Daftar Kontak</h4>
-          <div id="contacts-list" class="contacts-list scroll h-72 p-2 bg-white rounded"></div>
-        </section>
-      </main>
 
-      <button id="fab-add" title="Tambah kontak" style="display:none" class="btn-green" >
-        <i class="fas fa-user-plus"></i>
-      </button>
-    </div>
-  </div>
+          <div class="roblox-card p-6">
+            <div class="flex items-center mb-4">
+              <div
+                class="w-14 h-14 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center mr-4"
+              >
+                <i class="fas fa-chart-line text-white text-xl"></i>
+              </div>
+              <h4 class="text-2xl font-bold text-gray-800">Harga Terbaik</h4>
+            </div>
+            <p class="text-gray-600 text-lg">
+              Harga kompetitif dengan diskon spesial untuk pembelian besar
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
 
-  <!-- SCRIPT: Firebase + App Logic -->
-  <script type="module">
-    // Firebase v12 imports
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
-    import { getFirestore, collection, doc, setDoc, getDoc, addDoc, serverTimestamp, onSnapshot, query, orderBy, where, getDocs } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+    <section class="py-20 roblox-gradient text-white">
+      <div class="container mx-auto px-4 text-center">
+        <h3 class="text-4xl font-bold mb-6">
+          Siap Meningkatkan Pengalaman Roblox Anda?
+        </h3>
+        <p class="text-2xl mb-10 max-w-2xl mx-auto">
+          Top Up Robux sekarang dan nikmati fitur-fitur eksklusif di game
+          favorit Anda
+        </p>
+        <div class="flex flex-col sm:flex-row justify-center gap-6">
+          <button disabled class="roblox-button px-10 py-4 text-lg">
+            Development
+          </button>
+          <a
+            href="#"
+            class="bg-transparent border-4 border-white text-white px-10 py-4 rounded-full font-semibold text-lg hover:bg-white hover:text-red-500 transition-all transform hover:scale-105"
+          >
+            Pelajari Lebih Lanjut
+          </a>
+        </div>
+      </div>
+    </section>
 
-    // --- Firebase config (user provided) ---
-    const firebaseConfig = {
-      apiKey: "AIzaSyD9tO94PdmXnqSH4cMVLPbgcEyY1J266mQ",
-      authDomain: "whatsapp-clone-web-9418e.firebaseapp.com",
-      projectId: "whatsapp-clone-web-9418e",
-      storageBucket: "whatsapp-clone-web-9418e.firebasestorage.app",
-      messagingSenderId: "31927689655",
-      appId: "1:31927689655:web:3e4da24d4237a7ffb08832",
-      measurementId: "G-5624HP8XEX"
-    };
+    <footer class="bg-gray-900 text-white py-12">
+      <div class="container mx-auto px-4">
+        <div class="grid md:grid-cols-4 gap-8 mb-8">
+          <div>
+            <h5 class="font-semibold text-xl mb-4 text-red-400">
+              Tentang Kami
+            </h5>
+            <p class="text-gray-400 text-lg">
+              Platform resmi untuk top up Robux dengan harga terbaik dan proses
+              cepat.
+            </p>
+          </div>
+          <div>
+            <h5 class="font-semibold text-xl mb-4 text-red-400">Layanan</h5>
+            <ul class="space-y-3 text-gray-400 text-lg">
+              <li>
+                <a href="#" class="hover:text-white transition">Top Up Robux</a>
+              </li>
+              <li>
+                <a href="#" class="hover:text-white transition"
+                  >Gamepass Robux</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h5 class="font-semibold text-xl mb-4 text-red-400">Bantuan</h5>
+            <ul class="space-y-3 text-gray-400 text-lg">
+              <li>
+                <a href="#" class="hover:text-white transition"
+                  >Cara Pembayaran</a
+                >
+              </li>
+              <li><a href="#" class="hover:text-white transition">FAQ</a></li>
+              <li>
+                <a href="#" class="hover:text-white transition"
+                  >Syarat & Ketentuan</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h5 class="font-semibold text-xl mb-4 text-red-400">Ikuti Kami</h5>
+            <div class="flex space-x-4">
+              <a
+                href="#"
+                class="text-gray-400 hover:text-white transition text-2xl"
+              >
+                <i class="fab fa-instagram"></i>
+              </a>
+              <a
+                href="#"
+                class="text-gray-400 hover:text-white transition text-2xl"
+              >
+                <i class="fab fa-youtube"></i>
+              </a>
+              <a
+                href="#"
+                class="text-gray-400 hover:text-white transition text-2xl"
+              >
+                <i class="fab fa-discord"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+        <div
+          class="border-t border-gray-700 pt-6 text-center text-gray-400 text-lg"
+        >
+          <p>&copy; 2024 Robux Top Up. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
 
-    // init firebase
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
-    // app state
-    const appId = 'kawanchat-v1';
-    let currentUserId = null;
-    let currentUserName = null;
-    let currentChatContact = null;
-    let unsubscribeMessages = null;
-    let contactsUnsub = null;
-
-    // DOM refs
-    const loadingStage = document.getElementById('loading-stage');
-    const welcomeStage = document.getElementById('welcome-stage');
-    const registrationStage = document.getElementById('registration-stage');
-    const mainApp = document.getElementById('main-app');
-    const appHeader = document.getElementById('app-header');
-
-    const sapaanContent = document.getElementById('sapaan-content');
-    const welcomeNext = document.getElementById('welcome-next');
-    const tosBox = document.getElementById('tos');
-    const agreeTos = document.getElementById('agree-tos');
-
-    const regTyping = document.getElementById('reg-typing');
-    const nameArea = document.getElementById('name-area');
-    const regFirst = document.getElementById('reg-first');
-    const regLast = document.getElementById('reg-last');
-    const regGender = document.getElementById('reg-gender');
-    const nameFeedback = document.getElementById('name-feedback');
-
-    const phoneArea = document.getElementById('phone-area');
-    const regPhone = document.getElementById('reg-phone');
-    const phoneEmoji = document.getElementById('phone-emoji');
-
-    const finalArea = document.getElementById('final-area');
-    const regNext = document.getElementById('reg-next');
-
-    const displayNameEl = document.getElementById('display-name');
-    const displayIdEl = document.getElementById('display-id');
-
-    const tabs = document.querySelectorAll('.tabs button');
-    const tabContents = document.querySelectorAll('.tab-content');
-    const fabAdd = document.getElementById('fab-add');
-
-    const activeChats = document.getElementById('active-chats');
-    const messagesEl = document.getElementById('messages');
-    const chatWithEl = document.getElementById('chat-with');
-    const messageArea = document.getElementById('message-area');
-    const messageInput = document.getElementById('message-input');
-    const sendBtn = document.getElementById('send-btn');
-
-    const contactsList = document.getElementById('contacts-list');
-    const newContactInput = document.getElementById('new-contact-input');
-    const addContactBtn = document.getElementById('add-contact-btn');
-    const searchContactInput = document.getElementById('search-contact');
-    const btnSearch = document.getElementById('btn-search');
-
-    // onboarding texts
-    const sapaanTexts = [
-      "Selamat datang di KawanChat! 👋",
-      "Di KawanChat kamu bisa chat dengan teman lama maupun teman baru. Serasa gampang antar negara! 🌐",
-      "KawanChat adalah tempat yang aman untuk berbagi cerita. 🔒",
-      "Persahabatan sejati dimulai dari pesan sederhana. Mari kita mulai! 💬"
-    ];
-    let sapaanStep = 0;
-
-    // utilities
-    const setStage = (id) => {
-      [loadingStage, welcomeStage, registrationStage, mainApp].forEach(s => s.classList.remove('active'));
-      [loadingStage, welcomeStage, registrationStage, mainApp].forEach(s => s.classList.add('hidden'));
-      const target = document.getElementById(id);
-      if (target) target.classList.remove('hidden'), target.classList.add('active');
-      // header visibility
-      if (id === 'main-app') appHeader.style.display = 'flex'; else appHeader.style.display = 'none';
-    };
-
-    const typeText = (el, text, speed = 24) => {
-      return new Promise(res => {
-        el.textContent = '';
-        let i = 0;
-        const t = setInterval(() => {
-          if (i < text.length) { el.textContent += text.charAt(i); i++; } else { clearInterval(t); res(); }
-        }, speed);
-      });
-    };
-
-    const showNotif = (txt) => {
-      const n = document.createElement('div'); n.className='notif'; n.textContent = txt;
-      document.body.appendChild(n);
-      setTimeout(()=> n.remove(), 3000);
-    };
-
-    // Onboarding flow
-    const nextSapaan = async () => {
-      welcomeNext.disabled = true;
-      if (sapaanStep < sapaanTexts.length) {
-        await typeText(sapaanContent, sapaanTexts[sapaanStep]);
-        sapaanStep++;
-        welcomeNext.disabled = false;
-      } else if (sapaanStep === sapaanTexts.length) {
-        await typeText(sapaanContent, "Satu langkah lagi! Silakan setujui persyaratan kami untuk melanjutkan:");
-        tosBox.classList.remove('hidden');
-        welcomeNext.disabled = !agreeTos.checked;
-        sapaanStep++;
-      } else {
-        setStage('registration-stage');
-        startRegistration();
-      }
-    };
-    agreeTos.addEventListener('change', () => welcomeNext.disabled = !agreeTos.checked);
-    welcomeNext.addEventListener('click', nextSapaan);
-
-    // Registration steps
-    let currentUserName = null;
-    const startRegistration = async () => {
-      regNext.disabled = true;
-      await regStep1();
-    };
-
-    const regStep1 = async () => {
-      nameArea.classList.add('hidden'); phoneArea.classList.add('hidden'); finalArea.classList.add('hidden');
-      await typeText(regTyping, "Kita belum kenalan nih! Kenalan dulu yuk! 🙋");
-      nameArea.classList.remove('hidden');
-      regFirst.focus();
-      const nameHandler = () => {
-        if (regFirst.value.trim().length > 0) { nameFeedback.textContent = "Hmm kalo nama belakang boleh tau? (opsional)"; regNext.disabled = false; } else { nameFeedback.textContent=''; regNext.disabled = true; }
+    <script>
+      // Konfigurasi dari proyek Firebase Anda
+      const firebaseConfig = {
+        apiKey: "AIzaSyBP-BfH2y4PnhDR4x0WZceIcu_AA2EKSO4",
+        authDomain: "marstorekita-storebase.firebaseapp.com",
+        projectId: "marstorekita-storebase",
+        storageBucket: "marstorekita-storebase.firebasestorage.app",
+        messagingSenderId: "655700298665",
+        appId: "1:655700298665:web:ae6c703ba545283c2152b8",
+        measurementId: "G-LERLQVVGRF",
       };
-      regFirst.addEventListener('input', nameHandler);
-      regNext.onclick = () => {
-        regFirst.removeEventListener('input', nameHandler);
-        if (regFirst.value.trim()) regStep2();
-      };
-    };
 
-    const regStep2 = async () => {
-      nameArea.classList.add('hidden');
-      currentUserName = (regFirst.value.trim() + (regLast.value.trim() ? ' '+regLast.value.trim() : '')).trim();
-      await typeText(regTyping, `Yey kita udh kenalan! Hi ${regFirst.value.trim()} 🙌`);
-      await new Promise(r=>setTimeout(r,700));
-      await typeText(regTyping, "Hmm boleh minta nomor mu untuk masuk ke dalam KawanChat? 📞");
-      phoneArea.classList.remove('hidden');
-      regPhone.focus();
+      // Inisialisasi Firebase App
+      firebase.initializeApp(firebaseConfig);
 
-      const focusFn = () => phoneEmoji.textContent = '🤦‍♂️';
-      const blurFn = () => phoneEmoji.textContent = '🙍‍♂️';
-      regPhone.addEventListener('focus', focusFn);
-      regPhone.addEventListener('blur', blurFn);
+      // Inisialisasi Firestore Database (ini yang akan jadi 'db' Anda)
+      const db = firebase.firestore();
 
-      const phoneHandler = () => regNext.disabled = regPhone.value.replace(/\D/g,'').length < 8;
-      regPhone.addEventListener('input', phoneHandler);
+      // Catatan: getAnalytics(app) tidak kita gunakan di sini untuk menyederhanakan.
+    </script>
 
-      regNext.onclick = () => {
-        regPhone.removeEventListener('input', phoneHandler);
-        regPhone.removeEventListener('focus', focusFn);
-        regPhone.removeEventListener('blur', blurFn);
-        if (regPhone.value.replace(/\D/g,'').length >= 8) regStep3();
-      };
-    };
+    <script>
+      // Mobile menu toggle
+      document.addEventListener("DOMContentLoaded", function () {
+        const mobileMenuBtn = document.querySelector("header .md\\:hidden");
+        const mobileMenu = document.createElement("div");
+        mobileMenu.className =
+          "hidden md:hidden bg-white shadow-lg absolute top-full left-0 right-0 z-50";
+        mobileMenu.innerHTML = `
+          <div class="container mx-auto px-4 py-4 space-y-4">
+            <a href="#" class="block text-gray-600 hover:text-red-500 transition font-medium text-lg">Beranda</a>
+            <a href="#" class="block text-gray-600 hover:text-red-500 transition font-medium text-lg">Riwayat Transaksi</a>
+            <a href="#" class="block text-gray-600 hover:text-red-500 transition font-medium text-lg">Cara Top Up</a>
+            <a href="#" class="block text-gray-600 hover:text-red-500 transition font-medium text-lg">Bantuan</a>
+            <button class="roblox-button w-full px-6 py-3">
+              <i class="fas fa-user mr-2"></i>Masuk
+            </button>
+          </div>
+        `;
+        document.querySelector("header").appendChild(mobileMenu);
 
-    const signInAndSave = async (displayName, chatID, phoneVal) => {
-      const user = auth.currentUser;
-      if (!user) throw new Error('User not authenticated');
-      await updateProfile(user, { displayName });
-      const userDoc = doc(db, `artifacts/${appId}/users/${user.uid}`);
-      await setDoc(userDoc, {
-        name: displayName,
-        id: chatID,
-        phone: phoneVal,
-        gender: regGender.value || '',
-        createdAt: serverTimestamp()
-      }, { merge: true });
-      currentUserId = user.uid;
-      currentUserName = displayName;
-    };
-
-    const regStep3 = async () => {
-      phoneArea.classList.add('hidden');
-      regNext.classList.add('hidden');
-
-      const phoneRaw = regPhone.value.replace(/[^0-9]/g,'');
-      const full = '62' + phoneRaw.replace(/^0+/, '');
-      await typeText(regTyping, `Nomormu cantik banget ✨ kita ambil dari depan nomor mu yah!`);
-      await new Promise(r=>setTimeout(r,700));
-
-      const mockID = full.padEnd(11,'0');
-      const prefix = mockID.substring(0,5);
-      await typeText(regTyping, `Oke nomor depan mu ${prefix} kita tambahin jadi ${mockID}!`);
-      await new Promise(r=>setTimeout(r,800));
-
-      const finalID = mockID.substring(mockID.length - 6);
-      await typeText(regTyping, `Yey! ID mu udh di buat! Ini dia: ${finalID} 🎉`);
-      await new Promise(r=>setTimeout(r,800));
-
-      try {
-        await signInAndSave(currentUserName || regFirst.value.trim(), finalID, regPhone.value);
-      } catch(err){ console.error('save profile err', err); }
-
-      await typeText(regTyping, `Selamat datang di KawanChat, ${(currentUserName||regFirst.value.trim()).split(' ')[0]}!`);
-      await new Promise(r=>setTimeout(r,800));
-
-      setStage('main-app');
-      initMainApp();
-    };
-
-    // Auth init
-    const initializeAuth = async () => {
-      try { await signInAnonymously(auth); } catch(err){ console.error('signInAnon err', err); setStage('welcome-stage'); sapaanContent.textContent = "Error: Gagal terhubung ke server Firebase."; welcomeNext.disabled = true; }
-    };
-
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) { await initializeAuth(); return; }
-      // check if profile doc exists
-      const userDocRef = doc(db, `artifacts/${appId}/users/${user.uid}`);
-      const snap = await getDoc(userDocRef);
-      if (snap.exists()) {
-        currentUserId = user.uid;
-        currentUserName = user.displayName || snap.data().name;
-        displayNameEl.textContent = currentUserName || 'Teman';
-        displayIdEl.textContent = currentUserId.substring(0,8);
-        setStage('main-app');
-        initMainApp();
-      } else {
-        setStage('welcome-stage');
-        sapaanStep = 0;
-        nextSapaan();
-      }
-    });
-
-    // MAIN APP
-    const initMainApp = () => {
-      displayNameEl.textContent = currentUserName || 'Teman';
-      displayIdEl.textContent = currentUserId ? currentUserId.substring(0,8) : '';
-      bindTabs();
-      fabAdd.style.display = 'block';
-      document.getElementById('fab-add').style.display = 'block';
-      loadContactsRealtime();
-      loadActiveChats();
-    };
-
-    function bindTabs(){
-      tabs.forEach(btn => {
-        btn.onclick = () => {
-          tabs.forEach(b=>b.classList.remove('active'));
-          btn.classList.add('active');
-          tabContents.forEach(tc => tc.classList.add('hidden'));
-          const id = btn.getAttribute('data-tab');
-          document.getElementById(id).classList.remove('hidden');
-          // toggle FAB / message area
-          if (id === 'chat-tab') { fabAdd.style.display = 'block'; } else { fabAdd.style.display = 'none'; }
-        };
-      });
-    }
-
-    // Contacts realtime + render
-    const loadContactsRealtime = async () => {
-      if (!currentUserId) return;
-      const cRef = collection(db, `artifacts/${appId}/users/${currentUserId}/contacts`);
-      if (contactsUnsub) contactsUnsub();
-      contactsUnsub = onSnapshot(cRef, (snap) => {
-        contactsList.innerHTML = '';
-        activeChats.innerHTML = '';
-        if (snap.empty) {
-          contactsList.innerHTML = '<div class="muted p-2">Belum ada kontak.</div>';
-          activeChats.innerHTML = '<div class="muted p-2">Klik tombol + untuk tambah kontak.</div>';
-          return;
-        }
-        snap.forEach(d => {
-          const id = d.id; const data = d.data();
-          // contacts list (tab)
-          const row = document.createElement('div'); row.className='p-2 border-b flex items-center justify-between';
-          row.innerHTML = `<div><div class="font-semibold">${data.name||id.substring(0,8)}</div><div class="text-xs muted">ID: ${id}</div></div>`;
-          const chatBtn = document.createElement('button'); chatBtn.className='btn-green text-sm'; chatBtn.textContent = 'Chat';
-          chatBtn.onclick = () => { startPrivateChat(id, data.name||id.substring(0,8)); };
-          row.appendChild(chatBtn);
-          contactsList.appendChild(row);
-
-          // active chats left column
-          const ac = document.createElement('div'); ac.className='p-2 mb-2 bg-white rounded cursor-pointer';
-          ac.textContent = `${data.name||id.substring(0,8)} — ID:${id}`;
-          ac.onclick = () => startPrivateChat(id, data.name||id.substring(0,8));
-          activeChats.appendChild(ac);
+        mobileMenuBtn.addEventListener("click", function () {
+          mobileMenu.classList.toggle("hidden");
         });
-      }, (e)=> console.error('contacts snapshot err', e));
-    };
 
-    // optional active chats loader (placeholder)
-    const loadActiveChats = () => {
-      // left column populated by contacts snapshot
-    };
-
-    // Start private chat & messages listener
-    const startPrivateChat = (contactId, contactName) => {
-      currentChatContact = contactId;
-      chatWithEl.textContent = contactName;
-      messagesEl.innerHTML = '';
-      messageArea.classList.remove('hidden');
-      messageInput.value = '';
-      // unsubscribe previous
-      if (unsubscribeMessages) unsubscribeMessages();
-      // message path: artifacts/<appId>/private/chats/<sorted>/messages
-      const chatRoomId = [currentUserId, contactId].sort().join('_');
-      const messagesRef = collection(db, `artifacts/${appId}/private/chats/${chatRoomId}/messages`);
-      const q = query(messagesRef, orderBy('timestamp','asc'));
-      unsubscribeMessages = onSnapshot(q, (snap) => {
-        const msgs = []; snap.forEach(d => msgs.push({ id: d.id, ...d.data() }));
-        renderMessages(msgs);
-      }, (e) => console.error('messages snapshot err', e));
-      // switch to chat tab UI
-      document.querySelector('.tabs button[data-tab="chat-tab"]').click();
-      // scroll left column to selected - optional
-    };
-
-    const renderMessages = (messages) => {
-      messagesEl.innerHTML = '';
-      if (!messages.length) {
-        messagesEl.innerHTML = `<div class="muted text-center p-4">Awal dari obrolan dengan ${chatWithEl.textContent}.</div>`;
-        messagesEl.scrollTop = messagesEl.scrollHeight;
-        return;
-      }
-      messages.forEach(m => {
-        const el = document.createElement('div');
-        el.className = 'chat-bubble ' + (m.senderId === currentUserId ? 'sent' : 'recv');
-        el.style.alignSelf = (m.senderId === currentUserId) ? 'flex-end' : 'flex-start';
-        const name = m.senderId === currentUserId ? (currentUserName || 'Kamu') : (m.senderName || chatWithEl.textContent);
-        const time = m.timestamp ? new Date(m.timestamp.toDate ? m.timestamp.toDate() : m.timestamp).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' }) : '...';
-        el.innerHTML = `<div class="text-xs font-semibold ${m.senderId===currentUserId?'text-gray-700':'text-green-700'} mb-1">${name}</div>
-                        <div class="text-sm">${m.text}</div>
-                        <div class="text-xs muted mt-1" style="text-align:right">${time}</div>`;
-        messagesEl.appendChild(el);
-      });
-      messagesEl.scrollTop = messagesEl.scrollHeight;
-    };
-
-    // send message (ensure room exists)
-    const sendMessage = async (txt) => {
-      if (!txt.trim() || !currentChatContact || !currentUserId) return;
-      try {
-        const chatRoomId = [currentUserId, currentChatContact].sort().join('_');
-        const messagesRef = collection(db, `artifacts/${appId}/private/chats/${chatRoomId}/messages`);
-        await addDoc(messagesRef, {
-          text: txt.trim(),
-          timestamp: serverTimestamp(),
-          senderId: currentUserId,
-          senderName: currentUserName || '',
-          type: 'text'
+        // Close mobile menu when clicking outside
+        document.addEventListener("click", function (event) {
+          if (
+            !mobileMenuBtn.contains(event.target) &&
+            !mobileMenu.contains(event.target)
+          ) {
+            mobileMenu.classList.add("hidden");
+          }
         });
-        messageInput.value = '';
-      } catch (err) {
-        console.error('sendMessage err', err);
-        showNotif('Gagal mengirim pesan');
-      }
-    };
 
-    // add contact (two-way) with existence check
-    addContactBtn.addEventListener('click', async () => {
-      const newId = newContactInput.value.trim();
-      if (!newId) return alert('Masukkan ID kontak.');
-      if (!currentUserId) return alert('Belum login.');
-      if (newId === currentUserId) return alert('Tidak bisa menambahkan diri sendiri.');
-      try {
-        // basic check: does user document exist for that ID? (we assume they must have UID)
-        const otherUserDoc = doc(db, `artifacts/${appId}/users/${newId}`);
-        const snapshot = await getDoc(otherUserDoc);
-        if (!snapshot.exists()) {
-          // allow adding anyway but warn
-          if (!confirm('Pengguna dengan ID ini belum terdaftar. Tetap tambah sebagai kontak?')) return;
+        // Language dropdown toggle
+        const langButton = document.querySelector(".fa-globe").parentElement;
+        const langDropdown = langButton.nextElementSibling;
+
+        langButton.addEventListener("click", function (e) {
+          e.stopPropagation();
+          langDropdown.classList.toggle("hidden");
+        });
+
+        // Close language dropdown when clicking outside
+        document.addEventListener("click", function (event) {
+          if (
+            !langButton.contains(event.target) &&
+            !langDropdown.contains(event.target)
+          ) {
+            langDropdown.classList.add("hidden");
+          }
+        });
+
+        // Add ripple effect to buttons (except disabled buttons)
+        const buttons = document.querySelectorAll(
+          ".roblox-button:not(:disabled)"
+        );
+        buttons.forEach((button) => {
+          button.addEventListener("click", function (e) {
+            const ripple = document.createElement("span");
+            ripple.classList.add(
+              "absolute",
+              "bg-white",
+              "bg-opacity-30",
+              "rounded-full"
+            );
+
+            const rect = this.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            const x = e.clientX - rect.left - size / 2;
+            const y = e.clientY - rect.top - size / 2;
+
+            ripple.style.width = ripple.style.height = size + "px";
+            ripple.style.left = x + "px";
+            ripple.style.top = y + "px";
+
+            this.style.position = "relative";
+            this.style.overflow = "hidden";
+            this.appendChild(ripple);
+
+            setTimeout(() => {
+              ripple.remove();
+            }, 600);
+          });
+        });
+
+        // Pembelian Terakhir Carousel
+        const carousel = document.getElementById('purchaseCarousel');
+        const emptyState = document.getElementById('emptyState');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        let purchaseData = [];
+        let currentPosition = 0;
+        let autoSlideInterval;
+        let isAutoSliding = true;
+
+        // Fungsi untuk sensor username
+        function maskUsername(username) {
+          if (!username || username.length <= 3) return username || 'User';
+          
+          const firstChar = username.charAt(0);
+          const lastChar = username.charAt(username.length - 1);
+          const maskedLength = username.length - 2;
+          const masked = '*'.repeat(maskedLength);
+          
+          return firstChar + masked + lastChar;
         }
-        const path1 = doc(db, `artifacts/${appId}/users/${currentUserId}/contacts/${newId}`);
-        const path2 = doc(db, `artifacts/${appId}/users/${newId}/contacts/${currentUserId}`);
-        await setDoc(path1, { name: newId.substring(0,8), addedAt: serverTimestamp() }, { merge: true });
-        // attempt to write reverse (if user exists)
-        await setDoc(path2, { name: currentUserId.substring(0,8), addedAt: serverTimestamp() }, { merge: true });
-        showNotif(`Kontak ${newId} berhasil ditambahkan!`);
-        newContactInput.value = '';
-      } catch (err) {
-        console.error('addContact err', err);
-        alert('Gagal menambahkan kontak. Cek console.');
-      }
-    });
 
-    // search contact (filter client-side by displayed contacts)
-    btnSearch.addEventListener('click', () => {
-      const q = searchContactInput.value.trim().toLowerCase();
-      const children = Array.from(contactsList.children);
-      if (!q) { children.forEach(c => c.style.display='flex'); return; }
-      children.forEach(c => {
-        const text = c.textContent.toLowerCase();
-        c.style.display = text.includes(q) ? 'flex' : 'none';
+        // Fungsi untuk membuat card pembelian
+        function createPurchaseCard(data) {
+          const card = document.createElement('div');
+          card.className = 'purchase-card';
+          
+          const maskedUsername = maskUsername(data.username);
+          const robuxAmount = data.robux || '0';
+          
+          card.innerHTML = `
+            <div class="flex items-center mb-4">
+              <div class="purchase-avatar">
+                <i class="fas fa-user"></i>
+              </div>
+              <div>
+                <h4 class="font-bold text-lg text-gray-800">${maskedUsername}</h4>
+                <p class="text-gray-500 text-sm">Baru saja</p>
+              </div>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center">
+                <i class="fas fa-coins text-yellow-500 mr-2"></i>
+                <span class="font-semibold text-gray-800">${robuxAmount} R$</span>
+              </div>
+              <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">Berhasil</span>
+            </div>
+          `;
+          
+          return card;
+        }
+
+        // Fungsi untuk memperbarui tampilan carousel
+        function updateCarousel() {
+          // Kosongkan carousel
+          carousel.innerHTML = '';
+          
+          if (purchaseData.length === 0) {
+            // Tampilkan state kosong jika tidak ada data
+            carousel.style.display = 'none';
+            emptyState.style.display = 'block';
+            prevBtn.style.display = 'none';
+            nextBtn.style.display = 'none';
+            return;
+          }
+          
+          // Sembunyikan state kosong jika ada data
+          carousel.style.display = 'flex';
+          emptyState.style.display = 'none';
+          prevBtn.style.display = 'flex';
+          nextBtn.style.display = 'flex';
+          
+          // Duplikasi data untuk efek loop tak terbatas
+          const duplicatedData = [...purchaseData, ...purchaseData];
+          
+          // Tambahkan data ke carousel
+          duplicatedData.forEach(data => {
+            const card = createPurchaseCard(data);
+            carousel.appendChild(card);
+          });
+          
+          // Reset posisi
+          currentPosition = 0;
+          updateCarouselPosition();
+          
+          // Mulai auto slide
+          startAutoSlide();
+        }
+
+        // Fungsi untuk memperbarui posisi carousel
+        function updateCarouselPosition() {
+          const cardWidth = 280 + 16; // lebar card + margin
+          carousel.style.transform = `translateX(-${currentPosition * cardWidth}px)`;
+        }
+
+        // Fungsi untuk navigasi ke posisi tertentu
+        function navigateToPosition(position) {
+          const maxPosition = purchaseData.length - 1;
+          
+          if (position < 0) {
+            currentPosition = maxPosition;
+          } else if (position > maxPosition) {
+            currentPosition = 0;
+          } else {
+            currentPosition = position;
+          }
+          
+          updateCarouselPosition();
+        }
+
+        // Fungsi untuk auto slide
+        function startAutoSlide() {
+          // Hentikan auto slide yang sedang berjalan
+          if (autoSlideInterval) {
+            clearInterval(autoSlideInterval);
+          }
+          
+          // Mulai auto slide baru
+          autoSlideInterval = setInterval(() => {
+            if (isAutoSliding) {
+              navigateToPosition(currentPosition + 1);
+            }
+          }, 3000);
+        }
+
+        // Fungsi untuk memuat data dari Firestore
+        function loadPurchaseData() {
+          try {
+            db.collection('transactions')
+              .orderBy('timestamp', 'desc')
+              .limit(10)
+              .onSnapshot(snapshot => {
+                purchaseData = [];
+                snapshot.forEach(doc => {
+                  purchaseData.push(doc.data());
+                });
+                
+                updateCarousel();
+              }, error => {
+                console.error("Error getting transactions: ", error);
+                // Tampilkan state kosong jika terjadi error
+                carousel.style.display = 'none';
+                emptyState.style.display = 'block';
+                prevBtn.style.display = 'none';
+                nextBtn.style.display = 'none';
+              });
+          } catch (error) {
+            console.error("Error setting up listener: ", error);
+            // Tampilkan state kosong jika terjadi error
+            carousel.style.display = 'none';
+            emptyState.style.display = 'block';
+            prevBtn.style.display = 'none';
+            nextBtn.style.display = 'none';
+          }
+        }
+
+        // Event listener untuk tombol navigasi
+        prevBtn.addEventListener('click', () => {
+          isAutoSliding = false;
+          navigateToPosition(currentPosition - 1);
+          
+          // Kembali ke auto slide setelah 5 detik
+          setTimeout(() => {
+            isAutoSliding = true;
+          }, 5000);
+        });
+
+        nextBtn.addEventListener('click', () => {
+          isAutoSliding = false;
+          navigateToPosition(currentPosition + 1);
+          
+          // Kembali ke auto slide setelah 5 detik
+          setTimeout(() => {
+            isAutoSliding = true;
+          }, 5000);
+        });
+
+        // Hentikan auto slide saat hover
+        carousel.addEventListener('mouseenter', () => {
+          isAutoSliding = false;
+        });
+
+        carousel.addEventListener('mouseleave', () => {
+          isAutoSliding = true;
+        });
+
+        // Muat data pembelian
+        loadPurchaseData();
       });
-    });
-    searchContactInput.addEventListener('keypress', (e) => { if (e.key==='Enter') btnSearch.click(); });
+    </script>
 
-    // FAB -> go to contacts tab
-    fabAdd.addEventListener('click', () => {
-      document.querySelector('.tabs button[data-tab="contacts-tab"]').click();
-      newContactInput.focus();
-    });
-
-    // send & enter
-    sendBtn.addEventListener('click', () => sendMessage(messageInput.value));
-    messageInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(messageInput.value); });
-
-    // init on load
-    window.addEventListener('load', () => {
-      setTimeout(() => { setStage('loading-stage'); initializeAuth(); }, 300);
-    });
-
-  </script>
-</body>
+    <script src="order.js"></script>
+  </body>
 </html>
