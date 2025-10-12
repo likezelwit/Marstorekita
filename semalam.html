@@ -3,653 +3,497 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhatsApp Clone</title>
+    <title>WhatsApp Clone (Real-time Chat)</title>
+    <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* Custom styles for WhatsApp look and feel */
+        :root {
+            --whatsapp-green: #075E54;
+            --whatsapp-light-green: #128C7E;
+            --whatsapp-bubble: #DCF8C6;
+            --whatsapp-bg: #ECE5DD;
+        }
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #111b21;
+            background-color: var(--whatsapp-bg);
         }
-        /* Custom scrollbar for better aesthetics */
-        #messages-container::-webkit-scrollbar {
-            width: 6px;
+        .header {
+            background-color: var(--whatsapp-green);
         }
-        #messages-container::-webkit-scrollbar-track {
-            background: #2a3942;
+        .tab-bar {
+            background-color: var(--whatsapp-light-green);
         }
-        #messages-container::-webkit-scrollbar-thumb {
-            background-color: #3e4651;
-            border-radius: 20px;
-        }
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-        }
-        .nav-tab.active {
-            border-bottom: 3px solid #00a884;
-            color: #00a884;
-        }
-        .whatsapp-green {
-            background-color: #00a884;
-        }
-        .whatsapp-dark-green {
-            background-color: #008069;
-        }
-        .whatsapp-light-green {
-            background-color: #d9fdd3;
-        }
-        .whatsapp-gray {
-            background-color: #2a3942;
-        }
-        .whatsapp-light-gray {
-            background-color: #3e4651;
-        }
-        .whatsapp-dark {
-            background-color: #111b21;
-        }
-        .whatsapp-text-gray {
-            color: #8696a0;
-        }
-        .message-sent {
-            background-color: #d9fdd3;
-            color: #111b21;
-        }
-        .message-received {
-            background-color: #202c33;
+        .tab-bar button.active {
+            border-bottom: 3px solid white;
             color: white;
+            font-weight: 600;
         }
-        .chat-item:hover {
-            background-color: #2a3942;
+        .message-input-area {
+            background-color: #f0f0f0;
         }
-        .status-circle {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background-color: #00a884;
+        .chat-bubble {
+            max-width: 80%;
+            padding: 8px 12px;
+            border-radius: 15px;
+            margin-bottom: 8px;
+            word-wrap: break-word;
+        }
+        .sent {
+            background-color: var(--whatsapp-bubble);
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        .received {
+            background-color: #ffffff;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+        /* Mobile optimization */
+        .app-container {
+            height: 100vh;
+            max-width: 500px;
+            margin: 0 auto;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
             display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
+            flex-direction: column;
         }
-        .status-circle::after {
-            content: '';
-            position: absolute;
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            border: 2px solid #00a884;
+        /* Style for the Contact ID list */
+        .contact-item {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .contact-item:hover {
+            background-color: #f5f5f5;
+        }
+        .scroll-container {
+            overflow-y: auto;
+            flex-grow: 1;
         }
     </style>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
-<body class="flex items-center justify-center min-h-screen">
-
-    <div class="flex flex-col w-full max-w-lg h-[90vh] md:h-[80vh] whatsapp-dark rounded-lg shadow-2xl mx-4 overflow-hidden">
-        <!-- Header -->
-        <header class="whatsapp-gray p-4 shadow-md z-10">
-            <h1 class="text-xl font-bold text-center text-white" id="app-title">WhatsApp</h1>
-            <div class="text-center text-xs whatsapp-text-gray mt-1 truncate px-4" id="user-id-display">
-                Memuat ID Pengguna...
+<body class="bg-gray-100">
+    <div class="app-container bg-white">
+        <!-- HEADER -->
+        <header class="header text-white p-4 flex flex-col">
+            <div class="flex justify-between items-center mb-2">
+                <h1 id="app-title" class="text-xl font-bold">WhatsApp</h1>
+                <div class="flex space-x-4 text-lg">
+                    <i class="fas fa-search"></i>
+                    <i class="fas fa-ellipsis-v"></i>
+                </div>
             </div>
+            <p id="user-id-display" class="text-xs text-gray-200"></p>
         </header>
 
-        <!-- Navigation Tabs -->
-        <nav class="flex whatsapp-gray border-b border-gray-700">
-            <button class="nav-tab flex-1 py-3 text-center text-sm font-medium active text-white" data-tab="chat">
-                <i class="fas fa-comments mr-1"></i> Chat
-            </button>
-            <button class="nav-tab flex-1 py-3 text-center text-sm font-medium text-white" data-tab="status">
-                <i class="fas fa-circle-notch mr-1"></i> Status
-            </button>
-            <button class="nav-tab flex-1 py-3 text-center text-sm font-medium text-white" data-tab="community">
-                <i class="fas fa-users mr-1"></i> Komunitas
-            </button>
-            <button class="nav-tab flex-1 py-3 text-center text-sm font-medium text-white" data-tab="calls">
-                <i class="fas fa-phone mr-1"></i> Panggilan
-            </button>
+        <!-- TAB NAVIGATION -->
+        <nav class="tab-bar flex justify-between px-2 text-gray-300 shadow-md">
+            <button class="flex-1 py-3 text-sm tab-link active" data-tab="chat">CHATS</button>
+            <button class="flex-1 py-3 text-sm tab-link" data-tab="status">STATUS</button>
+            <button class="flex-1 py-3 text-sm tab-link" data-tab="calls">PANGGILAN</button>
+            <button class="flex-1 py-3 text-sm tab-link" data-tab="contacts">KONTAK</button>
         </nav>
 
-        <!-- Tab Contents -->
-        <div class="flex-1 overflow-hidden">
-            <!-- Chat Tab -->
+        <!-- MAIN CONTENT AREA -->
+        <main class="flex-grow scroll-container p-4">
+
+            <!-- CHAT TAB CONTENT -->
             <div id="chat-tab" class="tab-content active h-full flex flex-col">
-                <div class="flex items-center justify-between p-3 whatsapp-light-gray border-b border-gray-700">
-                    <h2 class="font-medium text-white">Percakapan</h2>
-                    <button id="add-contact-btn" class="text-green-500 hover:text-green-400">
-                        <i class="fas fa-user-plus mr-1"></i> Tambah Kontak
+                <div id="messages-container" class="scroll-container flex flex-col p-2 space-y-2 mb-4 bg-gray-50 rounded-lg">
+                    <!-- Messages will be loaded here -->
+                    <div class="text-center text-gray-500 p-4">Memuat pesan...</div>
+                </div>
+                
+                <!-- MESSAGE INPUT AREA -->
+                <div class="message-input-area p-3 flex items-center rounded-2xl shadow-inner">
+                    <button id="emoji-button" class="text-xl text-gray-600 mr-2"><i class="far fa-smile"></i></button>
+                    <input type="text" id="message-input" placeholder="Ketik pesan..." class="flex-grow p-3 rounded-full border-none focus:ring-green-500 focus:border-green-500">
+                    <button id="send-button" class="ml-2 w-10 h-10 bg-whatsapp-light-green text-white rounded-full flex items-center justify-center shadow-lg hover:bg-whatsapp-green transition duration-150">
+                        <i class="fas fa-paper-plane"></i>
                     </button>
                 </div>
-                
-                <!-- Contacts List -->
-                <div id="contacts-list" class="p-2 overflow-y-auto" style="max-height: 120px;">
-                    <div class="text-center whatsapp-text-gray py-2">Belum ada kontak</div>
-                </div>
-                
-                <!-- Messages Area -->
-                <main id="messages-container" class="flex-1 p-4 overflow-y-auto space-y-4">
-                    <!-- Messages will be dynamically inserted here -->
-                    <div class="flex justify-center items-center h-full">
-                        <div class="whatsapp-text-gray">Memuat pesan...</div>
-                    </div>
-                </main>
-
-                <!-- Message Input Form -->
-                <footer class="p-4 whatsapp-light-gray">
-                    <form id="message-form" class="flex items-center space-x-3">
-                        <button type="button" class="text-gray-400 hover:text-white">
-                            <i class="fas fa-paperclip text-xl"></i>
-                        </button>
-                        <input 
-                            id="message-input"
-                            type="text" 
-                            placeholder="Ketik pesan..."
-                            autocomplete="off"
-                            class="flex-1 whatsapp-gray border-none rounded-full px-5 py-3 text-white placeholder-gray-400 focus:ring-2 focus:ring-green-500 focus:outline-none transition duration-200"
-                        >
-                        <button type="button" class="text-gray-400 hover:text-white">
-                            <i class="fas fa-smile text-xl"></i>
-                        </button>
-                        <button 
-                            type="submit" 
-                            class="whatsapp-green hover:whatsapp-dark-green text-white rounded-full p-3 flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-700 focus:ring-green-500 transition duration-200 transform hover:scale-110"
-                            aria-label="Kirim Pesan"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-send"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                        </button>
-                    </form>
-                </footer>
             </div>
 
-            <!-- Status Tab -->
-            <div id="status-tab" class="tab-content h-full p-4">
-                <h2 class="text-xl font-bold mb-4 text-white">Status</h2>
-                <div class="space-y-4">
-                    <div class="flex items-center space-x-3 p-3 whatsapp-light-gray rounded-lg">
-                        <div class="status-circle">
-                            <i class="fas fa-user text-white"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-medium text-white">Status Saya</h3>
-                            <p class="text-xs whatsapp-text-gray">Ketuk untuk perbarui</p>
-                        </div>
-                    </div>
-                    
-                    <div class="text-center whatsapp-text-gray py-8">
-                        <i class="fas fa-circle-notch text-3xl mb-2"></i>
-                        <p>Belum ada status dari kontak</p>
-                    </div>
+            <!-- CONTACTS TAB CONTENT -->
+            <div id="contacts-tab" class="tab-content hidden h-full flex flex-col">
+                <h2 class="text-xl font-bold mb-4 text-whatsapp-green">Daftar Kontak</h2>
+                <div id="contact-list" class="flex flex-col space-y-2 mb-4">
+                    <!-- Contacts will be listed here -->
                 </div>
-            </div>
 
-            <!-- Community Tab -->
-            <div id="community-tab" class="tab-content h-full p-4">
-                <h2 class="text-xl font-bold mb-4 text-white">Komunitas</h2>
-                <div class="space-y-4">
-                    <div class="whatsapp-light-gray p-4 rounded-lg">
-                        <h3 class="font-medium mb-2 text-white">Buat Komunitas Baru</h3>
-                        <p class="text-sm whatsapp-text-gray mb-3">Buat grup untuk obrolan bersama</p>
-                        <button class="whatsapp-green hover:whatsapp-dark-green text-white px-4 py-2 rounded-lg text-sm w-full">
-                            Buat Komunitas
-                        </button>
-                    </div>
-                    
-                    <div class="text-center whatsapp-text-gray py-8">
-                        <i class="fas fa-users text-3xl mb-2"></i>
-                        <p>Belum ada komunitas</p>
-                    </div>
+                <div class="p-4 bg-gray-50 rounded-lg shadow-inner">
+                    <h3 class="text-lg font-semibold mb-3">Tambah Kontak Baru</h3>
+                    <input type="text" id="new-contact-id" placeholder="ID Pengguna (User ID) Kontak" class="w-full p-2 mb-2 rounded border border-gray-300 focus:ring-whatsapp-green focus:border-whatsapp-green">
+                    <button id="add-contact-button" class="w-full bg-whatsapp-green text-white py-2 rounded-lg font-semibold hover:bg-whatsapp-light-green transition duration-150">
+                        <i class="fas fa-user-plus mr-2"></i> Tambah
+                    </button>
                 </div>
             </div>
-
-            <!-- Calls Tab -->
-            <div id="calls-tab" class="tab-content h-full p-4">
-                <h2 class="text-xl font-bold mb-4 text-white">Panggilan</h2>
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center p-3 whatsapp-light-gray rounded-lg">
-                        <div>
-                            <h3 class="font-medium text-white">Panggilan Terbaru</h3>
-                            <p class="text-xs whatsapp-text-gray">Belum ada riwayat panggilan</p>
-                        </div>
-                        <button class="whatsapp-green hover:whatsapp-dark-green text-white rounded-full p-2">
-                            <i class="fas fa-phone"></i>
-                        </button>
-                    </div>
-                    
-                    <div class="text-center whatsapp-text-gray py-8">
-                        <i class="fas fa-phone-alt text-3xl mb-2"></i>
-                        <p>Fitur panggilan memerlukan pengaturan tambahan</p>
-                    </div>
-                </div>
+            
+            <!-- STATUS, CALLS, COMMUNITY (Placeholder Content) -->
+            <div id="status-tab" class="tab-content hidden text-center p-10">
+                <i class="fas fa-circle-notch text-4xl text-gray-400 mb-4"></i>
+                <p class="text-gray-600">Fitur Status belum diimplementasikan.</p>
             </div>
-        </div>
+            <div id="calls-tab" class="tab-content hidden text-center p-10">
+                <i class="fas fa-phone-alt text-4xl text-gray-400 mb-4"></i>
+                <p class="text-gray-600">Fitur Panggilan belum diimplementasikan.</p>
+            </div>
+            
+        </main>
     </div>
 
-    <!-- Add Contact Modal -->
-    <div id="add-contact-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 hidden">
-        <div class="whatsapp-light-gray rounded-xl p-6 w-full max-w-md">
-            <h3 class="text-xl font-bold mb-4 text-white">Tambah Kontak Baru</h3>
-            <div class="mb-4">
-                <label class="block text-sm font-medium mb-1 text-white">ID Pengguna</label>
-                <input 
-                    id="contact-id-input"
-                    type="text" 
-                    placeholder="Masukkan ID pengguna"
-                    class="w-full whatsapp-gray border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
-                >
-            </div>
-            <div class="flex justify-end space-x-3">
-                <button id="cancel-add-contact" class="px-4 py-2 whatsapp-text-gray hover:text-white">Batal</button>
-                <button id="confirm-add-contact" class="px-4 py-2 whatsapp-green hover:whatsapp-dark-green rounded-lg">Tambah</button>
-            </div>
-        </div>
-    </div>
-
+    <!-- JAVASCRIPT START -->
     <script type="module">
-        // Firebase Imports
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, onSnapshot, serverTimestamp, doc, getDoc, setDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        // --- Firebase Imports ---
+        // Menggunakan CDN versi 12.4.0 untuk konsistensi dengan konfigurasi Anda
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+        import { getFirestore, collection, query, where, onSnapshot, addDoc, serverTimestamp, updateDoc, doc, getDocs } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 
-        // --- Firebase Configuration ---
-        // GANTI BAGIAN INI DENGAN KONFIGURASI FIREBASE ANDA
+        // --- Firebase Configuration (Disediakan oleh Pengguna) ---
         const firebaseConfig = {
-            apiKey: "AIzaSyBjK7X8vY7nZ9X1W2V3U4T5Y6Z7A8B9C0D",
-            authDomain: "aplikasi-chat-sederhana.firebaseapp.com",
-            projectId: "aplikasi-chat-sederhana",
-            storageBucket: "aplikasi-chat-sederhana.appspot.com",
-            messagingSenderId: "123456789012",
-            appId: "1:123456789012:web:abcdef123456789012345"
+            apiKey: "AIzaSyD9tO94PdmXnqSH4cMVLPbgcEyY1J266mQ",
+            authDomain: "whatsapp-clone-web-9418e.firebaseapp.com",
+            projectId: "whatsapp-clone-web-9418e",
+            storageBucket: "whatsapp-clone-web-9418e.firebasestorage.app",
+            messagingSenderId: "31927689655",
+            appId: "1:31927689655:web:3e4da24d4237a7ffb08832",
+            measurementId: "G-5624HP8XEX"
         };
         
-        // ID aplikasi, bisa diganti sesuai keinginan
-        const appId = "whatsapp-clone";
+        // Inisialisasi Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        
+        // --- Global State ---
+        let currentUserId = null;
+        let currentChatContact = null; // null untuk Public Chat, string (ID) untuk Private Chat
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; // Wajib sesuai pedoman
         
         // --- DOM Elements ---
         const messagesContainer = document.getElementById('messages-container');
-        const messageForm = document.getElementById('message-form');
         const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
         const userIdDisplay = document.getElementById('user-id-display');
-        const contactsList = document.getElementById('contacts-list');
-        const addContactBtn = document.getElementById('add-contact-btn');
-        const addContactModal = document.getElementById('add-contact-modal');
-        const cancelAddContact = document.getElementById('cancel-add-contact');
-        const confirmAddContact = document.getElementById('confirm-add-contact');
-        const contactIdInput = document.getElementById('contact-id-input');
-        const navTabs = document.querySelectorAll('.nav-tab');
-        const tabContents = document.querySelectorAll('.tab-content');
         const appTitle = document.getElementById('app-title');
+        const tabLinks = document.querySelectorAll('.tab-link');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const contactList = document.getElementById('contact-list');
+        const newContactIdInput = document.getElementById('new-contact-id');
+        const addContactButton = document.getElementById('add-contact-button');
 
-        let db, auth;
-        let currentUserId = null;
-        let contacts = [];
-        let currentChatContact = null;
+        // --- Utility Functions ---
 
-        // --- Generate or Retrieve User ID ---
-        function getUserId() {
-            let userId = localStorage.getItem('userId');
-            if (!userId) {
-                // Generate a unique ID for the device
-                userId = 'user_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
-                localStorage.setItem('userId', userId);
-            }
-            return userId;
-        }
+        /**
+         * Mengkonversi timestamp Firestore menjadi string waktu lokal (HH:MM).
+         * @param {Object} timestamp - Objek Firestore Timestamp.
+         * @returns {string} Waktu yang diformat.
+         */
+        const formatTime = (timestamp) => {
+            if (!timestamp) return '...';
+            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        };
 
-        // --- Main Application Logic ---
-        async function main() {
-            try {
-                // Initialize Firebase
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                setLogLevel('debug');
-
-                // Get or generate user ID
-                currentUserId = getUserId();
-                
-                // Display user ID
-                userIdDisplay.textContent = `ID Anda: ${currentUserId}`;
-                
-                // Set up user document in Firestore
-                await setupUserDocument();
-                
-                // Listen for contacts
-                listenForContacts();
-                
-                // Listen for messages
-                listenForMessages();
-
-            } catch (error) {
-                console.error("Firebase initialization error:", error);
-                displayError("Gagal terhubung ke layanan chat. Silakan coba lagi.");
-            }
-        }
-
-        // --- Set up user document in Firestore ---
-        async function setupUserDocument() {
-            const userRef = doc(db, `/artifacts/${appId}/users/${currentUserId}`);
-            const userSnap = await getDoc(userRef);
-            
-            if (!userSnap.exists()) {
-                await setDoc(userRef, {
-                    id: currentUserId,
-                    name: `User ${currentUserId.substring(0, 8)}`,
-                    createdAt: serverTimestamp(),
-                    lastActive: serverTimestamp(),
-                    online: true
-                });
-            } else {
-                // Update last active time and online status
-                await updateDoc(userRef, {
-                    lastActive: serverTimestamp(),
-                    online: true
-                });
-            }
-            
-            // Set up user as offline when they close the tab
-            window.addEventListener('beforeunload', async () => {
-                await updateDoc(userRef, {
-                    online: false,
-                    lastActive: serverTimestamp()
-                });
-            });
-        }
-
-        // --- Firestore Real-time Listener for Contacts ---
-        function listenForContacts() {
-            const contactsRef = collection(db, `/artifacts/${appId}/users/${currentUserId}/contacts`);
-            
-            onSnapshot(contactsRef, (querySnapshot) => {
-                contacts = [];
-                querySnapshot.forEach((doc) => {
-                    contacts.push({ id: doc.id, ...doc.data() });
-                });
-                
-                renderContacts();
-            }, (error) => {
-                console.error("Error listening for contacts: ", error);
-            });
-        }
-
-        // --- Render Contacts to the UI ---
-        function renderContacts() {
-            if (contacts.length === 0) {
-                contactsList.innerHTML = '<div class="text-center whatsapp-text-gray py-2">Belum ada kontak</div>';
-                return;
-            }
-
-            contactsList.innerHTML = '';
-            contacts.forEach(contact => {
-                const contactElement = document.createElement('div');
-                contactElement.className = 'flex items-center space-x-3 p-2 hover:bg-gray-700 rounded-lg cursor-pointer chat-item';
-                contactElement.innerHTML = `
-                    <div class="relative">
-                        <div class="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
-                            <i class="fas fa-user text-white"></i>
-                        </div>
-                        ${contact.online ? '<span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-800"></span>' : ''}
-                    </div>
-                    <div class="flex-1">
-                        <h3 class="font-medium text-white">${contact.name || contact.id}</h3>
-                        <p class="text-xs whatsapp-text-gray">${contact.online ? 'Online' : 'Offline'}</p>
-                    </div>
-                    <button class="text-gray-400 hover:text-white">
-                        <i class="fas fa-ellipsis-v"></i>
-                    </button>
-                `;
-                
-                contactElement.addEventListener('click', () => {
-                    // Switch to chat with this contact
-                    switchToContactChat(contact);
-                });
-                
-                contactsList.appendChild(contactElement);
-            });
-        }
-
-        // --- Switch to chat with specific contact ---
-        function switchToContactChat(contact) {
-            currentChatContact = contact;
-            
-            // Update app title
-            appTitle.textContent = `${contact.name || contact.id}`;
-            
-            // Switch to chat tab
-            document.querySelector('[data-tab="chat"]').click();
-            
-            // Load messages with this contact
-            listenForPrivateMessages(contact.id);
-        }
-
-        // --- Firestore Real-time Listener for Public Messages ---
-        function listenForMessages() {
-            const messagesCollectionPath = `/artifacts/${appId}/public/data/messages`;
-            const q = query(collection(db, messagesCollectionPath));
-
-            onSnapshot(q, (querySnapshot) => {
-                const messages = [];
-                querySnapshot.forEach((doc) => {
-                    messages.push({ id: doc.id, ...doc.data() });
-                });
-
-                // Sort messages by timestamp client-side
-                messages.sort((a, b) => {
-                    const timeA = a.createdAt?.seconds || 0;
-                    const timeB = b.createdAt?.seconds || 0;
-                    return timeA - timeB;
-                });
-
-                // Only render if we're not in a private chat
-                if (!currentChatContact) {
-                    renderMessages(messages);
-                }
-            }, (error) => {
-                console.error("Error listening for messages: ", error);
-                displayError("Gagal memuat pesan.");
-            });
-        }
-
-        // --- Firestore Real-time Listener for Private Messages ---
-        function listenForPrivateMessages(contactId) {
-            // Create a unique chat ID that's the same regardless of who initiates
-            const chatId = [currentUserId, contactId].sort().join('_');
-            const messagesCollectionPath = `/artifacts/${appId}/private/chats/${chatId}/messages`;
-            const q = query(collection(db, messagesCollectionPath));
-
-            onSnapshot(q, (querySnapshot) => {
-                const messages = [];
-                querySnapshot.forEach((doc) => {
-                    messages.push({ id: doc.id, ...doc.data() });
-                });
-
-                // Sort messages by timestamp client-side
-                messages.sort((a, b) => {
-                    const timeA = a.createdAt?.seconds || 0;
-                    const timeB = b.createdAt?.seconds || 0;
-                    return timeA - timeB;
-                });
-
-                renderMessages(messages);
-            }, (error) => {
-                console.error("Error listening for private messages: ", error);
-                displayError("Gagal memuat pesan privat.");
-            });
-        }
-
-        // --- Render Messages to the UI ---
-        function renderMessages(messages) {
-            messagesContainer.innerHTML = ''; // Clear previous messages
+        /**
+         * Merender pesan di kontainer chat.
+         * @param {Array<Object>} messages - Daftar objek pesan.
+         */
+        const renderMessages = (messages) => {
+            messagesContainer.innerHTML = ''; // Kosongkan kontainer
             if (messages.length === 0) {
-                messagesContainer.innerHTML = '<div class="text-center whatsapp-text-gray">Belum ada pesan. Mulai percakapan!</div>';
+                messagesContainer.innerHTML = `<div class="text-center text-gray-500 p-4">Tidak ada pesan. Mulailah chat!</div>`;
                 return;
             }
 
             messages.forEach(msg => {
-                const isSentByCurrentUser = msg.userId === currentUserId;
+                const isSentByMe = msg.senderId === currentUserId;
+                const alignmentClass = isSentByMe ? 'sent' : 'received';
+                const displayName = isSentByMe ? 'Anda' : (msg.senderName || msg.senderId.substring(0, 8)); // Tampilkan 8 digit ID
+                const nameColor = isSentByMe ? 'text-gray-700' : 'text-blue-600';
 
-                const messageWrapper = document.createElement('div');
-                messageWrapper.className = `flex ${isSentByCurrentUser ? 'justify-end' : 'justify-start'} mb-4`;
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `chat-bubble ${alignmentClass} shadow-md flex flex-col`;
 
-                const messageBubble = document.createElement('div');
-                messageBubble.className = `max-w-xs md:max-w-md lg:max-w-lg rounded-2xl px-4 py-2 shadow ${isSentByCurrentUser ? 'message-sent rounded-br-lg' : 'message-received rounded-bl-lg'}`;
+                // Tampilkan nama pengirim jika bukan pesan saya
+                if (!isSentByMe || currentChatContact) {
+                    const nameSpan = document.createElement('span');
+                    nameSpan.className = `text-xs font-semibold mb-1 ${nameColor}`;
+                    nameSpan.textContent = displayName;
+                    messageDiv.appendChild(nameSpan);
+                }
+
+                // Konten pesan
+                const contentSpan = document.createElement('span');
+                contentSpan.className = 'text-sm text-black';
+                contentSpan.textContent = msg.text;
+                messageDiv.appendChild(contentSpan);
+
+                // Waktu pesan
+                const timeSpan = document.createElement('span');
+                timeSpan.className = 'text-xs text-gray-500 self-end mt-1 ml-4';
+                timeSpan.textContent = formatTime(msg.timestamp);
+                messageDiv.appendChild(timeSpan);
                 
-                const messageText = document.createElement('p');
-                messageText.className = `text-sm ${isSentByCurrentUser ? 'text-gray-800' : 'text-white'}`;
-                messageText.textContent = msg.text;
-                
-                const timestamp = document.createElement('div');
-                timestamp.className = `text-xs mt-1 ${isSentByCurrentUser ? 'text-gray-600' : 'whatsapp-text-gray'} text-right`;
-                timestamp.textContent = msg.createdAt ? new Date(msg.createdAt.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
-
-                messageBubble.appendChild(messageText);
-                messageBubble.appendChild(timestamp);
-                messageWrapper.appendChild(messageBubble);
-                messagesContainer.appendChild(messageWrapper);
+                messagesContainer.appendChild(messageDiv);
             });
             
-            // Auto-scroll to the latest message
+            // Scroll ke bawah
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }
+        };
 
-        // --- Handle Sending a New Message ---
-        messageForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const messageText = messageInput.value.trim();
-
-            if (messageText && currentUserId) {
-                try {
-                    let messagesCollectionPath;
-                    
-                    if (currentChatContact) {
-                        // Private message
-                        const chatId = [currentUserId, currentChatContact.id].sort().join('_');
-                        messagesCollectionPath = `/artifacts/${appId}/private/chats/${chatId}/messages`;
-                        
-                        // Mark message as delivered
-                        const contactRef = doc(db, `/artifacts/${appId}/users/${currentChatContact.id}`);
-                        await updateDoc(contactRef, {
-                            lastMessage: {
-                                from: currentUserId,
-                                text: messageText,
-                                timestamp: serverTimestamp()
-                            }
-                        });
-                    } else {
-                        // Public message
-                        messagesCollectionPath = `/artifacts/${appId}/public/data/messages`;
-                    }
-                    
-                    await addDoc(collection(db, messagesCollectionPath), {
-                        text: messageText,
-                        userId: currentUserId,
-                        createdAt: serverTimestamp(),
-                        delivered: false,
-                        read: false
-                    });
-                    
-                    messageInput.value = ''; // Clear input field
-                } catch (error) {
-                    console.error("Error sending message:", error);
-                    // Optionally show a temporary error message in the UI
-                }
-            }
-        });
-
-        // --- Tab Navigation ---
-        navTabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                const tabId = tab.getAttribute('data-tab');
-                
-                // Update active tab
-                navTabs.forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                
-                // Update active content
-                tabContents.forEach(content => {
-                    content.classList.remove('active');
-                    if (content.id === `${tabId}-tab`) {
-                        content.classList.add('active');
-                    }
-                });
-                
-                // Reset to public chat when switching tabs
-                if (tabId === 'chat' && !currentChatContact) {
-                    appTitle.textContent = 'WhatsApp';
-                    listenForMessages();
-                }
-            });
-        });
-
-        // --- Add Contact Modal ---
-        addContactBtn.addEventListener('click', () => {
-            addContactModal.classList.remove('hidden');
-            contactIdInput.value = '';
-            contactIdInput.focus();
-        });
-
-        cancelAddContact.addEventListener('click', () => {
-            addContactModal.classList.add('hidden');
-        });
-
-        confirmAddContact.addEventListener('click', async () => {
-            const contactId = contactIdInput.value.trim();
+        /**
+         * Mengirim pesan ke koleksi yang sesuai (Public atau Private).
+         * @param {string} text - Teks pesan.
+         */
+        const sendMessage = async (text) => {
+            if (!text.trim() || !currentUserId) return;
             
-            if (!contactId) {
-                alert('Masukkan ID pengguna');
-                return;
-            }
-            
-            if (contactId === currentUserId) {
-                alert('Tidak bisa menambahkan diri sendiri sebagai kontak');
-                return;
-            }
+            let messageRef;
             
             try {
-                // Check if user exists
-                const userRef = doc(db, `/artifacts/${appId}/users/${contactId}`);
-                const userSnap = await getDoc(userRef);
+                const messageData = {
+                    text: text.trim(),
+                    timestamp: serverTimestamp(),
+                    senderId: currentUserId,
+                    senderName: currentUserId.substring(0, 8), // Nama singkat
+                    type: 'text'
+                };
                 
-                if (!userSnap.exists()) {
-                    alert('Pengguna tidak ditemukan');
+                if (currentChatContact) {
+                    // PRIVATE CHAT
+                    // Koleksi diurutkan agar konsisten (misalnya: A_B atau B_A)
+                    const chatRoomId = [currentUserId, currentChatContact].sort().join('_');
+                    const privateChatPath = `/artifacts/${appId}/private/chats/${chatRoomId}/messages`;
+                    messageRef = collection(db, privateChatPath);
+
+                } else {
+                    // PUBLIC CHAT
+                    const publicChatPath = `/artifacts/${appId}/public/data/global_chat`;
+                    messageRef = collection(db, publicChatPath);
+                }
+
+                await addDoc(messageRef, messageData);
+                messageInput.value = ''; // Kosongkan input
+            } catch (error) {
+                console.error("Gagal mengirim pesan: ", error);
+            }
+        };
+        
+        /**
+         * Menyiapkan listener real-time untuk pesan (Public atau Private).
+         */
+        const listenForMessages = () => {
+            let messagesQuery;
+            let collectionPath;
+            
+            if (currentChatContact) {
+                // PRIVATE CHAT QUERY
+                const chatRoomId = [currentUserId, currentChatContact].sort().join('_');
+                collectionPath = `/artifacts/${appId}/private/chats/${chatRoomId}/messages`;
+            } else {
+                // PUBLIC CHAT QUERY
+                collectionPath = `/artifacts/${appId}/public/data/global_chat`;
+            }
+            
+            // Mengambil 50 pesan terakhir (tidak menggunakan orderBy untuk menghindari masalah index, diurutkan di client)
+            messagesQuery = collection(db, collectionPath); 
+
+            // Hapus listener lama jika ada (tidak diperlukan secara eksplisit di sini, karena onSnapshot mengembalikan fungsi unsubscribe)
+            // Namun, di aplikasi yang lebih besar, fungsi unsubscribe harus digunakan.
+
+            // Mulai listener baru
+            return onSnapshot(messagesQuery, (snapshot) => {
+                const messages = [];
+                snapshot.forEach(doc => {
+                    messages.push({ id: doc.id, ...doc.data() });
+                });
+                
+                // Urutkan di client side berdasarkan timestamp karena menghindari orderBy di query
+                messages.sort((a, b) => (a.timestamp?.toMillis() || 0) - (b.timestamp?.toMillis() || 0));
+                
+                renderMessages(messages);
+            }, (error) => {
+                console.error("Gagal mendengarkan pesan:", error);
+                messagesContainer.innerHTML = `<div class="text-center text-red-500 p-4">Gagal memuat pesan. Cek konsol.</div>`;
+            });
+        };
+        
+        /**
+         * Memuat dan menampilkan daftar kontak pengguna.
+         */
+        const loadContacts = async () => {
+            contactList.innerHTML = '';
+            if (!currentUserId) return;
+            
+            try {
+                const contactsPath = `/artifacts/${appId}/users/${currentUserId}/contacts`;
+                const q = collection(db, contactsPath);
+                const querySnapshot = await getDocs(q);
+                
+                if (querySnapshot.empty) {
+                    contactList.innerHTML = `<p class="text-gray-500 italic p-2">Belum ada kontak. Tambahkan ID teman Anda di bawah.</p>`;
                     return;
                 }
-                
-                // Add to contacts
-                const contactRef = doc(db, `/artifacts/${appId}/users/${currentUserId}/contacts/${contactId}`);
-                await setDoc(contactRef, {
-                    id: contactId,
-                    name: userSnap.data().name || contactId,
-                    addedAt: serverTimestamp(),
-                    online: userSnap.data().online || false
+
+                querySnapshot.forEach((doc) => {
+                    const contactData = doc.data();
+                    const contactId = doc.id;
+                    
+                    const contactItem = document.createElement('div');
+                    contactItem.className = 'contact-item flex items-center p-3 rounded-lg bg-white shadow-sm';
+                    contactItem.setAttribute('data-contact-id', contactId);
+                    
+                    contactItem.innerHTML = `
+                        <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3 text-lg text-whatsapp-green">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="flex-grow">
+                            <p class="font-semibold text-gray-800">Kontak: ${contactData.name || contactId.substring(0, 8)}</p>
+                            <p class="text-xs text-gray-500 truncate">ID: ${contactId}</p>
+                        </div>
+                    `;
+                    
+                    contactItem.addEventListener('click', () => startPrivateChat(contactId, contactData.name));
+                    contactList.appendChild(contactItem);
                 });
                 
-                // Also add the current user to the contact's contacts list
-                const reverseContactRef = doc(db, `/artifacts/${appId}/users/${contactId}/contacts/${currentUserId}`);
-                await setDoc(reverseContactRef, {
-                    id: currentUserId,
-                    name: `User ${currentUserId.substring(0, 8)}`,
-                    addedAt: serverTimestamp(),
-                    online: true
-                });
-                
-                addContactModal.classList.add('hidden');
             } catch (error) {
-                console.error("Error adding contact:", error);
-                alert('Gagal menambahkan kontak');
+                console.error("Gagal memuat kontak:", error);
+                contactList.innerHTML = `<p class="text-red-500 p-2">Error memuat kontak.</p>`;
             }
-        });
+        };
 
-        // --- Utility Function to Display Errors ---
-        function displayError(message) {
-            messagesContainer.innerHTML = `<div class="text-center text-red-400 p-4">${message}</div>`;
-        }
+        /**
+         * Memulai sesi chat privat dengan kontak.
+         * @param {string} contactId - ID pengguna kontak.
+         * @param {string} contactName - Nama kontak.
+         */
+        const startPrivateChat = (contactId, contactName) => {
+            currentChatContact = contactId;
+            appTitle.textContent = `Chat dengan ${contactName || contactId.substring(0, 8)}`;
+            
+            // Pindah ke tab chat
+            document.querySelector('.tab-link[data-tab="chat"]').click(); 
+            
+            // Mulai listener untuk chat privat
+            listenForMessages();
+        };
+
+        /**
+         * Menambahkan ID pengguna ke daftar kontak.
+         */
+        const addContact = async () => {
+            const newContactId = newContactIdInput.value.trim();
+            if (!newContactId || !currentUserId) return;
+
+            if (newContactId === currentUserId) {
+                alert('Tidak bisa menambahkan diri sendiri sebagai kontak!');
+                return;
+            }
+
+            try {
+                const contactDocPath = `/artifacts/${appId}/users/${currentUserId}/contacts/${newContactId}`;
+                await updateDoc(doc(db, contactDocPath), { 
+                    name: newContactId.substring(0, 8), // Default name
+                    addedAt: serverTimestamp() 
+                }, { merge: true });
+
+                newContactIdInput.value = '';
+                await loadContacts(); // Refresh daftar kontak
+                alert('Kontak berhasil ditambahkan!');
+            } catch (error) {
+                console.error("Gagal menambahkan kontak: ", error);
+                alert('Gagal menambahkan kontak. Pastikan ID benar.');
+            }
+        };
         
-        // Start the application
-        main();
+        // --- Initialization and Event Handlers ---
+        
+        /**
+         * Menginisialisasi otentikasi dan menyiapkan listener.
+         */
+        const initializeAppAndListeners = () => {
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    currentUserId = user.uid;
+                    userIdDisplay.textContent = `ID Anda: ${currentUserId}`;
+                    
+                    // Set up initial listeners
+                    listenForMessages(); // Mulai Public Chat secara default
+                    loadContacts();
+                } else {
+                    // Coba sign in secara anonim jika belum ada user
+                    signInAnonymously(auth)
+                        .catch((error) => {
+                            console.error("Gagal sign in anonim:", error);
+                            userIdDisplay.textContent = "Gagal terhubung ke server.";
+                        });
+                }
+            });
+            
+            // Event listener untuk tombol kirim
+            sendButton.addEventListener('click', () => sendMessage(messageInput.value));
+            
+            // Event listener untuk tombol Enter di input
+            messageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    sendMessage(messageInput.value);
+                }
+            });
+            
+            // Event listener untuk tombol tambah kontak
+            addContactButton.addEventListener('click', addContact);
 
+            // Tab navigation handler
+            tabLinks.forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    const tabId = tab.getAttribute('data-tab');
+                    
+                    // 1. Update active tab styling
+                    tabLinks.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    // 2. Update active content
+                    tabContents.forEach(content => {
+                        content.classList.add('hidden');
+                        content.classList.remove('active');
+                        if (content.id === `${tabId}-tab`) {
+                            content.classList.remove('hidden');
+                            content.classList.add('active');
+                        }
+                    });
+                    
+                    // 3. LOGIKA UNTUK CHAT: Reset ke public chat/load kontak
+                    if (tabId === 'chat') {
+                        // Reset state chat ke Public/Group Chat jika tidak ada chat privat yang sedang aktif
+                        if (currentChatContact) {
+                            // Jika ada chat privat aktif, biarkan
+                        } else {
+                            appTitle.textContent = 'WhatsApp';
+                            listenForMessages(); 
+                        }
+                    } else if (tabId === 'contacts') {
+                        loadContacts();
+                        // Reset judul kembali ke default agar tidak menampilkan nama kontak
+                        appTitle.textContent = 'WhatsApp';
+                        currentChatContact = null; // Pastikan chat direset saat pindah ke kontak
+                    } else {
+                        appTitle.textContent = 'WhatsApp';
+                        currentChatContact = null; // Pastikan chat direset saat pindah ke tab lain
+                    }
+                });
+            });
+        };
+
+        // Mulai aplikasi
+        initializeAppAndListeners();
+        
     </script>
+    <!-- JAVASCRIPT END -->
 </body>
 </html>
