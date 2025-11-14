@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>URL Shortener Zeli</title>
+<style>
+  body {
+    font-family: "Poppins", sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background: #f0f8ff;
+    padding: 20px;
+  }
+  input, button {
+    padding: 10px;
+    margin: 5px;
+    font-size: 16px;
+  }
+  #result {
+    margin-top: 15px;
+    font-weight: bold;
+    word-break: break-all;
+  }
+</style>
+</head>
+<body>
+
+<h1>URL Shortener</h1>
+<input type="text" id="originalURL" placeholder="Masukkan link asli..." size="40">
+<button onclick="shortenURL()">Generate</button>
+
+<div id="result"></div>
+
+<script>
+function generateRandomString(length) {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+}
+
+function shortenURL() {
+    const original = document.getElementById('originalURL').value.trim();
+    if (!original) {
+        alert("Isi dulu link aslinya!");
+        return;
+    }
+
+    // Ganti domain ini sesuai yang kamu punya
+    const domain = "https://zeli.com/";
+    const shortPath = generateRandomString(5); // contoh: 5 karakter acak
+    const shortURL = domain + shortPath;
+
+    // Tampilkan hasil
+    document.getElementById('result').innerHTML = `Link pendek: <a href="${original}" target="_blank">${shortURL}</a>`;
+}
+</script>
+
+</body>
+</html>
