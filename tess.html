@@ -2,93 +2,59 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roblox Profile Finder - Powered by Google Script</title>
+    <title>Roblox Discovery - Final Fix</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 50px; background: #f4f7f9; }
-        .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 320px; border: 1px solid #e1e4e8; }
-        input { padding: 12px; width: 85%; border: 2px solid #eee; border-radius: 10px; margin-bottom: 12px; outline: none; transition: 0.3s; }
-        input:focus { border-color: #007bff; }
-        button { padding: 12px 20px; background: #007bff; color: white; border: none; border-radius: 10px; cursor: pointer; width: 95%; font-weight: bold; transition: 0.3s; }
-        button:hover { background: #0056b3; transform: translateY(-2px); }
-        #avatar { width: 150px; height: 150px; border-radius: 50%; margin-top: 15px; display: none; border: 4px solid #007bff; object-fit: cover; }
-        h2 { margin: 15px 0 5px 0; font-size: 1.4em; color: #333; }
-        p { color: #888; margin: 0; font-size: 0.9em; background: #f0f0f0; padding: 5px 10px; border-radius: 20px; display: inline-block; }
-        .loading { font-size: 0.8em; color: #007bff; display: none; margin-top: 10px; }
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 50px; background: #f4f7f9; }
+        .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 320px; }
+        input { padding: 12px; width: 85%; border: 2px solid #eee; border-radius: 10px; margin-bottom: 12px; }
+        button { padding: 12px 20px; background: #007bff; color: white; border: none; border-radius: 10px; cursor: pointer; width: 95%; font-weight: bold; }
+        #avatar { width: 150px; height: 150px; border-radius: 50%; margin-top: 15px; display: none; border: 4px solid #007bff; }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <h3>Roblox Discovery</h3>
-        <input type="text" id="userInput" placeholder="Username atau User ID">
+        <h3>Roblox Profile</h3>
+        <input type="text" id="userInput" placeholder="Masukkan User ID (Angka)">
         <button onclick="findProfile()">Cari Profil</button>
-        <div id="loader" class="loading">Menembus CORS...</div>
-
         <div id="result">
             <img id="avatar" src="" alt="Avatar">
             <h2 id="displayName"></h2>
-            <p id="infoText">Masukkan data untuk melihat</p>
         </div>
     </div>
 
     <script>
-        async function findProfile() {
+        function findProfile() {
             const input = document.getElementById('userInput').value.trim();
-            if (!input) return alert("Masukkan Nama atau ID dulu!");
+            if (!input || isNaN(input)) return alert("Tolong masukkan User ID berupa ANGKA dulu!");
 
-            const loader = document.getElementById('loader');
             const avatarImg = document.getElementById('avatar');
             const dispName = document.getElementById('displayName');
-            const infoText = document.getElementById('infoText');
 
-            loader.style.display = "block";
-            avatarImg.style.display = "none";
-            dispName.innerText = "";
-            infoText.innerText = "Processing...";
+            // 1. TAMPILKAN GAMBAR (Ini 100% aman dari CORS karena pakai tag <img>)
+            const cdnUrl = `https://www.roblox.com/headshot-thumbnail/image?userId=${input}&width=150&height=150&format=png`;
+            avatarImg.src = cdnUrl;
+            avatarImg.style.display = "inline-block";
+            dispName.innerText = "Loading Name...";
 
-            // URL Google Apps Script kamu
-            const proxyBase = "https://script.google.com/macros/s/AKfycbw-rlh89wXtS_57q6vTALvvYAkdlAB5j83rAUqvLg160lUAnnV839abGlqx0X7TVQkMcA/exec";
+            // 2. AMBIL NAMA (Trik JSONP via Google Apps Script agar TIDAK kena CORS)
+            // Ganti URL ini dengan URL Web App Google Script kamu yang baru dideploy
+            const scriptUrl = "https://script.google.com/macros/s/AKfycbw-rlh89wXtS_57q6vTALvvYAkdlAB5j83rAUqvLg160lUAnnV839abGlqx0X7TVQkMcA/exec";
+            
+            const finalUrl = `${scriptUrl}?url=${encodeURIComponent('https://users.roblox.com/v1/users/' + input)}&callback=callbackFunc`;
 
-            try {
-                let userId = input;
+            // Kita pakai tag <script> buat ambil data, bukan FETCH. Tag <script> kebal CORS!
+            const script = document.createElement('script');
+            script.src = finalUrl;
+            document.body.appendChild(script);
+        }
 
-                // 1. Jika input adalah Username (Bukan Angka), cari ID-nya
-                if (isNaN(input)) {
-                    const nameUrl = encodeURIComponent(`https://users.roblox.com/v1/usernames/users`);
-                    const nameRes = await fetch(`${proxyBase}?url=${nameUrl}`, {
-                        method: 'POST',
-                        body: JSON.stringify({ usernames: [input], excludeBannedUsers: true })
-                    });
-                    const nameData = await nameRes.json();
-                    
-                    if (!nameData.data || nameData.data.length === 0) {
-                        throw new Error("Username tidak ditemukan!");
-                    }
-                    userId = nameData.data[0].id;
-                }
-
-                // 2. Ambil Nama Asli (Display Name) pakai Proxy
-                const userUrl = encodeURIComponent(`https://users.roblox.com/v1/users/${userId}`);
-                const userRes = await fetch(`${proxyBase}?url=${userUrl}`);
-                const userData = await userRes.json();
-
-                if (userData.errors) throw new Error("ID tidak valid!");
-
-                // 3. Tampilkan Data
-                dispName.innerText = userData.displayName;
-                infoText.innerText = "@" + userData.name + " (ID: " + userId + ")";
-                
-                // Thumbnail langsung tembak (kebal CORS di tag <img>)
-                avatarImg.src = `https://www.roblox.com/headshot-thumbnail/image?userId=${userId}&width=150&height=150&format=png`;
-                avatarImg.style.display = "inline-block";
-
-            } catch (error) {
-                console.error(error);
-                alert("Gagal: " + error.message);
-                infoText.innerText = "Gagal memuat data.";
-            } finally {
-                loader.style.display = "none";
+        // Fungsi penampung hasil dari Google Script
+        function callbackFunc(data) {
+            if (data.displayName) {
+                document.getElementById('displayName').innerText = data.displayName;
+            } else {
+                document.getElementById('displayName').innerText = "User Found";
             }
         }
     </script>
