@@ -6,21 +6,24 @@
     <title>Roblox Profile Finder</title>
     <style>
         body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 50px; background: #f0f2f5; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; width: 300px; }
-        input { padding: 10px; width: 80%; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 10px; }
-        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; width: 320px; }
+        input { padding: 12px; width: 85%; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 12px; outline: none; }
+        input:focus { border-color: #007bff; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; width: 95%; font-weight: bold; }
         button:hover { background: #0056b3; }
-        #avatar { width: 150px; height: 150px; border-radius: 50%; margin-top: 15px; display: none; background: #eee; }
-        h2 { margin: 10px 0 5px 0; font-size: 1.2em; }
-        p { color: #666; margin: 0; }
+        #avatar { width: 150px; height: 150px; border-radius: 50%; margin-top: 15px; display: none; background: #eee; border: 3px solid #007bff; }
+        h2 { margin: 15px 0 5px 0; font-size: 1.3em; color: #333; }
+        p { color: #888; margin: 0; font-size: 0.9em; }
+        .loading { font-size: 0.8em; color: #007bff; display: none; margin-top: 10px; }
     </style>
 </head>
 <body>
 
     <div class="card">
         <h3>Cek Profil Roblox</h3>
-        <input type="text" id="userIdInput" placeholder="Masukkan User ID (Contoh: 1)">
+        <input type="text" id="userInput" placeholder="Masukkan Username atau ID">
         <button onclick="findProfile()">Cari User</button>
+        <div id="loader" class="loading">Sedang mencari...</div>
 
         <div id="result">
             <img id="avatar" src="" alt="Avatar">
@@ -31,34 +34,64 @@
 
     <script>
         async function findProfile() {
-            const userId = document.getElementById('userIdInput').value;
-            if (!userId) return alert("Masukkan ID dulu!");
+            const input = document.getElementById('userInput').value.trim();
+            if (!input) return alert("Masukkan Nama atau ID dulu!");
+
+            const loader = document.getElementById('loader');
+            const avatarImg = document.getElementById('avatar');
+            
+            loader.style.display = "block";
+            avatarImg.style.display = "none";
+            document.getElementById('displayName').innerText = "";
+            document.getElementById('username').innerText = "";
+
+            // Proxy untuk menembus blokir CORS browser
+            const proxy = "https://api.allorigins.win/get?url=";
 
             try {
-                // 1. Ambil Data Nama (CORS aman karena ini API Publik tertentu)
-                const userRes = await fetch(`https://users.roblox.com/v1/users/${userId}`);
-                const userData = await userRes.json();
+                let userId = input;
 
-                if (userData.errors) {
-                    alert("User tidak ditemukan!");
-                    return;
+                // Jika input adalah teks (Username), cari ID-nya dulu
+                if (isNaN(input)) {
+                    const nameUrl = encodeURIComponent(`https://users.roblox.com/v1/usernames/users`);
+                    const nameRes = await fetch(`${proxy}${nameUrl}`, {
+                        method: 'POST', // Allorigins mendukung POST lewat wrapper tertentu, tapi kita coba cara paling simpel
+                    });
+                    
+                    // Karena AllOrigins membungkus JSON, kita harus olah lagi
+                    // Untuk pencarian username lebih akurat, kita pakai endpoint alternatif yang lebih bersahabat dengan proxy:
+                    const searchRes = await fetch(`${proxy}${encodeURIComponent('https://www.roblox.com/search/users/results?keyword=' + input + '&maxRows=1')}`);
+                    const searchData = JSON.parse((await searchRes.json()).contents);
+                    
+                    if (!searchData.UserSearchResults || searchData.UserSearchResults.length === 0) {
+                        throw new Error("Username tidak ditemukan");
+                    }
+                    userId = searchData.UserSearchResults[0].UserId;
                 }
 
-                // 2. Ambil Foto Profil (Headshot)
+                // 1. Ambil Data Profil Lengkap
+                const userUrl = encodeURIComponent(`https://users.roblox.com/v1/users/${userId}`);
+                const userRes = await fetch(`${proxy}${userUrl}`);
+                const userData = JSON.parse((await userRes.json()).contents);
+
+                if (userData.errors) throw new Error("ID tidak valid");
+
+                // 2. Ambil Foto Profil (Thumbnail biasanya tidak kena blokir CORS ketat)
                 const thumbRes = await fetch(`https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userId}&size=150x150&format=Png&isCircular=true`);
                 const thumbData = await thumbRes.json();
 
                 // 3. Tampilkan ke Layar
                 document.getElementById('displayName').innerText = userData.displayName;
-                document.getElementById('username').innerText = "@" + userData.name;
+                document.getElementById('username').innerText = "@" + userData.name + " | ID: " + userId;
                 
-                const avatarImg = document.getElementById('avatar');
                 avatarImg.src = thumbData.data[0].imageUrl;
                 avatarImg.style.display = "inline-block";
 
             } catch (error) {
                 console.error("Error:", error);
-                alert("Gagal mengambil data. Pastikan koneksi aman.");
+                alert("User tidak ditemukan atau server sibuk. Pastikan ID/Username benar.");
+            } finally {
+                loader.style.display = "none";
             }
         }
     </script>
