@@ -3,86 +3,341 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roblox Profile Finder - Fast Load</title>
+    <title>Roblox Profile Finder</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 50px; background: #f4f7f9; }
-        .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 320px; }
-        input { padding: 12px; width: 85%; border: 2px solid #eee; border-radius: 10px; margin-bottom: 12px; outline: none; }
-        input:focus { border-color: #007bff; }
-        button { padding: 12px 20px; background: #007bff; color: white; border: none; border-radius: 10px; cursor: pointer; width: 95%; font-weight: bold; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            padding: 20px;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            padding: 35px;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            width: 100%;
+            max-width: 380px;
+            transition: transform 0.3s ease;
+        }
+        .card:hover { transform: translateY(-5px); }
+        h3 {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .input-group {
+            position: relative;
+            margin-bottom: 15px;
+        }
+        input {
+            padding: 14px 16px;
+            width: 100%;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            color: #fff;
+            font-size: 1em;
+            outline: none;
+            transition: all 0.3s;
+        }
+        input::placeholder { color: rgba(255, 255, 255, 0.4); }
+        input:focus {
+            border-color: #00d4ff;
+            background: rgba(0, 0, 0, 0.3);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
+        }
+        button {
+            padding: 14px 24px;
+            background: linear-gradient(90deg, #007bff, #00d4ff);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+            font-size: 1em;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 123, 255, 0.4);
+        }
         button:active { transform: scale(0.98); }
-        #avatar { width: 150px; height: 150px; border-radius: 50%; margin-top: 15px; display: none; border: 4px solid #007bff; background: #eee; object-fit: cover; }
-        h2 { margin: 15px 0 5px 0; font-size: 1.4em; color: #333; min-height: 1.5em; }
-        .status-text { font-size: 0.8em; color: #888; margin-top: 5px; }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin: 0 auto 10px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        #result {
+            margin-top: 25px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.5s ease;
+        }
+        #result.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        #avatar {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            border: 4px solid transparent;
+            background: linear-gradient(45deg, #007bff, #00d4ff) border-box;
+            -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            object-fit: cover;
+            display: none;
+            box-shadow: 0 10px 30px rgba(0, 123, 255, 0.3);
+        }
+        #avatar.loaded { display: block; }
+        h2 {
+            margin: 10px 0 5px 0;
+            font-size: 1.5em;
+            color: #fff;
+            min-height: 1.5em;
+            word-break: break-word;
+        }
+        .username-text {
+            font-size: 1em;
+            color: #00d4ff;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        .status-text {
+            font-size: 0.85em;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 8px;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            display: inline-block;
+        }
+        .error {
+            color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+        .success {
+            color: #51cf66;
+            background: rgba(81, 207, 102, 0.1);
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+        .verified-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(0, 212, 255, 0.15);
+            color: #00d4ff;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75em;
+            font-weight: bold;
+            margin-top: 8px;
+        }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <h3>Roblox Profile</h3>
-        <input type="text" id="userInput" placeholder="Masukkan User ID (Angka)">
-        <button onclick="findProfile()">Cari Profil</button>
+        <h3>🔍 Roblox Profile Finder</h3>
+        <div class="input-group">
+            <input type="text" id="userInput" placeholder="Masukkan User ID (Angka)" onkeypress="if(event.key==='Enter')findProfile()">
+        </div>
+        <button onclick="findProfile()" id="searchBtn">
+            <span id="btnText">Cari Profil</span>
+        </button>
+        <div class="spinner" id="spinner"></div>
         
         <div id="result">
-            <img id="avatar" src="" alt="Avatar">
+            <img id="avatar" src="" alt="Avatar" onload="this.classList.add('loaded')">
             <h2 id="displayName"></h2>
+            <div id="username" class="username-text"></div>
+            <div id="verifiedBadge"></div>
             <div id="status" class="status-text"></div>
         </div>
     </div>
 
     <script>
-        function findProfile() {
-            const input = document.getElementById('userInput').value.trim();
-            if (!input || isNaN(input)) return alert("Tolong masukkan User ID berupa ANGKA!");
+        // Proxy publik untuk bypass CORS
+        const PROXY_URL = 'https://api.allorigins.win/get?url=';
+        const ROPROXY_USERS = 'https://users.roproxy.com/v1/users/';
+        const ROPROXY_THUMBNAILS = 'https://thumbnails.roproxy.com/v1/users/avatar-headshot';
 
+        async function findProfile() {
+            const input = document.getElementById('userInput').value.trim();
+            const btn = document.getElementById('searchBtn');
+            const btnText = document.getElementById('btnText');
+            const spinner = document.getElementById('spinner');
+            const result = document.getElementById('result');
             const avatarImg = document.getElementById('avatar');
             const dispName = document.getElementById('displayName');
-            const status = document.getElementById('status');
+            const usernameEl = document.getElementById('username');
+            const statusEl = document.getElementById('status');
+            const verifiedBadge = document.getElementById('verifiedBadge');
 
-            // 1. LANGSUNG MUNCULKAN GAMBAR (Bypass CORS via CDN)
-            // Ini akan muncul dalam milidetik karena browser mengizinkan pemuatan gambar langsung
-            const cdnUrl = `https://www.roblox.com/headshot-thumbnail/image?userId=${input}&width=150&height=150&format=png`;
-            avatarImg.src = cdnUrl;
-            avatarImg.style.display = "inline-block";
-            
-            dispName.innerText = "Memuat Nama...";
-            status.innerText = "Menghubungi Google Proxy...";
+            // Validasi input
+            if (!input || isNaN(input) || parseInt(input) <= 0) {
+                alert("Tolong masukkan User ID berupa ANGKA yang valid!");
+                return;
+            }
 
-            // 2. AMBIL DATA NAMA (JSONP Trick)
-            // Kita hapus script JSONP sebelumnya jika ada supaya tidak menumpuk
-            const oldScript = document.getElementById('jsonp-handler');
-            if (oldScript) oldScript.remove();
+            const userId = parseInt(input);
 
-            const scriptUrl = "https://script.google.com/macros/s/AKfycbw-rlh89wXtS_57q6vTALvvYAkdlAB5j83rAUqvLg160lUAnnV839abGlqx0X7TVQkMcA/exec";
-            const finalUrl = `${scriptUrl}?url=${encodeURIComponent('https://users.roblox.com/v1/users/' + input)}&callback=callbackFunc`;
+            // Reset UI
+            btn.disabled = true;
+            btnText.innerText = "Mencari...";
+            spinner.style.display = "block";
+            result.classList.remove('show');
+            avatarImg.classList.remove('loaded');
+            avatarImg.src = "";
+            dispName.innerText = "";
+            usernameEl.innerText = "";
+            statusEl.innerText = "";
+            statusEl.className = "status-text";
+            verifiedBadge.innerHTML = "";
 
-            const script = document.createElement('script');
-            script.id = 'jsonp-handler';
-            script.src = finalUrl;
-            
-            // Tangani jika Google Script lemot atau error
-            script.onerror = function() {
-                dispName.innerText = "Gagal Memuat Nama";
-                status.innerText = "CORS Proxy Error.";
-            };
+            try {
+                // 1. Ambil data user (Display Name & Username)
+                const userData = await fetchUserData(userId);
+                
+                // 2. Ambil URL headshot
+                const headshotUrl = await fetchHeadshotUrl(userId);
 
-            document.body.appendChild(script);
+                // 3. Tampilkan hasil
+                dispName.innerText = userData.displayName || userData.name;
+                usernameEl.innerText = "@" + userData.name;
+                
+                if (userData.hasVerifiedBadge) {
+                    verifiedBadge.innerHTML = `<div class="verified-badge">✓ Verified</div>`;
+                }
+
+                avatarImg.src = headshotUrl;
+                statusEl.innerText = "Profil ditemukan!";
+                statusEl.className = "status-text success";
+
+                // Animasi muncul
+                setTimeout(() => result.classList.add('show'), 100);
+
+            } catch (error) {
+                console.error("Error:", error);
+                dispName.innerText = "Gagal Memuat";
+                statusEl.innerText = error.message || "Terjadi kesalahan. Coba lagi nanti.";
+                statusEl.className = "status-text error";
+                result.classList.add('show');
+            } finally {
+                btn.disabled = false;
+                btnText.innerText = "Cari Profil";
+                spinner.style.display = "none";
+            }
         }
 
-        // Fungsi Callback yang dipanggil oleh Google Apps Script
-        function callbackFunc(data) {
-            const dispName = document.getElementById('displayName');
-            const status = document.getElementById('status');
+        async function fetchUserData(userId) {
+            // Coba RoProxy dulu
+            try {
+                const response = await fetch(`${ROPROXY_USERS}${userId}`, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                });
+                
+                if (!response.ok) throw new Error('RoProxy users failed');
+                const data = await response.json();
+                
+                if (data.errors) throw new Error(data.errors[0]?.message || 'User tidak ditemukan');
+                return data;
+                
+            } catch (roproxyError) {
+                // Fallback ke allorigins dengan endpoint asli Roblox
+                console.log("RoProxy gagal, mencoba fallback...");
+                
+                const robloxUrl = encodeURIComponent(`https://users.roblox.com/v1/users/${userId}`);
+                const response = await fetch(`${PROXY_URL}${robloxUrl}`, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                });
+                
+                if (!response.ok) throw new Error('Gagal mengambil data user');
+                
+                const proxyData = await response.json();
+                const data = JSON.parse(proxyData.contents);
+                
+                if (data.errors) throw new Error(data.errors[0]?.message || 'User tidak ditemukan');
+                return data;
+            }
+        }
 
-            if (data && data.displayName) {
-                dispName.innerText = data.displayName;
-                status.innerText = "@" + data.name;
-            } else if (data && data.errors) {
-                dispName.innerText = "User Tidak Ada";
-                status.innerText = "Periksa kembali ID Anda.";
-            } else {
-                dispName.innerText = "Error Data";
-                status.innerText = "Format data tidak dikenali.";
+        async function fetchHeadshotUrl(userId) {
+            const size = "420x420";
+            
+            // Coba RoProxy dulu
+            try {
+                const response = await fetch(
+                    `${ROPROXY_THUMBNAILS}?userIds=${userId}&size=${size}&format=Png&isCircular=false`,
+                    { headers: { 'Accept': 'application/json' } }
+                );
+                
+                if (!response.ok) throw new Error('RoProxy thumbnails failed');
+                const data = await response.json();
+                
+                if (!data.data || !data.data[0] || !data.data[0].imageUrl) {
+                    throw new Error('URL headshot tidak tersedia');
+                }
+                return data.data[0].imageUrl;
+                
+            } catch (roproxyError) {
+                // Fallback ke allorigins
+                console.log("RoProxy thumbnail gagal, mencoba fallback...");
+                
+                const robloxUrl = encodeURIComponent(
+                    `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userId}&size=${size}&format=Png&isCircular=false`
+                );
+                const response = await fetch(`${PROXY_URL}${robloxUrl}`, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                
+                if (!response.ok) throw new Error('Gagal mengambil headshot');
+                
+                const proxyData = await response.json();
+                const data = JSON.parse(proxyData.contents);
+                
+                if (!data.data || !data.data[0] || !data.data[0].imageUrl) {
+                    throw new Error('URL headshot tidak tersedia');
+                }
+                return data.data[0].imageUrl;
             }
         }
     </script>
