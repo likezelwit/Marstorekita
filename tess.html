@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roblox Profile Finder - Anti CORS</title>
+    <title>Roblox Profile Finder - Powered by Google Script</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 50px; background: #f4f7f9; }
         .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 320px; border: 1px solid #e1e4e8; }
@@ -14,51 +14,82 @@
         #avatar { width: 150px; height: 150px; border-radius: 50%; margin-top: 15px; display: none; border: 4px solid #007bff; object-fit: cover; }
         h2 { margin: 15px 0 5px 0; font-size: 1.4em; color: #333; }
         p { color: #888; margin: 0; font-size: 0.9em; background: #f0f0f0; padding: 5px 10px; border-radius: 20px; display: inline-block; }
+        .loading { font-size: 0.8em; color: #007bff; display: none; margin-top: 10px; }
     </style>
 </head>
 <body>
 
     <div class="card">
         <h3>Roblox Discovery</h3>
-        <input type="number" id="userIdInput" placeholder="Masukkan User ID (Angka)">
-        <button onclick="findProfile()">Lihat Profil</button>
+        <input type="text" id="userInput" placeholder="Username atau User ID">
+        <button onclick="findProfile()">Cari Profil</button>
+        <div id="loader" class="loading">Menembus CORS...</div>
 
         <div id="result">
             <img id="avatar" src="" alt="Avatar">
             <h2 id="displayName"></h2>
-            <p id="infoText">Masukkan ID untuk melihat</p>
+            <p id="infoText">Masukkan data untuk melihat</p>
         </div>
     </div>
 
     <script>
-        function findProfile() {
-            const userId = document.getElementById('userIdInput').value.trim();
-            
-            if (!userId || isNaN(userId)) {
-                return alert("Tolong masukkan ID dalam bentuk angka!");
-            }
+        async function findProfile() {
+            const input = document.getElementById('userInput').value.trim();
+            if (!input) return alert("Masukkan Nama atau ID dulu!");
 
+            const loader = document.getElementById('loader');
             const avatarImg = document.getElementById('avatar');
-            const infoText = document.getElementById('infoText');
             const dispName = document.getElementById('displayName');
+            const infoText = document.getElementById('infoText');
 
-            // TRIK: Langsung tembak CDN Thumbnail Roblox. 
-            // Ini tidak akan kena blokir CORS karena bukan 'fetch' tapi 'image load'
-            const cdnUrl = `https://www.roblox.com/headshot-thumbnail/image?userId=${userId}&width=150&height=150&format=png`;
-            
-            avatarImg.src = cdnUrl;
-            avatarImg.style.display = "inline-block";
-            
-            // Karena kita tidak bisa 'fetch' nama tanpa proxy yang jalan, 
-            // kita beri label ID saja agar sistem tetap informatif.
-            dispName.innerText = "User ID: " + userId;
-            infoText.innerText = "Data dimuat dari rbxcdn.com";
-            
-            // Jika gambar gagal dimuat (ID salah), beri peringatan
-            avatarImg.onerror = function() {
-                alert("Gagal memuat gambar. ID mungkin tidak ada.");
-                avatarImg.style.display = "none";
-            };
+            loader.style.display = "block";
+            avatarImg.style.display = "none";
+            dispName.innerText = "";
+            infoText.innerText = "Processing...";
+
+            // URL Google Apps Script kamu
+            const proxyBase = "https://script.google.com/macros/s/AKfycbw-rlh89wXtS_57q6vTALvvYAkdlAB5j83rAUqvLg160lUAnnV839abGlqx0X7TVQkMcA/exec";
+
+            try {
+                let userId = input;
+
+                // 1. Jika input adalah Username (Bukan Angka), cari ID-nya
+                if (isNaN(input)) {
+                    const nameUrl = encodeURIComponent(`https://users.roblox.com/v1/usernames/users`);
+                    const nameRes = await fetch(`${proxyBase}?url=${nameUrl}`, {
+                        method: 'POST',
+                        body: JSON.stringify({ usernames: [input], excludeBannedUsers: true })
+                    });
+                    const nameData = await nameRes.json();
+                    
+                    if (!nameData.data || nameData.data.length === 0) {
+                        throw new Error("Username tidak ditemukan!");
+                    }
+                    userId = nameData.data[0].id;
+                }
+
+                // 2. Ambil Nama Asli (Display Name) pakai Proxy
+                const userUrl = encodeURIComponent(`https://users.roblox.com/v1/users/${userId}`);
+                const userRes = await fetch(`${proxyBase}?url=${userUrl}`);
+                const userData = await userRes.json();
+
+                if (userData.errors) throw new Error("ID tidak valid!");
+
+                // 3. Tampilkan Data
+                dispName.innerText = userData.displayName;
+                infoText.innerText = "@" + userData.name + " (ID: " + userId + ")";
+                
+                // Thumbnail langsung tembak (kebal CORS di tag <img>)
+                avatarImg.src = `https://www.roblox.com/headshot-thumbnail/image?userId=${userId}&width=150&height=150&format=png`;
+                avatarImg.style.display = "inline-block";
+
+            } catch (error) {
+                console.error(error);
+                alert("Gagal: " + error.message);
+                infoText.innerText = "Gagal memuat data.";
+            } finally {
+                loader.style.display = "none";
+            }
         }
     </script>
 </body>
