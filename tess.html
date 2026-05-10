@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roblox Profile Finder</title>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 50px; background: #f0f2f5; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; width: 300px; }
+        input { padding: 10px; width: 80%; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 10px; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        #avatar { width: 150px; height: 150px; border-radius: 50%; margin-top: 15px; display: none; background: #eee; }
+        h2 { margin: 10px 0 5px 0; font-size: 1.2em; }
+        p { color: #666; margin: 0; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h3>Cek Profil Roblox</h3>
+        <input type="text" id="userIdInput" placeholder="Masukkan User ID (Contoh: 1)">
+        <button onclick="findProfile()">Cari User</button>
+
+        <div id="result">
+            <img id="avatar" src="" alt="Avatar">
+            <h2 id="displayName"></h2>
+            <p id="username"></p>
+        </div>
+    </div>
+
+    <script>
+        async function findProfile() {
+            const userId = document.getElementById('userIdInput').value;
+            if (!userId) return alert("Masukkan ID dulu!");
+
+            try {
+                // 1. Ambil Data Nama (CORS aman karena ini API Publik tertentu)
+                const userRes = await fetch(`https://users.roblox.com/v1/users/${userId}`);
+                const userData = await userRes.json();
+
+                if (userData.errors) {
+                    alert("User tidak ditemukan!");
+                    return;
+                }
+
+                // 2. Ambil Foto Profil (Headshot)
+                const thumbRes = await fetch(`https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userId}&size=150x150&format=Png&isCircular=true`);
+                const thumbData = await thumbRes.json();
+
+                // 3. Tampilkan ke Layar
+                document.getElementById('displayName').innerText = userData.displayName;
+                document.getElementById('username').innerText = "@" + userData.name;
+                
+                const avatarImg = document.getElementById('avatar');
+                avatarImg.src = thumbData.data[0].imageUrl;
+                avatarImg.style.display = "inline-block";
+
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Gagal mengambil data. Pastikan koneksi aman.");
+            }
+        }
+    </script>
+</body>
+</html>
