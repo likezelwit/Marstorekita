@@ -2,13 +2,18 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Roblox Discovery - Final Fix</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roblox Profile Finder - Fast Load</title>
     <style>
-        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 50px; background: #f4f7f9; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 50px; background: #f4f7f9; }
         .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 320px; }
-        input { padding: 12px; width: 85%; border: 2px solid #eee; border-radius: 10px; margin-bottom: 12px; }
+        input { padding: 12px; width: 85%; border: 2px solid #eee; border-radius: 10px; margin-bottom: 12px; outline: none; }
+        input:focus { border-color: #007bff; }
         button { padding: 12px 20px; background: #007bff; color: white; border: none; border-radius: 10px; cursor: pointer; width: 95%; font-weight: bold; }
-        #avatar { width: 150px; height: 150px; border-radius: 50%; margin-top: 15px; display: none; border: 4px solid #007bff; }
+        button:active { transform: scale(0.98); }
+        #avatar { width: 150px; height: 150px; border-radius: 50%; margin-top: 15px; display: none; border: 4px solid #007bff; background: #eee; object-fit: cover; }
+        h2 { margin: 15px 0 5px 0; font-size: 1.4em; color: #333; min-height: 1.5em; }
+        .status-text { font-size: 0.8em; color: #888; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -17,44 +22,67 @@
         <h3>Roblox Profile</h3>
         <input type="text" id="userInput" placeholder="Masukkan User ID (Angka)">
         <button onclick="findProfile()">Cari Profil</button>
+        
         <div id="result">
             <img id="avatar" src="" alt="Avatar">
             <h2 id="displayName"></h2>
+            <div id="status" class="status-text"></div>
         </div>
     </div>
 
     <script>
         function findProfile() {
             const input = document.getElementById('userInput').value.trim();
-            if (!input || isNaN(input)) return alert("Tolong masukkan User ID berupa ANGKA dulu!");
+            if (!input || isNaN(input)) return alert("Tolong masukkan User ID berupa ANGKA!");
 
             const avatarImg = document.getElementById('avatar');
             const dispName = document.getElementById('displayName');
+            const status = document.getElementById('status');
 
-            // 1. TAMPILKAN GAMBAR (Ini 100% aman dari CORS karena pakai tag <img>)
+            // 1. LANGSUNG MUNCULKAN GAMBAR (Bypass CORS via CDN)
+            // Ini akan muncul dalam milidetik karena browser mengizinkan pemuatan gambar langsung
             const cdnUrl = `https://www.roblox.com/headshot-thumbnail/image?userId=${input}&width=150&height=150&format=png`;
             avatarImg.src = cdnUrl;
             avatarImg.style.display = "inline-block";
-            dispName.innerText = "Loading Name...";
-
-            // 2. AMBIL NAMA (Trik JSONP via Google Apps Script agar TIDAK kena CORS)
-            // Ganti URL ini dengan URL Web App Google Script kamu yang baru dideploy
-            const scriptUrl = "https://script.google.com/macros/s/AKfycbw-rlh89wXtS_57q6vTALvvYAkdlAB5j83rAUqvLg160lUAnnV839abGlqx0X7TVQkMcA/exec";
             
+            dispName.innerText = "Memuat Nama...";
+            status.innerText = "Menghubungi Google Proxy...";
+
+            // 2. AMBIL DATA NAMA (JSONP Trick)
+            // Kita hapus script JSONP sebelumnya jika ada supaya tidak menumpuk
+            const oldScript = document.getElementById('jsonp-handler');
+            if (oldScript) oldScript.remove();
+
+            const scriptUrl = "https://script.google.com/macros/s/AKfycbw-rlh89wXtS_57q6vTALvvYAkdlAB5j83rAUqvLg160lUAnnV839abGlqx0X7TVQkMcA/exec";
             const finalUrl = `${scriptUrl}?url=${encodeURIComponent('https://users.roblox.com/v1/users/' + input)}&callback=callbackFunc`;
 
-            // Kita pakai tag <script> buat ambil data, bukan FETCH. Tag <script> kebal CORS!
             const script = document.createElement('script');
+            script.id = 'jsonp-handler';
             script.src = finalUrl;
+            
+            // Tangani jika Google Script lemot atau error
+            script.onerror = function() {
+                dispName.innerText = "Gagal Memuat Nama";
+                status.innerText = "CORS Proxy Error.";
+            };
+
             document.body.appendChild(script);
         }
 
-        // Fungsi penampung hasil dari Google Script
+        // Fungsi Callback yang dipanggil oleh Google Apps Script
         function callbackFunc(data) {
-            if (data.displayName) {
-                document.getElementById('displayName').innerText = data.displayName;
+            const dispName = document.getElementById('displayName');
+            const status = document.getElementById('status');
+
+            if (data && data.displayName) {
+                dispName.innerText = data.displayName;
+                status.innerText = "@" + data.name;
+            } else if (data && data.errors) {
+                dispName.innerText = "User Tidak Ada";
+                status.innerText = "Periksa kembali ID Anda.";
             } else {
-                document.getElementById('displayName').innerText = "User Found";
+                dispName.innerText = "Error Data";
+                status.innerText = "Format data tidak dikenali.";
             }
         }
     </script>
