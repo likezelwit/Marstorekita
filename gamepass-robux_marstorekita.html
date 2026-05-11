@@ -3,11 +3,14 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Top Up Robux - Game Pass System</title>
+    <title>Top Up Robux - PayPal Payment</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
+    <!-- PayPal SDK (Client ID dari request) -->
+    <script src="https://www.paypal.com/sdk/js?client-id=AQq-vLiqrftLbzO3Muz_nVAOES0Yb9bOoUFSe4uShYg-HW5xqVJegBBxytSyc6dQnbLpmOPLVVTe4Kn8&currency=USD"></script>
 
     <style>
         @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
@@ -145,7 +148,7 @@
             margin-left: 8px;
         }
 
-        /* Games List (SPA - tidak pindah page) */
+        /* Games List */
         .games-panel {
             background: rgba(0,0,0,0.3);
             border-radius: 12px;
@@ -385,6 +388,55 @@
             cursor: not-allowed;
         }
 
+        /* PAYMENT STEP (Step 4) */
+        .payment-summary {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            text-align: left;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 0.95rem;
+            color: #475569;
+        }
+        .summary-row.total {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 2px dashed #cbd5e1;
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: #0f172a;
+            align-items: center;
+        }
+        .paypal-badge {
+            background: #FFC439;
+            color: #111;
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+
+        /* Processing Overlay for Payment */
+        .processing-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 16px;
+            z-index: 10;
+        }
+        .processing-overlay.show { display: flex; }
+
         .search-wrapper { position: relative; }
 
         .click-hint {
@@ -421,6 +473,9 @@
                     </div>
                     <h1 class="text-xl font-bold tracking-tight">RobuxTopUp</h1>
                 </div>
+                <div class="text-sm text-gray-500 hidden sm:block">
+                    Secure Payment <i class="fab fa-paypal text-blue-700 ml-1"></i>
+                </div>
             </div>
         </div>
     </header>
@@ -437,27 +492,35 @@
     <main class="container mx-auto px-4 -mt-8 pb-12">
         <div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
             
-            <!-- Steps -->
-            <div class="flex justify-between items-center px-8 py-5 border-b bg-gray-50">
-                <div class="flex flex-col items-center">
+            <!-- Steps (Updated to 5 Steps) -->
+            <div class="flex justify-between items-center px-6 py-5 border-b bg-gray-50 overflow-x-auto">
+                <div class="flex flex-col items-center min-w-[60px]">
                     <div class="step-dot w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-bold active" id="dot-1">1</div>
-                    <span class="text-xs mt-1 text-gray-500 font-medium">Paket</span>
+                    <span class="text-[10px] mt-1 text-gray-500 font-medium hidden sm:block">Paket</span>
                 </div>
-                <div class="relative z-10 flex flex-col items-center">
+                <div class="h-px bg-gray-300 flex-1 mx-2"></div>
+                <div class="flex flex-col items-center min-w-[60px]">
                     <div class="step-dot w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-bold" id="dot-2">2</div>
-                    <span class="text-xs mt-1 text-gray-500 font-medium">Akun & Game</span>
+                    <span class="text-[10px] mt-1 text-gray-500 font-medium hidden sm:block">Akun</span>
                 </div>
-                <div class="relative z-10 flex flex-col items-center">
+                <div class="h-px bg-gray-300 flex-1 mx-2"></div>
+                <div class="flex flex-col items-center min-w-[60px]">
                     <div class="step-dot w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-bold" id="dot-3">3</div>
-                    <span class="text-xs mt-1 text-gray-500 font-medium">Verifikasi</span>
+                    <span class="text-[10px] mt-1 text-gray-500 font-medium hidden sm:block">Verif</span>
                 </div>
-                <div class="relative z-10 flex flex-col items-center">
+                <div class="h-px bg-gray-300 flex-1 mx-2"></div>
+                <div class="flex flex-col items-center min-w-[60px]">
                     <div class="step-dot w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-bold" id="dot-4">4</div>
-                    <span class="text-xs mt-1 text-gray-500 font-medium">Bayar</span>
+                    <span class="text-[10px] mt-1 text-gray-500 font-medium hidden sm:block">Bayar</span>
+                </div>
+                <div class="h-px bg-gray-300 flex-1 mx-2"></div>
+                <div class="flex flex-col items-center min-w-[60px]">
+                    <div class="step-dot w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-bold" id="dot-5">5</div>
+                    <span class="text-[10px] mt-1 text-gray-500 font-medium hidden sm:block">Selesai</span>
                 </div>
             </div>
 
-            <div class="p-6 md:p-8 min-h-[450px]">
+            <div class="p-6 md:p-8 min-h-[450px] relative">
 
                 <!-- ==========================================
                      STEP 1: PILIH PAKET ROBUX
@@ -504,20 +567,18 @@
                 </div>
 
                 <!-- ==========================================
-                     STEP 2: CARI AKUN & PILIH GAME (SPA)
+                     STEP 2: CARI AKUN & PILIH GAME
                      ========================================== -->
                 <div id="step-2" class="hidden fade-in">
                     <div class="step-label">Step 2</div>
                     <h3 class="text-xl font-bold mb-2">🔍 Cari Akun Roblox</h3>
                     <p class="text-sm text-gray-500 mb-4">Ketik username, klik avatar, lalu pilih game place.</p>
                     
-                    <!-- Selected Package Info -->
                     <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 flex justify-between items-center">
                         <span class="text-sm text-blue-700 font-medium">Paket:</span>
                         <span class="text-blue-700 font-bold" id="packageInfo">-</span>
                     </div>
 
-                    <!-- Search -->
                     <div class="search-wrapper">
                         <div class="relative">
                             <span class="absolute left-3 top-3 text-gray-400"><i class="fas fa-search"></i></span>
@@ -529,7 +590,6 @@
                         <div class="search-dropdown" id="searchDropdown"></div>
                     </div>
 
-                    <!-- Profile Card + Games (SPA - tidak pindah page) -->
                     <div class="profile-card" id="profileCard">
                         <img class="profile-avatar" id="profileAvatar" src="" alt="Avatar" onclick="loadGames()">
                         <div class="profile-name">
@@ -540,7 +600,6 @@
                         <div class="profile-id" id="profileUserId"></div>
                         <div class="click-hint">👆 Klik avatar untuk muat game places</div>
 
-                        <!-- Games Panel -->
                         <div class="games-panel" id="gamesPanel">
                             <div class="flex justify-between items-center mb-3">
                                 <span class="text-sm font-bold text-blue-400">🎮 Pilih Game Place</span>
@@ -589,13 +648,57 @@
                 </div>
 
                 <!-- ==========================================
-                     STEP 4: PEMBAYARAN
+                     STEP 4: PEMBAYARAN (PAYPAL)
                      ========================================== -->
-                <div id="step-4" class="hidden fade-in text-center py-6">
+                <div id="step-4" class="hidden fade-in">
+                    <div class="step-label">Step 4</div>
+                    <h3 class="text-xl font-bold mb-2">💳 Pembayaran</h3>
+                    <p class="text-sm text-gray-500 mb-6">Selesaikan pembayaran aman melalui PayPal.</p>
+                    
+                    <div class="payment-summary">
+                        <div class="summary-row">
+                            <span>Item Pembelian</span>
+                            <span class="font-semibold">Top Up Robux</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Username</span>
+                            <span class="font-medium" id="payUsername">-</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Jumlah Robux (Estimasi)</span>
+                            <span class="font-bold text-blue-600" id="payRobux">-</span>
+                        </div>
+                        <div class="summary-row">
+                            <small class="text-gray-400">Kurs: 1 USD ≈ Rp 15.000</small>
+                        </div>
+                        <div class="summary-row total">
+                            <span>Total Bayar</span>
+                            <div>
+                                <span id="payTotalUSD" class="text-blue-600">$0.00</span>
+                                <span class="paypal-badge"><i class="fab fa-paypal"></i></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PayPal Button Container -->
+                    <div id="paypal-button-container" class="max-w-sm mx-auto"></div>
+                    
+                    <!-- Processing Overlay inside Step 4 -->
+                    <div class="processing-overlay" id="paymentProcessing">
+                        <div class="loading-spinner w-12 h-12 border-4 mb-4" style="border-top-color: #0070ba;"></div>
+                        <h4 class="font-bold text-gray-700">Memproses Pembayaran...</h4>
+                        <p class="text-sm text-gray-500">Jangan tutup halaman ini.</p>
+                    </div>
+                </div>
+
+                <!-- ==========================================
+                     STEP 5: SUKSES
+                     ========================================== -->
+                <div id="step-5" class="hidden fade-in text-center py-6">
                     <div id="paymentLoading" class="block">
                         <div class="loading-spinner mx-auto mb-4 w-12 h-12 border-4"></div>
-                        <h3 class="text-xl font-bold mb-2">Memproses Pembayaran...</h3>
-                        <p class="text-gray-500 text-sm">Mohon jangan tutup halaman ini.</p>
+                        <h3 class="text-xl font-bold mb-2">Finalisasi Pesanan...</h3>
+                        <p class="text-gray-500 text-sm">Mohon tunggu sebentar.</p>
                     </div>
 
                     <div id="paymentSuccess" class="hidden">
@@ -603,16 +706,24 @@
                             <i class="fas fa-check text-green-600 text-3xl"></i>
                         </div>
                         <h3 class="text-xl font-bold mb-2 text-green-600">Pesanan Berhasil!</h3>
-                        <p class="text-gray-600 mb-6">Robux akan masuk setelah pembayaran dikonfirmasi.</p>
+                        <p class="text-gray-600 mb-6">Robux akan masuk setelah sistem Roblox memproses Game Pass Anda.</p>
                         
                         <div class="bg-gray-50 rounded-lg p-4 text-left mb-6 max-w-sm mx-auto border">
                             <p class="text-xs text-gray-500 uppercase font-bold">ID Transaksi</p>
                             <p id="trxIdDisplay" class="font-mono font-bold text-lg mb-3">-</p>
-                            <p class="text-xs text-gray-500 uppercase font-bold">Total Bayar</p>
-                            <p id="paymentTotal" class="font-bold text-2xl text-blue-600">-</p>
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="text-xs text-gray-500 uppercase font-bold">Total Bayar</p>
+                                    <p id="paymentTotalFinal" class="font-bold text-2xl text-blue-600">-</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xs text-gray-500 uppercase font-bold">Status</p>
+                                    <p class="font-bold text-green-600">Paid</p>
+                                </div>
+                            </div>
                         </div>
 
-                        <button onclick="location.reload()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        <button onclick="location.reload()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
                             Pesanan Baru
                         </button>
                     </div>
@@ -620,25 +731,21 @@
 
             </div>
 
-            <!-- Navigation -->
+            <!-- Navigation Buttons -->
             <div class="bg-gray-50 px-6 py-4 border-t flex justify-between" id="navButtons">
                 <button id="btnBack" onclick="prevStep()" class="hidden px-4 py-2 text-gray-600 font-medium hover:text-gray-900">
                     <i class="fas fa-arrow-left mr-2"></i> Kembali
                 </button>
                 <div class="flex-1"></div>
+                <!-- Tombol ini disembunyikan di Step 4 karena kita pakai tombol PayPal -->
                 <button id="btnNext" onclick="nextStep()" disabled class="px-6 py-2 bg-gray-300 text-white font-medium rounded-lg cursor-not-allowed transition">
                     Lanjut
-                </button>
-                <button id="btnPay" onclick="processPayment()" class="hidden px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition shadow-lg">
-                    Bayar Sekarang
                 </button>
             </div>
         </div>
     </main>
 
-    <!-- ==========================================
-         DISCLAIMER MODAL
-         ========================================== -->
+    <!-- DISCLAIMER MODAL -->
     <div class="modal-overlay" id="disclaimerModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -696,14 +803,17 @@
         let selectedUser = null;
         let selectedGame = null;
         let searchTimeout = null;
-        
+        let paypalRendered = false; // Flag agar tidak render button 2x
+
+        // State Data
         let orderData = {
-            desiredRobux: 0,      // Robux yang user inginkan
-            gamePassPrice: 0,     // Harga game pass yang harus dibuat (dengan pajak)
+            desiredRobux: 0,
+            gamePassPrice: 0,
             gameId: null,
             gameName: '',
             userId: null,
-            username: ''
+            username: '',
+            usdAmount: 0 // New property for USD
         };
 
         // ==========================================
@@ -715,6 +825,8 @@
             document.getElementById('customInfo').classList.add('hidden');
             
             orderData.desiredRobux = amount;
+            // Reset USD calculation placeholder
+            orderData.usdAmount = 0;
             event.currentTarget.classList.add('selected');
             enableNext();
         }
@@ -727,6 +839,7 @@
             
             if (val && val >= 10) {
                 orderData.desiredRobux = val;
+                orderData.usdAmount = 0;
                 info.classList.remove('hidden');
                 info.classList.add('flex');
                 enableNext();
@@ -739,7 +852,7 @@
         }
 
         // ==========================================
-        // STEP 2: SEARCH USER & GAMES (SPA)
+        // STEP 2: SEARCH USER & GAMES
         // ==========================================
         const searchInput = document.getElementById('searchUsername');
         const searchDropdown = document.getElementById('searchDropdown');
@@ -881,22 +994,24 @@
         }
 
         function selectGameItem(index, gameId, gameName) {
-            // Remove previous selection
             document.querySelectorAll('.game-item').forEach(el => el.classList.remove('selected'));
             
-            // Select current
             document.getElementById(`game-${index}`).classList.add('selected');
             
             selectedGame = { id: gameId, name: gameName };
             orderData.gameId = gameId;
             orderData.gameName = gameName;
             
-            // Calculate Game Pass price with tax
-            // Formula: GamePassPrice = ceil(DesiredRobux / 0.7)
-            // Example: 100 / 0.7 = 142.857 → ceil → 143
+            // Math: Game Pass Price (Robux)
             orderData.gamePassPrice = Math.ceil(orderData.desiredRobux / 0.7);
             
-            // Show disclaimer modal
+            // Math: USD Calculation
+            // Asumsi: 1 Robux = Rp 144 (Marked up)
+            // Asumsi Kurs: 1 USD = Rp 15.000
+            // Total USD = (gamePassPrice * 144) / 15000
+            const priceIDR = orderData.gamePassPrice * 144;
+            orderData.usdAmount = (priceIDR / 15000).toFixed(2);
+            
             showDisclaimer();
         }
 
@@ -915,7 +1030,6 @@
 
         function closeDisclaimer() {
             document.getElementById('disclaimerModal').classList.remove('show');
-            // Deselect game
             document.querySelectorAll('.game-item').forEach(el => el.classList.remove('selected'));
             selectedGame = null;
         }
@@ -923,13 +1037,11 @@
         function confirmDisclaimer() {
             document.getElementById('disclaimerModal').classList.remove('show');
             
-            // Move to verification step
             hideStep(2);
             currentStep = 3;
             showStep(3);
             updateNavButtons();
             
-            // Setup verification panel
             document.getElementById('verifyGame').innerText = orderData.gameName;
             document.getElementById('verifyPrice').innerText = orderData.gamePassPrice + ' R$';
             document.getElementById('verifyRobux').innerText = orderData.desiredRobux + ' R$';
@@ -947,13 +1059,10 @@
             btn.disabled = true;
             btn.innerHTML = '<div class="loading-spinner w-4 h-4 border-2 inline mr-2"></div> Mengecek...';
             
-            // Simulate API check (in real implementation, this would check Roblox API)
             setTimeout(() => {
-                // Simulate: 80% chance success for demo
                 const isSuccess = Math.random() > 0.2;
                 
                 if (isSuccess) {
-                    // Success
                     icon.className = 'verify-status success';
                     icon.innerHTML = '<i class="fas fa-check"></i>';
                     text.innerText = 'Game Pass Ditemukan!';
@@ -962,24 +1071,15 @@
                     
                     btn.innerHTML = '<i class="fas fa-arrow-right mr-2"></i> Lanjut ke Pembayaran';
                     btn.onclick = () => {
-                        hideStep(3);
-                        currentStep = 4;
-                        showStep(4);
-                        updateNavButtons();
+                        goToStep4();
                     };
                     btn.disabled = false;
-                    
-                    // Auto-enable pay button
-                    document.getElementById('btnNext').classList.add('hidden');
-                    document.getElementById('btnPay').classList.remove('hidden');
-                    
                 } else {
-                    // Not found
                     icon.className = 'verify-status error';
                     icon.innerHTML = '<i class="fas fa-times"></i>';
                     text.innerText = 'Game Pass Tidak Ditemukan';
                     text.style.color = '#ff4444';
-                    subtext.innerText = 'Belum ada Game Pass dengan harga ' + orderData.gamePassPrice + ' R$ di game ini. Pastikan Anda sudah membuatnya dan mengaktifkan "Item for Sale".';
+                    subtext.innerText = 'Belum ada Game Pass dengan harga ' + orderData.gamePassPrice + ' R$ di game ini.';
                     
                     btn.innerHTML = '<i class="fas fa-redo mr-2"></i> Cek Lagi';
                     btn.disabled = false;
@@ -987,28 +1087,83 @@
             }, 2000);
         }
 
-        // ==========================================
-        // STEP 4: PAYMENT
-        // ==========================================
-        function processPayment() {
-            const btn = document.getElementById('btnPay');
-            btn.disabled = true;
-            btn.innerHTML = '<div class="loading-spinner w-4 h-4 border-2 inline mr-2"></div> Proses...';
-
-            const trxId = "TRX-" + Date.now().toString().slice(-6) + Math.random().toString(36).substr(2, 4).toUpperCase();
-
+        function goToStep4() {
             hideStep(3);
+            currentStep = 4;
             showStep(4);
-            document.getElementById('navButtons').classList.add('hidden');
-
-            setTimeout(() => {
-                document.getElementById('paymentLoading').classList.add('hidden');
-                document.getElementById('paymentSuccess').classList.remove('hidden');
-                document.getElementById('trxIdDisplay').textContent = trxId;
-                document.getElementById('paymentTotal').textContent = 'Rp ' + (orderData.gamePassPrice * 144).toLocaleString('id-ID');
-            }, 1500);
+            updateNavButtons();
+            
+            // Populate Payment Summary
+            document.getElementById('payUsername').innerText = '@' + orderData.username;
+            document.getElementById('payRobux').innerText = orderData.desiredRobux + ' Robux';
+            document.getElementById('payTotalUSD').innerText = '$' + orderData.usdAmount;
+            
+            // Render PayPal Button
+            renderPayPalButtons();
         }
 
+        // ==========================================
+        // STEP 4: PAYPAL INTEGRATION
+        // ==========================================
+        function renderPayPalButtons() {
+            // Prevent multiple renders
+            if (paypalRendered) return;
+
+            paypal.Buttons({
+                createOrder: function(data, actions) {
+                    return actions.order.create({
+                        purchase_units: [{
+                            description: `Top Up ${orderData.desiredRobux} Robux for @${orderData.username}`,
+                            amount: {
+                                value: orderData.usdAmount
+                            }
+                        }]
+                    });
+                },
+                onApprove: function(data, actions) {
+                    // Show processing overlay
+                    document.getElementById('paymentProcessing').classList.add('show');
+
+                    return actions.order.capture().then(function(details) {
+                        // Simulate server processing delay
+                        setTimeout(() => {
+                            document.getElementById('paymentProcessing').classList.remove('show');
+                            
+                            // Move to Success Step
+                            hideStep(4);
+                            currentStep = 5;
+                            showStep(5);
+                            updateNavButtons();
+                            
+                            // Show Success Content
+                            document.getElementById('paymentLoading').classList.remove('block'); // ensure hidden if logic changes
+                            document.getElementById('paymentSuccess').classList.remove('hidden');
+                            
+                            document.getElementById('trxIdDisplay').textContent = data.orderID || ('TRX-' + Date.now());
+                            document.getElementById('paymentTotalFinal').textContent = '$' + orderData.usdAmount;
+                        }, 2000);
+                    });
+                },
+                onError: function (err) {
+                    console.error(err);
+                    alert('Terjadi kesalahan saat pembayaran PayPal. Silakan coba lagi.');
+                    document.getElementById('paymentProcessing').classList.remove('show');
+                },
+                style: {
+                    layout: 'vertical',
+                    color:  'blue',
+                    shape:  'rect',
+                    label:  'pay'
+                }
+            }).render('#paypal-button-container');
+            
+            paypalRendered = true;
+        }
+
+        // ==========================================
+        // STEP 5: SUCCESS (Handled inside PayPal onApprove)
+        // ==========================================
+        
         // ==========================================
         // NAVIGATION
         // ==========================================
@@ -1018,14 +1173,23 @@
                 currentStep = 2;
                 showStep(2);
                 updateNavButtons();
-                
-                // Update package info in step 2
                 document.getElementById('packageInfo').innerText = orderData.desiredRobux + ' Robux';
             }
         }
 
         function prevStep() {
+            // If going back from Payment (Step 4), we might need to reset PayPal container if implemented dynamically, 
+            // but since we stay in DOM, it's fine. 
+            // However, if we go back to change amount, we need to re-render buttons next time.
+            
             if (currentStep > 1) {
+                // If going back from step 4, we might want to hide nav buttons logic specifically
+                if(currentStep === 4) {
+                     // Optional: clear paypal container if you want to reset state
+                     // document.getElementById('paypal-button-container').innerHTML = '';
+                     // paypalRendered = false; 
+                }
+
                 hideStep(currentStep);
                 currentStep--;
                 showStep(currentStep);
@@ -1035,7 +1199,9 @@
 
         function showStep(step) {
             document.getElementById(`step-${step}`).classList.remove('hidden');
-            for(let i=1; i<=4; i++) {
+            
+            // Update Dots
+            for(let i=1; i<=5; i++) {
                 const dot = document.getElementById(`dot-${i}`);
                 dot.classList.remove('active', 'completed');
                 if (i === step) dot.classList.add('active');
@@ -1050,21 +1216,16 @@
         function updateNavButtons() {
             const backBtn = document.getElementById('btnBack');
             const nextBtn = document.getElementById('btnNext');
-            const payBtn = document.getElementById('btnPay');
+            const navContainer = document.getElementById('navButtons');
 
             backBtn.classList.toggle('hidden', currentStep === 1);
             
-            if (currentStep === 3) {
-                // In verification step, hide next/pay until verified
-                nextBtn.classList.add('hidden');
-                payBtn.classList.add('hidden');
-            } else if (currentStep === 4) {
-                nextBtn.classList.add('hidden');
-                payBtn.classList.add('hidden');
-                document.getElementById('navButtons').classList.add('hidden');
+            // Hide default navigation in Payment and Success steps
+            if (currentStep === 4 || currentStep === 5) {
+                navContainer.classList.add('hidden');
             } else {
+                navContainer.classList.remove('hidden');
                 nextBtn.classList.remove('hidden');
-                payBtn.classList.add('hidden');
             }
         }
 
@@ -1093,7 +1254,6 @@
             return response.json();
         }
 
-        // Close modal on outside click
         document.getElementById('disclaimerModal').addEventListener('click', function(e) {
             if (e.target === this) closeDisclaimer();
         });
