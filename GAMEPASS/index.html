@@ -200,7 +200,7 @@
                 <div id="step-4" class="hidden fade-in">
                     <div class="step-label">Step 4</div>
                     <h3 class="text-xl font-bold mb-2">💳 Pembayaran</h3>
-                    <p class="text-sm text-gray-500 mb-6">Selesaikan pembayaran aman melalui PayPal.</p>
+                    <p class="text-sm text-gray-500 mb-6">Selesaikan pembayaran aman melalui PayPal atau Saweria.</p>
                     
                     <div class="payment-summary">
                         <div class="summary-row">
@@ -226,6 +226,27 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- PayPal Button Container -->
+                    <div id="paypal-button-container" class="max-w-sm mx-auto mb-4"></div>
+                    
+                    <!-- PEMISAH (ATAU) -->
+                    <div class="payment-divider">
+                        <span>ATAU</span>
+                    </div>
+
+                    <!-- Tombol Saweria -->
+                    <a href="https://saweria.co/VowViwEntertainment" target="_blank" class="btn-saweria max-w-sm mx-auto">
+                        <i class="fa-solid fa-hand-holding-dollar mr-2"></i> Donasi via Saweria
+                    </a>
+                    
+                    <!-- Processing Overlay -->
+                    <div class="processing-overlay" id="paymentProcessing">
+                        <div class="loading-spinner w-12 h-12 border-4 mb-4" style="border-top-color: #0070ba;"></div>
+                        <h4 class="font-bold text-gray-700">Memproses Pembayaran...</h4>
+                        <p class="text-sm text-gray-500">Jangan tutup halaman ini.</p>
+                    </div>
+                </div>
 
                     <!-- PayPal Button Container -->
                     <div id="paypal-button-container" class="max-w-sm mx-auto"></div>
