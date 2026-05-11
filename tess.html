@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roblox Profile Finder</title>
+    <title>Roblox Profile Finder - By Username</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -26,7 +26,7 @@
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             text-align: center;
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
         }
         h3 {
             font-size: 1.8em;
@@ -34,6 +34,12 @@
             background: linear-gradient(90deg, #00d4ff, #7b2cbf);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+        }
+        .input-hint {
+            font-size: 0.75em;
+            color: rgba(255,255,255,0.4);
+            margin-bottom: 8px;
+            text-align: left;
         }
         input {
             padding: 14px 16px;
@@ -98,6 +104,11 @@
         #avatar.loaded { display: block; }
         h2 { margin: 10px 0 5px; font-size: 1.5em; color: #fff; word-break: break-word; }
         .username-text { font-size: 1em; color: #00d4ff; font-weight: 600; }
+        .user-id-text { 
+            font-size: 0.8em; 
+            color: rgba(255,255,255,0.4); 
+            margin-top: 4px;
+        }
         .status-text {
             font-size: 0.85em;
             color: rgba(255,255,255,0.5);
@@ -126,20 +137,29 @@
             color: rgba(255,255,255,0.3);
             margin-top: 15px;
         }
+        .step-info {
+            font-size: 0.75em;
+            color: rgba(255,255,255,0.5);
+            margin-top: 5px;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
 
     <div class="card">
         <h3>🔍 Roblox Profile Finder</h3>
-        <input type="text" id="userInput" placeholder="Masukkan User ID (Angka)" onkeypress="if(event.key==='Enter')findProfile()">
+        <div class="input-hint">Masukkan Username Roblox (bukan Display Name)</div>
+        <input type="text" id="userInput" placeholder="Contoh: Roblox, Builderman, Stickmasterluke" onkeypress="if(event.key==='Enter')findProfile()">
         <button onclick="findProfile()" id="searchBtn">Cari Profil</button>
         <div class="spinner" id="spinner"></div>
+        <div class="step-info" id="stepInfo"></div>
         
         <div id="result">
             <img id="avatar" src="" alt="Avatar" onload="this.classList.add('loaded')">
             <h2 id="displayName"></h2>
             <div id="username" class="username-text"></div>
+            <div id="userId" class="user-id-text"></div>
             <div id="verifiedBadge"></div>
             <div id="status" class="status-text"></div>
         </div>
@@ -148,29 +168,25 @@
 
     <script>
         // ============================================
-        // DAFTAR PROXY CORS PUBLIK (diurutkan prioritas)
+        // DAFTAR PROXY CORS PUBLIK
         // ============================================
         const PROXIES = [
             {
                 name: "CORS.sh",
-                users: (id) => `https://cors.sh/https://users.roblox.com/v1/users/${id}`,
-                thumbnails: (id) => `https://cors.sh/https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${id}&size=420x420&format=Png&isCircular=false`
+                get: (url) => `https://cors.sh/${url}`
             },
             {
                 name: "CORSProxy.io",
-                users: (id) => `https://corsproxy.io/?https://users.roblox.com/v1/users/${id}`,
-                thumbnails: (id) => `https://corsproxy.io/?https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${id}&size=420x420&format=Png&isCircular=false`
+                get: (url) => `https://corsproxy.io/?${url}`
             },
             {
                 name: "AllOrigins",
-                users: (id) => `https://api.allorigins.win/get?url=${encodeURIComponent(`https://users.roblox.com/v1/users/${id}`)}`,
-                thumbnails: (id) => `https://api.allorigins.win/get?url=${encodeURIComponent(`https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${id}&size=420x420&format=Png&isCircular=false`)}`,
+                get: (url) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
                 wrapResponse: true
             },
             {
                 name: "ThingProxy",
-                users: (id) => `https://thingproxy.freeboard.io/fetch/https://users.roblox.com/v1/users/${id}`,
-                thumbnails: (id) => `https://thingproxy.freeboard.io/fetch/https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${id}&size=420x420&format=Png&isCircular=false`
+                get: (url) => `https://thingproxy.freeboard.io/fetch/${url}`
             }
         ];
 
@@ -185,16 +201,20 @@
             const avatarImg = document.getElementById('avatar');
             const dispName = document.getElementById('displayName');
             const usernameEl = document.getElementById('username');
+            const userIdEl = document.getElementById('userId');
             const statusEl = document.getElementById('status');
             const verifiedBadge = document.getElementById('verifiedBadge');
             const proxyInfo = document.getElementById('proxyInfo');
+            const stepInfo = document.getElementById('stepInfo');
 
             // Validasi
-            if (!input || isNaN(input) || parseInt(input) <= 0) {
-                alert("Tolong masukkan User ID berupa ANGKA yang valid!");
+            if (!input) {
+                alert("Tolong masukkan Username Roblox!");
                 return;
             }
-            const userId = parseInt(input);
+
+            // Normalisasi username (hapus spasi, lowercase)
+            const username = input.replace(/\s+/g, '').toLowerCase();
 
             // Reset UI
             btn.disabled = true;
@@ -205,35 +225,48 @@
             avatarImg.src = "";
             dispName.innerText = "";
             usernameEl.innerText = "";
+            userIdEl.innerText = "";
             statusEl.innerText = "";
             statusEl.className = "status-text";
             verifiedBadge.innerHTML = "";
             proxyInfo.innerText = "";
+            stepInfo.innerText = "";
 
             try {
-                // Coba semua proxy secara berurutan sampai berhasil
-                const userData = await fetchWithFallback(userId, 'users');
-                const headshotData = await fetchWithFallback(userId, 'thumbnails');
+                // STEP 1: Konversi Username ke User ID
+                stepInfo.innerText = "🔎 Mencari User ID dari username...";
+                const userId = await getUserIdFromUsername(username);
+                
+                // STEP 2: Ambil detail profil
+                stepInfo.innerText = "📋 Mengambil detail profil...";
+                const userData = await fetchUserData(userId);
+                
+                // STEP 3: Ambil avatar headshot
+                stepInfo.innerText = "🖼️ Mengambil avatar...";
+                const headshotUrl = await fetchHeadshotUrl(userId);
 
                 // Tampilkan hasil
                 dispName.innerText = userData.displayName || userData.name;
                 usernameEl.innerText = "@" + userData.name;
+                userIdEl.innerText = `User ID: ${userData.id}`;
                 
                 if (userData.hasVerifiedBadge) {
                     verifiedBadge.innerHTML = `<div class="verified-badge">✓ Verified</div>`;
                 }
 
-                avatarImg.src = headshotData;
+                avatarImg.src = headshotUrl;
                 statusEl.innerText = "✅ Profil ditemukan!";
                 statusEl.className = "status-text success";
+                stepInfo.innerText = "";
 
                 setTimeout(() => result.classList.add('show'), 100);
 
             } catch (error) {
                 console.error("Error:", error);
                 dispName.innerText = "❌ Gagal Memuat";
-                statusEl.innerText = error.message || "Semua proxy gagal. Coba lagi nanti.";
+                statusEl.innerText = error.message || "Username tidak ditemukan atau semua proxy gagal.";
                 statusEl.className = "status-text error";
+                stepInfo.innerText = "";
                 result.classList.add('show');
             } finally {
                 btn.disabled = false;
@@ -243,25 +276,30 @@
         }
 
         // ============================================
-        // FETCH DENGAN FALLBACK OTOMATIS
+        // KONVERSI USERNAME KE USER ID
         // ============================================
-        async function fetchWithFallback(userId, type) {
-            const proxyInfo = document.getElementById('proxyInfo');
-            let lastError = null;
+        async function getUserIdFromUsername(username) {
+            const url = `https://users.roblox.com/v1/usernames/users`;
+            const body = {
+                usernames: [username],
+                excludeBannedUsers: false
+            };
 
             for (let i = 0; i < PROXIES.length; i++) {
                 const proxy = PROXIES[i];
                 try {
-                    proxyInfo.innerText = `Mencoba proxy: ${proxy.name}...`;
-
-                    const url = type === 'users' ? proxy.users(userId) : proxy.thumbnails(userId);
+                    const proxyUrl = proxy.get(url);
                     
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 detik timeout
+                    const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-                    const response = await fetch(url, {
-                        method: 'GET',
-                        headers: { 'Accept': 'application/json' },
+                    const response = await fetch(proxyUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(body),
                         signal: controller.signal
                     });
                     
@@ -272,38 +310,118 @@
                         throw new Error(`HTTP ${response.status}`);
                     }
 
-                    const data = proxy.wrapResponse ? await response.json() : await response.json();
-                    
-                    // Parse jika menggunakan AllOrigins (wrapResponse)
-                    const parsedData = proxy.wrapResponse ? JSON.parse(data.contents) : data;
-
-                    // Validasi data
-                    if (type === 'users') {
-                        if (parsedData.errors) throw new Error(parsedData.errors[0]?.message || 'User tidak ditemukan');
-                        proxyInfo.innerText = `✅ Menggunakan proxy: ${proxy.name}`;
-                        return parsedData;
+                    let data;
+                    if (proxy.wrapResponse) {
+                        const wrapped = await response.json();
+                        data = JSON.parse(wrapped.contents);
                     } else {
-                        // Thumbnails
-                        if (!parsedData.data || !parsedData.data[0] || !parsedData.data[0].imageUrl) {
-                            throw new Error('URL headshot tidak tersedia');
-                        }
-                        proxyInfo.innerText = `✅ Menggunakan proxy: ${proxy.name}`;
-                        return parsedData.data[0].imageUrl;
+                        data = await response.json();
                     }
 
+                    // Validasi hasil
+                    if (!data.data || data.data.length === 0) {
+                        throw new Error(`Username "${username}" tidak ditemukan`);
+                    }
+
+                    return data.data[0].id;
+
                 } catch (error) {
-                    lastError = error;
-                    console.warn(`Proxy ${proxy.name} gagal:`, error.message);
-                    proxyInfo.innerText = `❌ ${proxy.name} gagal, mencoba proxy lain...`;
-                    
-                    // Tunggu sedikit sebelum pindah ke proxy berikutnya (kecuali yang terakhir)
+                    console.warn(`Proxy ${proxy.name} gagal (username lookup):`, error.message);
                     if (i < PROXIES.length - 1) {
-                        await new Promise(r => setTimeout(r, 500));
+                        await new Promise(r => setTimeout(r, 600));
                     }
                 }
             }
 
-            throw new Error(`Semua proxy gagal. Error terakhir: ${lastError?.message}`);
+            throw new Error(`Username "${username}" tidak ditemukan atau semua proxy gagal`);
+        }
+
+        // ============================================
+        // FETCH DATA USER (GET)
+        // ============================================
+        async function fetchUserData(userId) {
+            const url = `https://users.roblox.com/v1/users/${userId}`;
+
+            for (let i = 0; i < PROXIES.length; i++) {
+                const proxy = PROXIES[i];
+                try {
+                    const proxyUrl = proxy.get(url);
+                    
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+                    const response = await fetch(proxyUrl, {
+                        method: 'GET',
+                        headers: { 'Accept': 'application/json' },
+                        signal: controller.signal
+                    });
+                    
+                    clearTimeout(timeoutId);
+
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                    let data;
+                    if (proxy.wrapResponse) {
+                        const wrapped = await response.json();
+                        data = JSON.parse(wrapped.contents);
+                    } else {
+                        data = await response.json();
+                    }
+
+                    if (data.errors) throw new Error(data.errors[0]?.message || 'User tidak ditemukan');
+                    return data;
+
+                } catch (error) {
+                    console.warn(`Proxy ${proxy.name} gagal (user data):`, error.message);
+                    if (i < PROXIES.length - 1) await new Promise(r => setTimeout(r, 500));
+                }
+            }
+            throw new Error('Gagal mengambil data user');
+        }
+
+        // ============================================
+        // FETCH AVATAR HEADSHOT
+        // ============================================
+        async function fetchHeadshotUrl(userId) {
+            const url = `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userId}&size=420x420&format=Png&isCircular=false`;
+
+            for (let i = 0; i < PROXIES.length; i++) {
+                const proxy = PROXIES[i];
+                try {
+                    const proxyUrl = proxy.get(url);
+                    
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+                    const response = await fetch(proxyUrl, {
+                        method: 'GET',
+                        headers: { 'Accept': 'application/json' },
+                        signal: controller.signal
+                    });
+                    
+                    clearTimeout(timeoutId);
+
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                    let data;
+                    if (proxy.wrapResponse) {
+                        const wrapped = await response.json();
+                        data = JSON.parse(wrapped.contents);
+                    } else {
+                        data = await response.json();
+                    }
+
+                    if (!data.data || !data.data[0] || !data.data[0].imageUrl) {
+                        throw new Error('URL headshot tidak tersedia');
+                    }
+                    return data.data[0].imageUrl;
+
+                } catch (error) {
+                    console.warn(`Proxy ${proxy.name} gagal (thumbnail):`, error.message);
+                    if (i < PROXIES.length - 1) await new Promise(r => setTimeout(r, 500));
+                }
+            }
+            throw new Error('Gagal mengambil avatar');
         }
     </script>
 </body>
