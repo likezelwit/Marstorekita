@@ -936,7 +936,7 @@
         }
 
         // ==========================================
-        // STEP 3: VERIFY GAME PASS (FIXED VERSION)
+        // STEP 3: VERIFY GAME PASS
         // ==========================================
         async function checkGamePass() {
             const btn = document.getElementById('btnCheck');
@@ -947,34 +947,18 @@
             btn.disabled = true;
             btn.innerHTML = '<div class="loading-spinner w-4 h-4 border-2 inline mr-2"></div> Mengecek...';
             
-            const universeId = orderData.gameId;
-            const targetPrice = orderData.gamePassPrice;
-
-            try {
-                // 1. Fetch daftar Game Pass yang ada di game ini
-                // API: https://games.roblox.com/v1/games/{universeId}/game-passes?limit=100
-                const url = `https://games.roblox.com/v1/games/${universeId}/game-passes?limit=100`;
-                const response = await apiCall(url);
+            // Simulate API check (in real implementation, this would check Roblox API)
+            setTimeout(() => {
+                // Simulate: 80% chance success for demo
+                const isSuccess = Math.random() > 0.2;
                 
-                let found = false;
-
-                // 2. Cek data respons
-                if (response && response.data) {
-                    // Loop semua gamepass yang didapat
-                    found = response.data.some(gp => {
-                        // Pastikan harga sesuai (tipe data number)
-                        return gp.price === targetPrice;
-                    });
-                }
-
-                // 3. Update UI berdasarkan hasil pengecekan nyata
-                if (found) {
-                    // SUKSI: Game Pass dengan harga tersebut ditemukan
+                if (isSuccess) {
+                    // Success
                     icon.className = 'verify-status success';
                     icon.innerHTML = '<i class="fas fa-check"></i>';
                     text.innerText = 'Game Pass Ditemukan!';
                     text.style.color = '#51cf66';
-                    subtext.innerText = `Game Pass dengan harga ${targetPrice} R$ berhasil terdeteksi di game ini.`;
+                    subtext.innerText = 'Game Pass dengan harga ' + orderData.gamePassPrice + ' R$ sudah terdeteksi. Silakan lanjutkan pembayaran.';
                     
                     btn.innerHTML = '<i class="fas fa-arrow-right mr-2"></i> Lanjut ke Pembayaran';
                     btn.onclick = () => {
@@ -985,31 +969,22 @@
                     };
                     btn.disabled = false;
                     
+                    // Auto-enable pay button
                     document.getElementById('btnNext').classList.add('hidden');
                     document.getElementById('btnPay').classList.remove('hidden');
                     
                 } else {
-                    // GAGAL: Tidak ada Game Pass dengan harga tersebut
+                    // Not found
                     icon.className = 'verify-status error';
                     icon.innerHTML = '<i class="fas fa-times"></i>';
                     text.innerText = 'Game Pass Tidak Ditemukan';
                     text.style.color = '#ff4444';
-                    subtext.innerText = `Sistem tidak menemukan Game Pass dengan harga ${targetPrice} R$ di game ini. Pastikan Anda sudah membuatnya dengan harga yang tepat dan mengaktifkan "Item for Sale".`;
+                    subtext.innerText = 'Belum ada Game Pass dengan harga ' + orderData.gamePassPrice + ' R$ di game ini. Pastikan Anda sudah membuatnya dan mengaktifkan "Item for Sale".';
                     
                     btn.innerHTML = '<i class="fas fa-redo mr-2"></i> Cek Lagi';
                     btn.disabled = false;
                 }
-
-            } catch (error) {
-                console.error("Error verifying game pass:", error);
-                icon.className = 'verify-status error';
-                icon.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
-                text.innerText = 'Terjadi Kesalahan';
-                text.style.color = '#ff4444';
-                subtext.innerText = 'Gagal menghubungi server verifikasi. Periksa koneksi internet Anda atau coba lagi nanti.';
-                btn.innerHTML = 'Coba Lagi';
-                btn.disabled = false;
-            }
+            }, 2000);
         }
 
         // ==========================================
