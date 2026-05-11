@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roblox Profile Finder - By Username</title>
+    <title>Roblox Profile Finder</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -164,6 +164,31 @@
             border-color: #00d4ff;
             color: #00d4ff;
         }
+        .proxy-setup {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .proxy-setup h4 {
+            font-size: 0.9em;
+            color: #00d4ff;
+            margin-bottom: 10px;
+        }
+        .proxy-setup p {
+            font-size: 0.75em;
+            color: rgba(255,255,255,0.6);
+            line-height: 1.5;
+            text-align: left;
+        }
+        .proxy-setup code {
+            background: rgba(0,0,0,0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #ffd43b;
+            font-family: monospace;
+        }
     </style>
 </head>
 <body>
@@ -191,31 +216,41 @@
             <div id="status" class="status-text"></div>
         </div>
         <div class="proxy-info" id="proxyInfo"></div>
+
+        <div class="proxy-setup">
+            <h4>⚠️ Proxy Setup (Wajib)</h4>
+            <p>
+                Proxy publik sering down. Solusi terbaik: buat proxy sendiri gratis.<br><br>
+                <strong>Opsi 1 - Cloudflare Worker (Rekomendasi):</strong><br>
+                1. Buka <code>dash.cloudflare.com</code> → Workers & Pages<br>
+                2. Create a Service → paste kode worker.js<br>
+                3. Deploy, lalu masukkan URL worker Anda di bawah:<br><br>
+                <input type="text" id="customProxy" placeholder="https://proxy-anda.workers.dev/?url=" style="margin-top:8px;width:100%;font-size:0.8em;">
+            </p>
+        </div>
     </div>
 
     <script>
         // ============================================
         // KONFIGURASI & STATE
         // ============================================
-        let searchMode = 'username'; // 'username' atau 'id'
+        let searchMode = 'username';
         
-        // Proxy yang support GET dengan baik
+        // Proxy yang sudah diuji (bisa ditambah custom proxy)
         const PROXIES = [
             {
-                name: "Corsfix",
-                get: (url) => `https://proxy.corsfix.com/?${url}`,
-                supportsPost: false
+                name: "AllOrigins",
+                get: (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+                wrapResponse: false // raw mode, langsung return body asli
             },
             {
-                name: "AllOrigins",
+                name: "AllOrigins (JSON)",
                 get: (url) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
-                wrapResponse: true,
-                supportsPost: false
+                wrapResponse: true
             },
             {
                 name: "CORSProxy.io",
-                get: (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-                supportsPost: true
+                get: (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`
             }
         ];
 
@@ -255,6 +290,17 @@
             const verifiedBadge = document.getElementById('verifiedBadge');
             const proxyInfo = document.getElementById('proxyInfo');
             const stepInfo = document.getElementById('stepInfo');
+            const customProxyInput = document.getElementById('customProxy').value.trim();
+
+            // Tambahkan custom proxy jika ada
+            let activeProxies = [...PROXIES];
+            if (customProxyInput) {
+                activeProxies.unshift({
+                    name: "Custom Proxy",
+                    get: (url) => customProxyInput + encodeURIComponent(url),
+                    isCustom: true
+                });
+            }
 
             // Validasi
             if (!input) {
@@ -284,17 +330,15 @@
                 let headshotUrl;
 
                 if (searchMode === 'username') {
-                    // MODE USERNAME: Gunakan teknik redirect URL untuk dapat User ID
                     stepInfo.innerText = "🔎 Mengkonversi username ke User ID...";
-                    userId = await getUserIdFromUsernameRedirect(input);
+                    userId = await getUserIdFromUsername(input, activeProxies);
                     
                     stepInfo.innerText = "📋 Mengambil detail profil...";
-                    userData = await fetchUserData(userId);
+                    userData = await fetchUserData(userId, activeProxies);
                     
                     stepInfo.innerText = "🖼️ Mengambil avatar...";
-                    headshotUrl = await fetchHeadshotUrl(userId);
+                    headshotUrl = await fetchHeadshotUrl(userId, activeProxies);
                 } else {
-                    // MODE USER ID
                     const parsedId = parseInt(input);
                     if (isNaN(parsedId) || parsedId <= 0) {
                         throw new Error("User ID harus berupa angka positif!");
@@ -302,10 +346,10 @@
                     userId = parsedId;
                     
                     stepInfo.innerText = "📋 Mengambil detail profil...";
-                    userData = await fetchUserData(userId);
+                    userData = await fetchUserData(userId, activeProxies);
                     
                     stepInfo.innerText = "🖼️ Mengambil avatar...";
-                    headshotUrl = await fetchHeadshotUrl(userId);
+                    headshotUrl = await fetchHeadshotUrl(userId, activeProxies);
                 }
 
                 // Tampilkan hasil
@@ -327,7 +371,7 @@
             } catch (error) {
                 console.error("Error:", error);
                 dispName.innerText = "❌ Gagal Memuat";
-                statusEl.innerText = error.message || "Terjadi kesalahan. Coba lagi nanti.";
+                statusEl.innerText = error.message || "Semua proxy gagal. Silakan setup proxy sendiri (lihat kotak di bawah).";
                 statusEl.className = "status-text error";
                 stepInfo.innerText = "";
                 result.classList.add('show');
@@ -339,26 +383,24 @@
         }
 
         // ============================================
-        // TEKNIK BARU: Username ke User ID via Redirect
-        // Menggunakan https://www.roblox.com/users/profile?username=NAME
-        // Roblox akan redirect ke URL dengan User ID
+        // USERNAME KE USER ID (SEARCH API)
         // ============================================
-        async function getUserIdFromUsernameRedirect(username) {
-            // Normalisasi username
+        async function getUserIdFromUsername(username, proxies) {
             const cleanUsername = username.replace(/\s+/g, '').toLowerCase();
-            const profileUrl = `https://www.roblox.com/users/profile?username=${encodeURIComponent(cleanUsername)}`;
-            
-            for (let i = 0; i < PROXIES.length; i++) {
-                const proxy = PROXIES[i];
+            const searchUrl = `https://users.roblox.com/v1/users/search?keyword=${encodeURIComponent(cleanUsername)}&limit=10`;
+
+            for (let i = 0; i < proxies.length; i++) {
+                const proxy = proxies[i];
                 try {
-                    const proxyUrl = proxy.get(profileUrl);
+                    proxyInfo.innerText = `Mencoba ${proxy.name}...`;
+                    const proxyUrl = proxy.get(searchUrl);
                     
                     const controller = new AbortController();
                     const timeoutId = setTimeout(() => controller.abort(), 15000);
 
                     const response = await fetch(proxyUrl, {
                         method: 'GET',
-                        redirect: 'follow',
+                        headers: { 'Accept': 'application/json' },
                         signal: controller.signal
                     });
                     
@@ -369,109 +411,49 @@
                         throw new Error(`HTTP ${response.status}`);
                     }
 
-                    let finalUrl;
-                    
-                    if (proxy.wrapResponse) {
-                        // AllOrigins: perlu ekstrak URL dari response
-                        const data = await response.json();
-                        // AllOrigins tidak mengikuti redirect, tapi kita bisa cek status
-                        if (data.status?.http_code === 302 || data.status?.http_code === 301) {
-                            // Coba ekstrak Location header
-                            const location = data.status?.headers?.Location || data.status?.headers?.location;
-                            if (location) {
-                                const match = location.match(/\/users\/(\d+)\//);
-                                if (match) return parseInt(match[1]);
-                            }
-                        }
-                        throw new Error('AllOrigins tidak mengikuti redirect');
-                    } else {
-                        // Proxy lain yang mengikuti redirect
-                        finalUrl = response.url;
-                    }
-
-                    // Ekstrak User ID dari URL final
-                    const match = finalUrl.match(/\/users\/(\d+)\//);
-                    if (!match) {
-                        throw new Error(`Username "${cleanUsername}" tidak ditemukan`);
-                    }
-
-                    return parseInt(match[1]);
-
-                } catch (error) {
-                    console.warn(`Proxy ${proxy.name} gagal (redirect):`, error.message);
-                    if (i < PROXIES.length - 1) await new Promise(r => setTimeout(r, 800));
-                }
-            }
-
-            // FALLBACK: Gunakan endpoint search API (GET)
-            return await getUserIdFromSearch(cleanUsername);
-        }
-
-        // ============================================
-        // FALLBACK: Gunakan Search API (GET)
-        // ============================================
-        async function getUserIdFromSearch(username) {
-            const searchUrl = `https://users.roblox.com/v1/users/search?keyword=${encodeURIComponent(username)}&limit=1`;
-            
-            for (let i = 0; i < PROXIES.length; i++) {
-                const proxy = PROXIES[i];
-                try {
-                    const proxyUrl = proxy.get(searchUrl);
-                    
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-                    const response = await fetch(proxyUrl, {
-                        method: 'GET',
-                        headers: { 'Accept': 'application/json' },
-                        signal: controller.signal
-                    });
-                    
-                    clearTimeout(timeoutId);
-
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
                     let data;
                     if (proxy.wrapResponse) {
                         const wrapped = await response.json();
                         data = JSON.parse(wrapped.contents);
+                    } else if (proxy.isCustom) {
+                        data = await response.json();
                     } else {
                         data = await response.json();
                     }
 
                     if (!data.data || data.data.length === 0) {
-                        throw new Error(`Username "${username}" tidak ditemukan`);
+                        throw new Error(`Username "${cleanUsername}" tidak ditemukan`);
                     }
 
-                    // Cek exact match
-                    const exactMatch = data.data.find(u => u.name.toLowerCase() === username.toLowerCase());
+                    // Cari exact match
+                    const exactMatch = data.data.find(u => u.name.toLowerCase() === cleanUsername);
                     if (exactMatch) return exactMatch.id;
                     
-                    // Jika tidak exact match, gunakan hasil pertama
+                    // Fallback ke hasil pertama
                     return data.data[0].id;
 
                 } catch (error) {
                     console.warn(`Proxy ${proxy.name} gagal (search):`, error.message);
-                    if (i < PROXIES.length - 1) await new Promise(r => setTimeout(r, 600));
+                    if (i < proxies.length - 1) await new Promise(r => setTimeout(r, 800));
                 }
             }
 
-            throw new Error(`Username "${username}" tidak ditemukan atau semua proxy gagal`);
+            throw new Error(`Username "${cleanUsername}" tidak ditemukan atau semua proxy gagal`);
         }
 
         // ============================================
         // FETCH DATA USER
         // ============================================
-        async function fetchUserData(userId) {
+        async function fetchUserData(userId, proxies) {
             const url = `https://users.roblox.com/v1/users/${userId}`;
 
-            for (let i = 0; i < PROXIES.length; i++) {
-                const proxy = PROXIES[i];
+            for (let i = 0; i < proxies.length; i++) {
+                const proxy = proxies[i];
                 try {
                     const proxyUrl = proxy.get(url);
                     
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 10000);
+                    const timeoutId = setTimeout(() => controller.abort(), 15000);
 
                     const response = await fetch(proxyUrl, {
                         method: 'GET',
@@ -487,6 +469,8 @@
                     if (proxy.wrapResponse) {
                         const wrapped = await response.json();
                         data = JSON.parse(wrapped.contents);
+                    } else if (proxy.isCustom) {
+                        data = await response.json();
                     } else {
                         data = await response.json();
                     }
@@ -496,7 +480,7 @@
 
                 } catch (error) {
                     console.warn(`Proxy ${proxy.name} gagal (user data):`, error.message);
-                    if (i < PROXIES.length - 1) await new Promise(r => setTimeout(r, 600));
+                    if (i < proxies.length - 1) await new Promise(r => setTimeout(r, 800));
                 }
             }
             throw new Error('Gagal mengambil data user');
@@ -505,16 +489,16 @@
         // ============================================
         // FETCH AVATAR HEADSHOT
         // ============================================
-        async function fetchHeadshotUrl(userId) {
+        async function fetchHeadshotUrl(userId, proxies) {
             const url = `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userId}&size=420x420&format=Png&isCircular=false`;
 
-            for (let i = 0; i < PROXIES.length; i++) {
-                const proxy = PROXIES[i];
+            for (let i = 0; i < proxies.length; i++) {
+                const proxy = proxies[i];
                 try {
                     const proxyUrl = proxy.get(url);
                     
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 10000);
+                    const timeoutId = setTimeout(() => controller.abort(), 15000);
 
                     const response = await fetch(proxyUrl, {
                         method: 'GET',
@@ -530,6 +514,8 @@
                     if (proxy.wrapResponse) {
                         const wrapped = await response.json();
                         data = JSON.parse(wrapped.contents);
+                    } else if (proxy.isCustom) {
+                        data = await response.json();
                     } else {
                         data = await response.json();
                     }
@@ -541,7 +527,7 @@
 
                 } catch (error) {
                     console.warn(`Proxy ${proxy.name} gagal (thumbnail):`, error.message);
-                    if (i < PROXIES.length - 1) await new Promise(r => setTimeout(r, 600));
+                    if (i < proxies.length - 1) await new Promise(r => setTimeout(r, 800));
                 }
             }
             throw new Error('Gagal mengambil avatar');
