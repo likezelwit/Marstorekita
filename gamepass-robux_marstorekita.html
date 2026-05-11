@@ -3,12 +3,9 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Top Up Robux - Fast & Secure</title>
-    <!-- Tailwind CSS -->
+    <title>Top Up Robux - Game Pass System</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
 
@@ -34,21 +31,7 @@
             background-color: #f0f9ff;
             box-shadow: 0 0 0 2px rgba(0, 180, 216, 0.2);
         }
-        
-        .payment-method {
-            transition: all 0.2s ease;
-            border: 2px solid #e5e7eb;
-        }
-        .payment-method:hover {
-            background-color: #f9fafb;
-            border-color: #d1d5db;
-        }
-        .payment-method.selected {
-            border-color: #00b4d8;
-            background-color: #f0f9ff;
-        }
 
-        /* Animations */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -65,10 +48,365 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Step Indicator */
         .step-dot { transition: all 0.3s; }
         .step-dot.active { background-color: #00b4d8; color: white; transform: scale(1.1); }
         .step-dot.completed { background-color: #10b981; color: white; }
+
+        /* Search Styles */
+        .search-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            margin-top: 8px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            z-index: 100;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+        }
+        .search-dropdown.show { display: block; }
+        
+        .user-suggestion {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .user-suggestion:last-child { border-bottom: none; }
+        .user-suggestion:hover { background: #f0f9ff; }
+        
+        .user-suggestion-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #e5e7eb;
+        }
+        .user-suggestion-info { flex: 1; }
+        .user-suggestion-name {
+            font-weight: 600;
+            color: #1f2937;
+            font-size: 0.95em;
+        }
+        .user-suggestion-display {
+            font-size: 0.8em;
+            color: #6b7280;
+        }
+
+        /* Profile Card */
+        .profile-card {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 16px;
+            padding: 20px;
+            color: white;
+            margin-top: 20px;
+            display: none;
+        }
+        .profile-card.show { display: block; animation: fadeIn 0.5s ease; }
+        
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 4px solid #00d4ff;
+            object-fit: cover;
+            margin: 0 auto 12px;
+            display: block;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+        .profile-avatar:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+        }
+        
+        .profile-name { text-align: center; font-size: 1.3em; font-weight: bold; }
+        .profile-username { text-align: center; color: #00d4ff; font-size: 1em; margin-top: 4px; }
+        .profile-id { text-align: center; color: rgba(255,255,255,0.5); font-size: 0.85em; margin-top: 4px; }
+        
+        .verified-badge-inline {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(0,212,255,0.2);
+            color: #00d4ff;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+
+        /* Games List (SPA - tidak pindah page) */
+        .games-panel {
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 15px;
+            display: none;
+        }
+        .games-panel.show { display: block; animation: fadeIn 0.4s ease; }
+        
+        .game-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        .game-item:hover {
+            background: rgba(0, 212, 255, 0.15);
+            border-color: rgba(0, 212, 255, 0.3);
+            transform: translateX(8px);
+        }
+        .game-item.selected {
+            border-color: #00d4ff;
+            background: rgba(0, 212, 255, 0.2);
+        }
+        .game-thumb {
+            width: 60px;
+            height: 60px;
+            border-radius: 10px;
+            object-fit: cover;
+            background: #333;
+        }
+        .game-info { flex: 1; }
+        .game-name { font-size: 1em; font-weight: 600; color: #fff; }
+        .game-stats { font-size: 0.8em; color: rgba(255,255,255,0.6); margin-top: 4px; }
+        .game-check { 
+            width: 24px; 
+            height: 24px; 
+            border-radius: 50%; 
+            border: 2px solid rgba(255,255,255,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+            color: transparent;
+            transition: all 0.3s;
+        }
+        .game-item.selected .game-check {
+            background: #00d4ff;
+            border-color: #00d4ff;
+            color: #fff;
+        }
+
+        /* Disclaimer Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal-overlay.show { display: flex; }
+        
+        .modal-content {
+            background: #1a1a2e;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 500px;
+            border: 1px solid rgba(255,255,255,0.1);
+            overflow: hidden;
+        }
+        .modal-header {
+            padding: 25px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .modal-header h3 {
+            font-size: 1.4em;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+        .modal-header p {
+            color: rgba(255,255,255,0.6);
+            font-size: 0.9em;
+        }
+        
+        .modal-body { padding: 25px; }
+        
+        .calc-box {
+            background: rgba(0,0,0,0.3);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .calc-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .calc-row:last-child { border-bottom: none; }
+        .calc-label { color: rgba(255,255,255,0.6); font-size: 0.9em; }
+        .calc-value { color: #fff; font-weight: 600; }
+        .calc-value.highlight { color: #ffd43b; font-size: 1.3em; }
+        .calc-value.robux { color: #00d4ff; }
+        
+        .tax-badge {
+            display: inline-block;
+            background: rgba(255, 68, 68, 0.2);
+            color: #ff6b6b;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        
+        .warning-box {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .warning-box i { color: #ffc107; margin-right: 8px; }
+        .warning-box p {
+            color: rgba(255,255,255,0.8);
+            font-size: 0.85em;
+            line-height: 1.6;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 12px;
+        }
+        .btn-cancel {
+            flex: 1;
+            padding: 14px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.7);
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-cancel:hover { background: rgba(255,255,255,0.1); }
+        
+        .btn-ok {
+            flex: 2;
+            padding: 14px;
+            background: linear-gradient(90deg, #00b4d8, #0077b6);
+            border: none;
+            color: #fff;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .btn-ok:hover {
+            box-shadow: 0 5px 20px rgba(0, 180, 216, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* Verification Step */
+        .verify-panel {
+            background: rgba(0,0,0,0.2);
+            border-radius: 16px;
+            padding: 25px;
+            text-align: center;
+            display: none;
+        }
+        .verify-panel.show { display: block; animation: fadeIn 0.5s ease; }
+        
+        .verify-status {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+        }
+        .verify-status.pending {
+            background: rgba(255, 193, 7, 0.1);
+            border: 3px solid #ffc107;
+            color: #ffc107;
+        }
+        .verify-status.success {
+            background: rgba(81, 207, 102, 0.1);
+            border: 3px solid #51cf66;
+            color: #51cf66;
+        }
+        .verify-status.error {
+            background: rgba(255, 68, 68, 0.1);
+            border: 3px solid #ff4444;
+            color: #ff4444;
+        }
+        
+        .verify-text {
+            color: #fff;
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .verify-subtext {
+            color: rgba(255,255,255,0.6);
+            font-size: 0.9em;
+            margin-bottom: 20px;
+        }
+        
+        .btn-verify {
+            padding: 12px 30px;
+            background: linear-gradient(90deg, #00b4d8, #0077b6);
+            border: none;
+            color: #fff;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .btn-verify:hover {
+            box-shadow: 0 5px 15px rgba(0, 180, 216, 0.3);
+        }
+        .btn-verify:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .search-wrapper { position: relative; }
+
+        .click-hint {
+            text-align: center;
+            font-size: 0.8em;
+            color: rgba(255,255,255,0.5);
+            margin-top: 10px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        .step-label {
+            font-size: 0.75em;
+            color: #00d4ff;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
@@ -83,407 +421,606 @@
                     </div>
                     <h1 class="text-xl font-bold tracking-tight">RobuxTopUp</h1>
                 </div>
-                <div class="hidden md:flex items-center space-x-6 text-sm font-medium">
-                    <a href="#" class="text-gray-600 hover:text-blue-600">Beranda</a>
-                    <a href="#" class="text-gray-600 hover:text-blue-600">Cek Transaksi</a>
-                    <a href="#" class="text-blue-600 hover:underline">Masuk</a>
-                </div>
             </div>
         </div>
     </header>
 
-    <!-- Hero Section -->
-    <section class="gradient-bg text-white py-12 pb-20">
+    <!-- Hero -->
+    <section class="gradient-bg text-white py-10 pb-16">
         <div class="container mx-auto px-4 text-center">
-            <h2 class="text-3xl md:text-4xl font-bold mb-2">Top Up Robux Instan</h2>
-            <p class="opacity-90">Proses cepat, aman, dan tanpa ribet.</p>
+            <h2 class="text-3xl font-bold mb-2">Top Up Robux via Game Pass</h2>
+            <p class="opacity-90">Pilih paket → Cari akun → Pilih game → Verifikasi → Bayar</p>
         </div>
     </section>
 
-    <!-- Main Content -->
-    <main class="container mx-auto px-4 -mt-10 pb-12">
-        <div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden relative">
+    <!-- Main -->
+    <main class="container mx-auto px-4 -mt-8 pb-12">
+        <div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
             
-            <!-- Step Indicators -->
-            <div class="flex justify-between items-center px-8 py-6 border-b bg-gray-50">
+            <!-- Steps -->
+            <div class="flex justify-between items-center px-8 py-5 border-b bg-gray-50">
                 <div class="flex flex-col items-center">
                     <div class="step-dot w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-bold active" id="dot-1">1</div>
                     <span class="text-xs mt-1 text-gray-500 font-medium">Paket</span>
                 </div>
-                <div class="h-0.5 w-full bg-gray-200 absolute top-9 left-0 z-0"></div> <!-- Line Background -->
-                <div class="relative z-10 flex flex-col items-center ml-4 md:ml-auto">
+                <div class="relative z-10 flex flex-col items-center">
                     <div class="step-dot w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-bold" id="dot-2">2</div>
-                    <span class="text-xs mt-1 text-gray-500 font-medium">Data</span>
+                    <span class="text-xs mt-1 text-gray-500 font-medium">Akun & Game</span>
                 </div>
-                <div class="relative z-10 flex flex-col items-center ml-4 md:ml-auto">
+                <div class="relative z-10 flex flex-col items-center">
                     <div class="step-dot w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-bold" id="dot-3">3</div>
-                    <span class="text-xs mt-1 text-gray-500 font-medium">Bayar</span>
+                    <span class="text-xs mt-1 text-gray-500 font-medium">Verifikasi</span>
                 </div>
-                <div class="relative z-10 flex flex-col items-center ml-4 md:ml-auto">
+                <div class="relative z-10 flex flex-col items-center">
                     <div class="step-dot w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-bold" id="dot-4">4</div>
-                    <span class="text-xs mt-1 text-gray-500 font-medium">Selesai</span>
+                    <span class="text-xs mt-1 text-gray-500 font-medium">Bayar</span>
                 </div>
             </div>
 
-            <div class="p-6 md:p-8 min-h-[400px]">
-                
-                <!-- STEP 1: Pilih Paket -->
+            <div class="p-6 md:p-8 min-h-[450px]">
+
+                <!-- ==========================================
+                     STEP 1: PILIH PAKET ROBUX
+                     ========================================== -->
                 <div id="step-1" class="fade-in block">
-                    <h3 class="text-lg font-bold mb-4">Pilih Nominal Robux</h3>
+                    <div class="step-label">Step 1</div>
+                    <h3 class="text-xl font-bold mb-2">💎 Pilih Nominal Robux</h3>
+                    <p class="text-sm text-gray-500 mb-6">Pilih paket yang tersedia atau masukkan jumlah custom.</p>
                     
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-                        <!-- Paket 50 -->
-                        <div class="robux-card rounded-xl p-4 text-center" onclick="selectPackage('50', 7200)">
-                            <div class="text-2xl mb-1">💎</div>
-                            <div class="font-bold text-gray-800">50</div>
+                        <div class="robux-card rounded-xl p-4 text-center" onclick="selectPackage(50)">
+                            <div class="text-3xl mb-2">💎</div>
+                            <div class="font-bold text-gray-800 text-lg">50</div>
                             <div class="text-xs text-gray-500">Robux</div>
-                            <div class="text-sm font-semibold text-blue-600 mt-2">Rp 7.200</div>
                         </div>
-                        <!-- Paket 100 -->
-                        <div class="robux-card rounded-xl p-4 text-center" onclick="selectPackage('100', 14400)">
-                            <div class="text-2xl mb-1">💎</div>
-                            <div class="font-bold text-gray-800">100</div>
+                        <div class="robux-card rounded-xl p-4 text-center" onclick="selectPackage(100)">
+                            <div class="text-3xl mb-2">💎</div>
+                            <div class="font-bold text-gray-800 text-lg">100</div>
                             <div class="text-xs text-gray-500">Robux</div>
-                            <div class="text-sm font-semibold text-blue-600 mt-2">Rp 14.400</div>
                         </div>
-                        <!-- Paket 150 -->
-                        <div class="robux-card rounded-xl p-4 text-center" onclick="selectPackage('150', 21600)">
-                            <div class="text-2xl mb-1">💎</div>
-                            <div class="font-bold text-gray-800">150</div>
+                        <div class="robux-card rounded-xl p-4 text-center" onclick="selectPackage(150)">
+                            <div class="text-3xl mb-2">💎</div>
+                            <div class="font-bold text-gray-800 text-lg">150</div>
                             <div class="text-xs text-gray-500">Robux</div>
-                            <div class="text-sm font-semibold text-blue-600 mt-2">Rp 21.600</div>
                         </div>
-                        <!-- Paket 200 -->
-                        <div class="robux-card rounded-xl p-4 text-center" onclick="selectPackage('200', 28800)">
-                            <div class="text-2xl mb-1">💎</div>
-                            <div class="font-bold text-gray-800">200</div>
+                        <div class="robux-card rounded-xl p-4 text-center" onclick="selectPackage(200)">
+                            <div class="text-3xl mb-2">💎</div>
+                            <div class="font-bold text-gray-800 text-lg">200</div>
                             <div class="text-xs text-gray-500">Robux</div>
-                            <div class="text-sm font-semibold text-blue-600 mt-2">Rp 28.800</div>
                         </div>
                     </div>
 
                     <div class="border-t pt-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Atau Masukkan Jumlah Custom</label>
-                        <div class="flex flex-col sm:flex-row gap-2">
-                            <input type="number" id="customAmount" placeholder="Contoh: 500" 
-                                class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                oninput="calculateCustomPrice()">
-                            <div id="customPriceDisplay" class="hidden sm:flex items-center px-4 py-2 bg-blue-50 text-blue-700 font-bold rounded-lg min-w-[120px] justify-center">
-                                Rp 0
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Custom Amount</label>
+                        <div class="flex gap-2">
+                            <input type="number" id="customAmount" placeholder="Min. 10" min="10"
+                                class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                oninput="calculateCustom()">
+                            <div id="customInfo" class="hidden items-center px-4 py-2 bg-blue-50 text-blue-700 font-bold rounded-lg">
+                                <span id="customPrice">Rp 0</span>
                             </div>
                         </div>
-                        <p id="customPriceMobile" class="mt-2 text-sm font-bold text-blue-600 sm:hidden"></p>
                     </div>
                 </div>
 
-                <!-- STEP 2: Data Pengguna -->
+                <!-- ==========================================
+                     STEP 2: CARI AKUN & PILIH GAME (SPA)
+                     ========================================== -->
                 <div id="step-2" class="hidden fade-in">
-                    <h3 class="text-lg font-bold mb-4">Data Akun</h3>
+                    <div class="step-label">Step 2</div>
+                    <h3 class="text-xl font-bold mb-2">🔍 Cari Akun Roblox</h3>
+                    <p class="text-sm text-gray-500 mb-4">Ketik username, klik avatar, lalu pilih game place.</p>
                     
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Username Roblox</label>
-                            <div class="relative">
-                                <span class="absolute left-3 top-3 text-gray-400"><i class="fas fa-user"></i></span>
-                                <input type="text" id="inputUsername" placeholder="Masukkan username tanpa @" 
-                                    class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                            </div>
-                            <p class="text-xs text-gray-500 mt-1">Pastikan username benar agar Robux masuk tepat.</p>
-                        </div>
+                    <!-- Selected Package Info -->
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 flex justify-between items-center">
+                        <span class="text-sm text-blue-700 font-medium">Paket:</span>
+                        <span class="text-blue-700 font-bold" id="packageInfo">-</span>
+                    </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Kode Referral (Opsional)</label>
-                            <div class="relative">
-                                <span class="absolute left-3 top-3 text-gray-400"><i class="fas fa-tag"></i></span>
-                                <input type="text" id="inputReferral" placeholder="Kode referral jika ada" 
-                                    class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    <!-- Search -->
+                    <div class="search-wrapper">
+                        <div class="relative">
+                            <span class="absolute left-3 top-3 text-gray-400"><i class="fas fa-search"></i></span>
+                            <input type="text" id="searchUsername" placeholder="Ketik username..." 
+                                class="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                autocomplete="off">
+                            <div class="loading-spinner absolute right-3 top-3 hidden" id="searchSpinner" style="width:20px;height:20px;border-width:2px;"></div>
+                        </div>
+                        <div class="search-dropdown" id="searchDropdown"></div>
+                    </div>
+
+                    <!-- Profile Card + Games (SPA - tidak pindah page) -->
+                    <div class="profile-card" id="profileCard">
+                        <img class="profile-avatar" id="profileAvatar" src="" alt="Avatar" onclick="loadGames()">
+                        <div class="profile-name">
+                            <span id="profileDisplayName"></span>
+                            <span id="profileVerified"></span>
+                        </div>
+                        <div class="profile-username" id="profileUsername"></div>
+                        <div class="profile-id" id="profileUserId"></div>
+                        <div class="click-hint">👆 Klik avatar untuk muat game places</div>
+
+                        <!-- Games Panel -->
+                        <div class="games-panel" id="gamesPanel">
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="text-sm font-bold text-blue-400">🎮 Pilih Game Place</span>
+                                <span class="text-xs text-gray-400" id="gamesCount">0 game</span>
                             </div>
+                            <div id="gamesList"></div>
                         </div>
                     </div>
                 </div>
 
-                <!-- STEP 3: Pembayaran -->
+                <!-- ==========================================
+                     STEP 3: VERIFIKASI GAME PASS
+                     ========================================== -->
                 <div id="step-3" class="hidden fade-in">
-                    <h3 class="text-lg font-bold mb-4">Metode Pembayaran</h3>
-                    
-                    <div class="grid grid-cols-2 gap-3 mb-6">
-                        <!-- E-Wallet -->
-                        <div class="payment-method rounded-lg p-3 cursor-pointer flex items-center" onclick="selectPayment('GoPay', 'gopay')">
-                            <div class="w-10 h-10 bg-blue-100 rounded flex items-center justify-center text-blue-600 mr-3">
-                                <i class="fas fa-wallet"></i>
-                            </div>
-                            <span class="font-medium">GoPay</span>
-                        </div>
-                        <div class="payment-method rounded-lg p-3 cursor-pointer flex items-center" onclick="selectPayment('DANA', 'dana')">
-                            <div class="w-10 h-10 bg-blue-100 rounded flex items-center justify-center text-blue-600 mr-3">
-                                <i class="fas fa-wallet"></i>
-                            </div>
-                            <span class="font-medium">DANA</span>
-                        </div>
-                        <div class="payment-method rounded-lg p-3 cursor-pointer flex items-center" onclick="selectPayment('OVO', 'ovo')">
-                            <div class="w-10 h-10 bg-purple-100 rounded flex items-center justify-center text-purple-600 mr-3">
-                                <i class="fas fa-wallet"></i>
-                            </div>
-                            <span class="font-medium">OVO</span>
-                        </div>
-                        <div class="payment-method rounded-lg p-3 cursor-pointer flex items-center" onclick="selectPayment('QRIS', 'qris')">
-                            <div class="w-10 h-10 bg-gray-800 rounded flex items-center justify-center text-white mr-3">
-                                <i class="fas fa-qrcode"></i>
-                            </div>
-                            <span class="font-medium">QRIS (All Payment)</span>
-                        </div>
-                    </div>
+                    <div class="step-label">Step 3</div>
+                    <h3 class="text-xl font-bold mb-4">✅ Verifikasi Game Pass</h3>
 
-                    <!-- Bank Transfer -->
-                    <h4 class="text-sm font-bold text-gray-500 uppercase mb-2">Transfer Bank</h4>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="payment-method rounded-lg p-3 cursor-pointer flex items-center" onclick="selectPayment('BCA', 'bca')">
-                            <div class="w-10 h-10 bg-blue-600 rounded flex items-center justify-center text-white mr-3 font-bold text-xs">BCA</div>
-                            <span class="font-medium">BCA VA</span>
+                    <div class="verify-panel show" id="verifyPanel">
+                        <div class="verify-status pending" id="verifyIcon">
+                            <i class="fas fa-hourglass-half"></i>
                         </div>
-                        <div class="payment-method rounded-lg p-3 cursor-pointer flex items-center" onclick="selectPayment('Mandiri', 'mandiri')">
-                            <div class="w-10 h-10 bg-yellow-400 rounded flex items-center justify-center text-white mr-3 font-bold text-xs">MDR</div>
-                            <span class="font-medium">Mandiri VA</span>
+                        <div class="verify-text" id="verifyText">Menunggu Verifikasi</div>
+                        <div class="verify-subtext" id="verifySubtext">
+                            Sistem akan memeriksa apakah Game Pass sudah dibuat di game yang dipilih.
                         </div>
-                    </div>
 
-                    <!-- Summary Box -->
-                    <div class="mt-6 bg-gray-50 rounded-lg p-4 border border-gray-100">
-                        <div class="flex justify-between mb-2">
-                            <span class="text-gray-600">Item:</span>
-                            <span id="summaryItem" class="font-medium">-</span>
+                        <div class="bg-gray-800 rounded-lg p-4 mb-4 text-left">
+                            <div class="flex justify-between mb-2">
+                                <span class="text-gray-400 text-sm">Game:</span>
+                                <span class="text-white font-medium text-sm" id="verifyGame">-</span>
+                            </div>
+                            <div class="flex justify-between mb-2">
+                                <span class="text-gray-400 text-sm">Game Pass Harga:</span>
+                                <span class="text-yellow-400 font-bold" id="verifyPrice">-</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400 text-sm">Robux Masuk:</span>
+                                <span class="text-blue-400 font-bold" id="verifyRobux">-</span>
+                            </div>
                         </div>
-                        <div class="flex justify-between mb-2">
-                            <span class="text-gray-600">Username:</span>
-                            <span id="summaryUsername" class="font-medium">-</span>
-                        </div>
-                        <div class="flex justify-between pt-2 border-t border-gray-200">
-                            <span class="font-bold text-gray-800">Total Bayar:</span>
-                            <span id="summaryTotal" class="font-bold text-blue-600 text-lg">Rp 0</span>
-                        </div>
+
+                        <button class="btn-verify" id="btnCheck" onclick="checkGamePass()">
+                            <i class="fas fa-sync-alt mr-2"></i> Cek Game Pass
+                        </button>
                     </div>
                 </div>
 
-                <!-- STEP 4: Selesai / Loading -->
-                <div id="step-4" class="hidden fade-in text-center py-10">
-                    <!-- Loading State -->
+                <!-- ==========================================
+                     STEP 4: PEMBAYARAN
+                     ========================================== -->
+                <div id="step-4" class="hidden fade-in text-center py-6">
                     <div id="paymentLoading" class="block">
                         <div class="loading-spinner mx-auto mb-4 w-12 h-12 border-4"></div>
-                        <h3 class="text-xl font-bold mb-2">Memproses Transaksi...</h3>
+                        <h3 class="text-xl font-bold mb-2">Memproses Pembayaran...</h3>
                         <p class="text-gray-500 text-sm">Mohon jangan tutup halaman ini.</p>
                     </div>
 
-                    <!-- Success State -->
                     <div id="paymentSuccess" class="hidden">
                         <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                             <i class="fas fa-check text-green-600 text-3xl"></i>
                         </div>
-                        <h3 class="text-xl font-bold mb-2 text-green-600">Pesanan Dibuat!</h3>
-                        <p class="text-gray-600 mb-6 max-w-xs mx-auto">Silakan lanjutkan pembayaran sesuai metode yang dipilih.</p>
+                        <h3 class="text-xl font-bold mb-2 text-green-600">Pesanan Berhasil!</h3>
+                        <p class="text-gray-600 mb-6">Robux akan masuk setelah pembayaran dikonfirmasi.</p>
                         
-                        <div class="bg-gray-50 rounded-lg p-4 text-left mb-6 max-w-sm mx-auto border border-gray-200">
+                        <div class="bg-gray-50 rounded-lg p-4 text-left mb-6 max-w-sm mx-auto border">
                             <p class="text-xs text-gray-500 uppercase font-bold">ID Transaksi</p>
-                            <p id="trxIdDisplay" class="font-mono font-bold text-lg mb-3">LOADING...</p>
-                            
-                            <p class="text-xs text-gray-500 uppercase font-bold">Nomor Pembayaran</p>
-                            <p class="font-mono font-bold text-2xl text-blue-600" id="paymentNumberDisplay">0812-XXXX-XXXX</p>
+                            <p id="trxIdDisplay" class="font-mono font-bold text-lg mb-3">-</p>
+                            <p class="text-xs text-gray-500 uppercase font-bold">Total Bayar</p>
+                            <p id="paymentTotal" class="font-bold text-2xl text-blue-600">-</p>
                         </div>
 
-                        <button onclick="location.reload()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                            Buat Pesanan Baru
+                        <button onclick="location.reload()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                            Pesanan Baru
                         </button>
                     </div>
                 </div>
 
             </div>
 
-            <!-- Footer Navigation -->
+            <!-- Navigation -->
             <div class="bg-gray-50 px-6 py-4 border-t flex justify-between" id="navButtons">
-                <button id="btnBack" onclick="prevStep()" class="hidden px-4 py-2 text-gray-600 font-medium hover:text-gray-900 disabled:opacity-50">
+                <button id="btnBack" onclick="prevStep()" class="hidden px-4 py-2 text-gray-600 font-medium hover:text-gray-900">
                     <i class="fas fa-arrow-left mr-2"></i> Kembali
                 </button>
-                <div class="flex-1"></div> <!-- Spacer -->
+                <div class="flex-1"></div>
                 <button id="btnNext" onclick="nextStep()" disabled class="px-6 py-2 bg-gray-300 text-white font-medium rounded-lg cursor-not-allowed transition">
                     Lanjut
                 </button>
-                <button id="btnPay" onclick="processPayment()" class="hidden px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition shadow-lg shadow-blue-200">
+                <button id="btnPay" onclick="processPayment()" class="hidden px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition shadow-lg">
                     Bayar Sekarang
                 </button>
             </div>
-
         </div>
     </main>
 
+    <!-- ==========================================
+         DISCLAIMER MODAL
+         ========================================== -->
+    <div class="modal-overlay" id="disclaimerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>⚠️ Buat Game Pass</h3>
+                <p>Ikuti langkah ini untuk melanjutkan top up</p>
+            </div>
+            <div class="modal-body">
+                <div class="calc-box">
+                    <div class="calc-row">
+                        <span class="calc-label">Robux yang diinginkan</span>
+                        <span class="calc-value robux" id="calcDesired">100 R$</span>
+                    </div>
+                    <div class="calc-row">
+                        <span class="calc-label">Pajak Roblox (30%)</span>
+                        <span class="calc-value"><span class="tax-badge">-30%</span></span>
+                    </div>
+                    <div class="calc-row">
+                        <span class="calc-label">Game Pass yang harus dibuat</span>
+                        <span class="calc-value highlight" id="calcGamePass">143 R$</span>
+                    </div>
+                    <div class="calc-row" style="border-top: 2px solid rgba(255,255,255,0.1); margin-top: 10px; padding-top: 15px;">
+                        <span class="calc-label">Creator Earnings (70%)</span>
+                        <span class="calc-value robux" id="calcEarnings">100 R$</span>
+                    </div>
+                </div>
+
+                <div class="warning-box">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>
+                        <strong>Langkah-langkah:</strong><br>
+                        1. Login ke <strong>roblox.com</strong><br>
+                        2. Buka game place: <strong id="instrGame">Game Name</strong><br>
+                        3. Buat Game Pass dengan harga <strong id="instrPrice" class="text-yellow-400">143 R$</strong><br>
+                        4. Pastikan Game Pass sudah aktif "Item for Sale"<br>
+                        5. Klik "Oke, Sudah Buat" di bawah
+                    </p>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn-cancel" onclick="closeDisclaimer()">Batal</button>
+                    <button class="btn-ok" onclick="confirmDisclaimer()">
+                        <i class="fas fa-check mr-2"></i> Oke, Sudah Buat
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ==========================================
-        // KONFIGURASI FIREBASE (GANTI DENGAN ANDA)
+        // CONFIG & STATE
         // ==========================================
-        const firebaseConfig = {
-            apiKey: "ISI_API_KEY_ANDA_DISINI",
-            authDomain: "project-id.firebaseapp.com",
-            projectId: "project-id",
-            storageBucket: "project-id.appspot.com",
-            messagingSenderId: "123456789",
-            appId: "1:123456789:web:abcdef"
-        };
-
-        // Initialize Firebase
-        // Jika config belum diisi, kita gunakan mode 'Demo' (tidak save ke DB)
-        let db = null;
-        try {
-            if (firebaseConfig.apiKey !== "ISI_API_KEY_ANDA_DISINI") {
-                firebase.initializeApp(firebaseConfig);
-                db = firebase.firestore();
-                console.log("Firebase connected");
-            } else {
-                console.warn("Firebase belum dikonfigurasi. Berjalan dalam mode Demo UI.");
-            }
-        } catch (e) {
-            console.error("Firebase Error:", e);
-        }
-
-        // ==========================================
-        // STATE VARIABLES
-        // ==========================================
+        const API_BASE = '/api/roblox?url=';
         let currentStep = 1;
-        let selectedData = {
-            amount: 0,
-            price: 0,
-            type: '', // 'package' or 'custom'
-            username: '',
-            referral: '',
-            paymentMethod: '',
-            paymentCode: ''
+        let selectedUser = null;
+        let selectedGame = null;
+        let searchTimeout = null;
+        
+        let orderData = {
+            desiredRobux: 0,      // Robux yang user inginkan
+            gamePassPrice: 0,     // Harga game pass yang harus dibuat (dengan pajak)
+            gameId: null,
+            gameName: '',
+            userId: null,
+            username: ''
         };
-        const RATE_PER_ROBUX = 144; // Rp 144 per Robux
 
         // ==========================================
-        // STEP 1 LOGIC
+        // STEP 1: PACKAGE SELECTION
         // ==========================================
-        function selectPackage(amount, price) {
-            // Reset visual selection
+        function selectPackage(amount) {
             document.querySelectorAll('.robux-card').forEach(el => el.classList.remove('selected'));
             document.getElementById('customAmount').value = '';
-            document.getElementById('customPriceDisplay').classList.add('hidden');
-            document.getElementById('customPriceDisplay').textContent = 'Rp 0';
-            document.getElementById('customPriceMobile').textContent = '';
+            document.getElementById('customInfo').classList.add('hidden');
             
-            // Set Data
-            selectedData.amount = parseInt(amount);
-            selectedData.price = price;
-            selectedData.type = 'package';
-
-            // Highlight selected card (finding by onclick text is a bit hacky but works for simple static sites, 
-            // normally we add an ID to each card. Here we just rely on event bubbling logic or simple query)
-            // For simplicity in this structure, let's find the element clicked manually via event if passed, 
-            // or just iterate. Since I'm writing inline onclick, 'event.currentTarget' works best.
-            const clickedCard = event.currentTarget;
-            clickedCard.classList.add('selected');
-
-            validateStep1();
+            orderData.desiredRobux = amount;
+            event.currentTarget.classList.add('selected');
+            enableNext();
         }
 
-        function calculateCustomPrice() {
-            const input = document.getElementById('customAmount');
-            const val = parseInt(input.value);
-            const display = document.getElementById('customPriceDisplay');
-            const displayMobile = document.getElementById('customPriceMobile');
-
-            // Remove selection from preset cards
+        function calculateCustom() {
+            const val = parseInt(document.getElementById('customAmount').value);
+            const info = document.getElementById('customInfo');
+            
             document.querySelectorAll('.robux-card').forEach(el => el.classList.remove('selected'));
-
-            if (val && val > 0) {
-                const price = val * RATE_PER_ROBUX;
-                selectedData.amount = val;
-                selectedData.price = price;
-                selectedData.type = 'custom';
-
-                display.textContent = formatRupiah(price);
-                display.classList.remove('hidden');
-                displayMobile.textContent = formatRupiah(price);
-                validateStep1();
+            
+            if (val && val >= 10) {
+                orderData.desiredRobux = val;
+                info.classList.remove('hidden');
+                info.classList.add('flex');
+                enableNext();
             } else {
-                selectedData.amount = 0;
-                selectedData.price = 0;
-                selectedData.type = '';
-                display.classList.add('hidden');
-                displayMobile.textContent = '';
-                document.getElementById('btnNext').disabled = true;
-                document.getElementById('btnNext').classList.replace('bg-blue-600', 'bg-gray-300');
-            }
-        }
-
-        function validateStep1() {
-            const btn = document.getElementById('btnNext');
-            if (selectedData.amount > 0) {
-                btn.disabled = false;
-                btn.classList.replace('bg-gray-300', 'bg-blue-600');
-                btn.classList.replace('cursor-not-allowed', 'hover:bg-blue-700');
-            } else {
-                btn.disabled = true;
-                btn.classList.replace('bg-blue-600', 'bg-gray-300');
-                btn.classList.replace('hover:bg-blue-700', 'cursor-not-allowed');
+                orderData.desiredRobux = 0;
+                info.classList.add('hidden');
+                info.classList.remove('flex');
+                disableNext();
             }
         }
 
         // ==========================================
-        // STEP 2 LOGIC
+        // STEP 2: SEARCH USER & GAMES (SPA)
         // ==========================================
-        const usernameInput = document.getElementById('inputUsername');
-        usernameInput.addEventListener('input', function() {
-            this.value = this.value.replace(/[^a-zA-Z0-9_]/g, ''); // Hanya boleh huruf, angka, underscore
-            validateStep2();
+        const searchInput = document.getElementById('searchUsername');
+        const searchDropdown = document.getElementById('searchDropdown');
+
+        searchInput.addEventListener('input', function() {
+            const query = this.value.trim();
+            if (searchTimeout) clearTimeout(searchTimeout);
+            if (query.length < 2) {
+                searchDropdown.classList.remove('show');
+                return;
+            }
+            searchTimeout = setTimeout(() => searchUsers(query), 300);
         });
 
-        function validateStep2() {
-            const btn = document.getElementById('btnNext');
-            const val = usernameInput.value.trim();
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.search-wrapper')) searchDropdown.classList.remove('show');
+        });
+
+        async function searchUsers(keyword) {
+            document.getElementById('searchSpinner').classList.remove('hidden');
             
-            if (val.length >= 3) {
-                btn.disabled = false;
-                btn.classList.replace('bg-gray-300', 'bg-blue-600');
-            } else {
-                btn.disabled = true;
-                btn.classList.replace('bg-blue-600', 'bg-gray-300');
+            try {
+                const data = await apiCall(`https://users.roblox.com/v1/users/search?keyword=${encodeURIComponent(keyword)}&limit=10`);
+                
+                if (!data.data || data.data.length === 0) {
+                    searchDropdown.innerHTML = '<div class="p-4 text-center text-gray-500">Tidak ditemukan</div>';
+                    searchDropdown.classList.add('show');
+                    return;
+                }
+
+                const lowerKeyword = keyword.toLowerCase();
+                const exactMatches = data.data.filter(u => u.name.toLowerCase() === lowerKeyword);
+                let results = exactMatches.length > 0 ? exactMatches.slice(0, 1) : data.data.slice(0, 3);
+
+                // Fetch avatars
+                const userIds = results.map(u => u.id).join(',');
+                const avatarData = await apiCall(`https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userIds}&size=150x150&format=Png&isCircular=true`);
+                
+                const avatarMap = {};
+                if (avatarData.data) {
+                    avatarData.data.forEach(a => {
+                        if (a.imageUrl) avatarMap[a.targetId] = a.imageUrl;
+                    });
+                }
+
+                searchDropdown.innerHTML = results.map(user => `
+                    <div class="user-suggestion" onclick="selectUser(${user.id}, '${user.name.replace(/'/g, "\\'")}', '${(user.displayName || user.name).replace(/'/g, "\\'")}', '${avatarMap[user.id] || ''}', ${user.hasVerifiedBadge || false})">
+                        <img class="user-suggestion-avatar" src="${avatarMap[user.id] || ''}" onerror="this.style.background='#e5e7eb'">
+                        <div class="user-suggestion-info">
+                            <div class="user-suggestion-name">${user.displayName || user.name} ${user.hasVerifiedBadge ? '<span style="color:#00b4d8;">✓</span>' : ''}</div>
+                            <div class="user-suggestion-display">@${user.name}</div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                searchDropdown.classList.add('show');
+            } catch (error) {
+                console.error(error);
+            } finally {
+                document.getElementById('searchSpinner').classList.add('hidden');
             }
         }
 
-        // ==========================================
-        // STEP 3 LOGIC
-        // ==========================================
-        function selectPayment(name, code) {
-            document.querySelectorAll('.payment-method').forEach(el => el.classList.remove('selected'));
-            event.currentTarget.classList.add('selected');
+        function selectUser(userId, username, displayName, avatarUrl, isVerified) {
+            selectedUser = { id: userId, name: username, displayName, avatar: avatarUrl, verified: isVerified };
+            orderData.userId = userId;
+            orderData.username = username;
+            
+            searchDropdown.classList.remove('show');
+            searchInput.value = username;
 
-            selectedData.paymentMethod = name;
-            selectedData.paymentCode = code;
+            const card = document.getElementById('profileCard');
+            document.getElementById('profileAvatar').src = avatarUrl;
+            document.getElementById('profileDisplayName').innerText = displayName;
+            document.getElementById('profileUsername').innerText = '@' + username;
+            document.getElementById('profileUserId').innerText = 'ID: ' + userId;
+            document.getElementById('profileVerified').innerHTML = isVerified ? '<span class="verified-badge-inline">✓ Verified</span>' : '';
+            
+            card.classList.add('show');
+            document.getElementById('gamesPanel').classList.remove('show');
+        }
 
-            // Update Summary
-            document.getElementById('summaryItem').textContent = selectedData.amount + ' Robux';
-            document.getElementById('summaryUsername').textContent = usernameInput.value;
-            document.getElementById('summaryTotal').textContent = formatRupiah(selectedData.price);
+        async function loadGames() {
+            if (!selectedUser) return;
+            
+            const panel = document.getElementById('gamesPanel');
+            const list = document.getElementById('gamesList');
+            
+            panel.classList.add('show');
+            list.innerHTML = '<div class="loading-spinner" style="width:20px;height:20px;border-width:2px;margin:10px auto;"></div>';
 
-            // Enable Pay Button
-            const btn = document.getElementById('btnPay');
-            btn.disabled = false;
-            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            try {
+                const games = await fetchUserGames(selectedUser.id);
+                document.getElementById('gamesCount').innerText = games.length + ' game';
+                
+                if (games.length === 0) {
+                    list.innerHTML = '<div class="text-sm text-gray-400 text-center py-3">Tidak ada game places</div>';
+                    return;
+                }
+
+                list.innerHTML = games.map((game, index) => `
+                    <div class="game-item" id="game-${index}" onclick="selectGameItem(${index}, ${game.id}, '${game.name.replace(/'/g, "\\'")}')">
+                        <img class="game-thumb" src="${game.thumbnail || ''}" onerror="this.style.display='none'">
+                        <div style="display:none;width:60px;height:60px;background:rgba(255,255,255,0.1);border-radius:10px;align-items:center;justify-content:center;font-size:1.5em;">🎮</div>
+                        <div class="game-info">
+                            <div class="game-name">${game.name}</div>
+                            <div class="game-stats">👥 ${game.playing || 0} playing • 🏗️ ${game.placeVisits || 0} visits</div>
+                        </div>
+                        <div class="game-check"><i class="fas fa-check"></i></div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                list.innerHTML = '<div class="text-sm text-red-400 text-center py-3">Gagal memuat game</div>';
+            }
+        }
+
+        async function fetchUserGames(userId) {
+            try {
+                const data = await apiCall(`https://games.roblox.com/v2/users/${userId}/games?sortOrder=Asc&limit=10`);
+                
+                if (data.data && data.data.length > 0) {
+                    const universeIds = data.data.map(g => g.id).join(',');
+                    try {
+                        const thumbData = await apiCall(`https://thumbnails.roblox.com/v1/games/multiget/thumbnails?universeIds=${universeIds}&size=150x150&format=Png&isCircular=false`);
+                        const thumbMap = {};
+                        if (thumbData.data) {
+                            thumbData.data.forEach(t => {
+                                if (t.thumbnails && t.thumbnails[0]) thumbMap[t.universeId] = t.thumbnails[0].imageUrl;
+                            });
+                        }
+                        data.data.forEach(g => g.thumbnail = thumbMap[g.id]);
+                    } catch (e) {}
+                }
+                return data.data || [];
+            } catch (error) {
+                return [];
+            }
+        }
+
+        function selectGameItem(index, gameId, gameName) {
+            // Remove previous selection
+            document.querySelectorAll('.game-item').forEach(el => el.classList.remove('selected'));
+            
+            // Select current
+            document.getElementById(`game-${index}`).classList.add('selected');
+            
+            selectedGame = { id: gameId, name: gameName };
+            orderData.gameId = gameId;
+            orderData.gameName = gameName;
+            
+            // Calculate Game Pass price with tax
+            // Formula: GamePassPrice = ceil(DesiredRobux / 0.7)
+            // Example: 100 / 0.7 = 142.857 → ceil → 143
+            orderData.gamePassPrice = Math.ceil(orderData.desiredRobux / 0.7);
+            
+            // Show disclaimer modal
+            showDisclaimer();
         }
 
         // ==========================================
-        // NAVIGATION & PROCESSING
+        // DISCLAIMER MODAL
+        // ==========================================
+        function showDisclaimer() {
+            document.getElementById('calcDesired').innerText = orderData.desiredRobux + ' R$';
+            document.getElementById('calcGamePass').innerText = orderData.gamePassPrice + ' R$';
+            document.getElementById('calcEarnings').innerText = orderData.desiredRobux + ' R$';
+            document.getElementById('instrGame').innerText = orderData.gameName;
+            document.getElementById('instrPrice').innerText = orderData.gamePassPrice + ' R$';
+            
+            document.getElementById('disclaimerModal').classList.add('show');
+        }
+
+        function closeDisclaimer() {
+            document.getElementById('disclaimerModal').classList.remove('show');
+            // Deselect game
+            document.querySelectorAll('.game-item').forEach(el => el.classList.remove('selected'));
+            selectedGame = null;
+        }
+
+        function confirmDisclaimer() {
+            document.getElementById('disclaimerModal').classList.remove('show');
+            
+            // Move to verification step
+            hideStep(2);
+            currentStep = 3;
+            showStep(3);
+            updateNavButtons();
+            
+            // Setup verification panel
+            document.getElementById('verifyGame').innerText = orderData.gameName;
+            document.getElementById('verifyPrice').innerText = orderData.gamePassPrice + ' R$';
+            document.getElementById('verifyRobux').innerText = orderData.desiredRobux + ' R$';
+        }
+
+        // ==========================================
+        // STEP 3: VERIFY GAME PASS
+        // ==========================================
+        async function checkGamePass() {
+            const btn = document.getElementById('btnCheck');
+            const icon = document.getElementById('verifyIcon');
+            const text = document.getElementById('verifyText');
+            const subtext = document.getElementById('verifySubtext');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<div class="loading-spinner w-4 h-4 border-2 inline mr-2"></div> Mengecek...';
+            
+            // Simulate API check (in real implementation, this would check Roblox API)
+            setTimeout(() => {
+                // Simulate: 80% chance success for demo
+                const isSuccess = Math.random() > 0.2;
+                
+                if (isSuccess) {
+                    // Success
+                    icon.className = 'verify-status success';
+                    icon.innerHTML = '<i class="fas fa-check"></i>';
+                    text.innerText = 'Game Pass Ditemukan!';
+                    text.style.color = '#51cf66';
+                    subtext.innerText = 'Game Pass dengan harga ' + orderData.gamePassPrice + ' R$ sudah terdeteksi. Silakan lanjutkan pembayaran.';
+                    
+                    btn.innerHTML = '<i class="fas fa-arrow-right mr-2"></i> Lanjut ke Pembayaran';
+                    btn.onclick = () => {
+                        hideStep(3);
+                        currentStep = 4;
+                        showStep(4);
+                        updateNavButtons();
+                    };
+                    btn.disabled = false;
+                    
+                    // Auto-enable pay button
+                    document.getElementById('btnNext').classList.add('hidden');
+                    document.getElementById('btnPay').classList.remove('hidden');
+                    
+                } else {
+                    // Not found
+                    icon.className = 'verify-status error';
+                    icon.innerHTML = '<i class="fas fa-times"></i>';
+                    text.innerText = 'Game Pass Tidak Ditemukan';
+                    text.style.color = '#ff4444';
+                    subtext.innerText = 'Belum ada Game Pass dengan harga ' + orderData.gamePassPrice + ' R$ di game ini. Pastikan Anda sudah membuatnya dan mengaktifkan "Item for Sale".';
+                    
+                    btn.innerHTML = '<i class="fas fa-redo mr-2"></i> Cek Lagi';
+                    btn.disabled = false;
+                }
+            }, 2000);
+        }
+
+        // ==========================================
+        // STEP 4: PAYMENT
+        // ==========================================
+        function processPayment() {
+            const btn = document.getElementById('btnPay');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="loading-spinner w-4 h-4 border-2 inline mr-2"></div> Proses...';
+
+            const trxId = "TRX-" + Date.now().toString().slice(-6) + Math.random().toString(36).substr(2, 4).toUpperCase();
+
+            hideStep(3);
+            showStep(4);
+            document.getElementById('navButtons').classList.add('hidden');
+
+            setTimeout(() => {
+                document.getElementById('paymentLoading').classList.add('hidden');
+                document.getElementById('paymentSuccess').classList.remove('hidden');
+                document.getElementById('trxIdDisplay').textContent = trxId;
+                document.getElementById('paymentTotal').textContent = 'Rp ' + (orderData.gamePassPrice * 144).toLocaleString('id-ID');
+            }, 1500);
+        }
+
+        // ==========================================
+        // NAVIGATION
         // ==========================================
         function nextStep() {
-            if (currentStep === 2) {
-                // Simpan data sementara saat pindah dari step 2
-                selectedData.username = usernameInput.value.trim();
-                selectedData.referral = document.getElementById('inputReferral').value.trim();
-            }
-
-            if (currentStep < 4) {
-                hideStep(currentStep);
-                currentStep++;
-                showStep(currentStep);
+            if (currentStep === 1 && orderData.desiredRobux > 0) {
+                hideStep(1);
+                currentStep = 2;
+                showStep(2);
                 updateNavButtons();
+                
+                // Update package info in step 2
+                document.getElementById('packageInfo').innerText = orderData.desiredRobux + ' Robux';
             }
         }
 
@@ -498,8 +1035,6 @@
 
         function showStep(step) {
             document.getElementById(`step-${step}`).classList.remove('hidden');
-            
-            // Update Dots
             for(let i=1; i<=4; i++) {
                 const dot = document.getElementById(`dot-${i}`);
                 dot.classList.remove('active', 'completed');
@@ -517,85 +1052,51 @@
             const nextBtn = document.getElementById('btnNext');
             const payBtn = document.getElementById('btnPay');
 
-            if (currentStep === 1) {
-                backBtn.classList.add('hidden');
-            } else {
-                backBtn.classList.remove('hidden');
-            }
-
+            backBtn.classList.toggle('hidden', currentStep === 1);
+            
             if (currentStep === 3) {
+                // In verification step, hide next/pay until verified
                 nextBtn.classList.add('hidden');
-                payBtn.classList.remove('hidden');
+                payBtn.classList.add('hidden');
+            } else if (currentStep === 4) {
+                nextBtn.classList.add('hidden');
+                payBtn.classList.add('hidden');
+                document.getElementById('navButtons').classList.add('hidden');
             } else {
                 nextBtn.classList.remove('hidden');
                 payBtn.classList.add('hidden');
             }
         }
 
-        // ==========================================
-        // CHECKOUT PROCESS
-        // ==========================================
-        async function processPayment() {
-            // UI Loading State
-            const btn = document.getElementById('btnPay');
-            const originalText = btn.innerHTML;
+        function enableNext() {
+            const btn = document.getElementById('btnNext');
+            btn.disabled = false;
+            btn.classList.replace('bg-gray-300', 'bg-blue-600');
+            btn.classList.replace('cursor-not-allowed', 'hover:bg-blue-700');
+        }
+
+        function disableNext() {
+            const btn = document.getElementById('btnNext');
             btn.disabled = true;
-            btn.innerHTML = '<div class="loading-spinner w-4 h-4 border-2 inline mr-2"></div> Proses...';
-
-            // Generate Fake Data untuk Pembayaran (VA / E-Wallet Number)
-            const randomNum = Math.floor(1000000000 + Math.random() * 9000000000);
-            let paymentNumber = "";
-            
-            if (selectedData.paymentCode === 'bca' || selectedData.paymentCode === 'mandiri') {
-                paymentNumber = "8800" + randomNum; // Format VA
-            } else {
-                paymentNumber = "08" + Math.floor(100000000 + Math.random() * 900000000); // Format E-Wallet
-            }
-
-            // Buat ID Transaksi Unik
-            const trxId = "TRX-" + Date.now().toString().slice(-6) + Math.floor(Math.random() * 100);
-
-            // Simpan ke Firestore jika dikonfigurasi
-            if (db) {
-                try {
-                    await db.collection('transactions').add({
-                        trxId: trxId,
-                        username: selectedData.username,
-                        amount: selectedData.amount,
-                        price: selectedData.price,
-                        method: selectedData.paymentMethod,
-                        paymentNumber: paymentNumber,
-                        status: 'pending',
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                } catch (error) {
-                    console.error("Error saving to DB:", error);
-                }
-            }
-
-            // Pindah ke Step 4 (Loading)
-            hideStep(3);
-            showStep(4);
-            document.getElementById('navButtons').classList.add('hidden'); // Sembunyikan tombol navigasi di step akhir
-
-            // Simulasi delay sebentar agar terasa "diproses"
-            setTimeout(() => {
-                document.getElementById('paymentLoading').classList.add('hidden');
-                document.getElementById('paymentSuccess').classList.remove('hidden');
-                
-                // Isi Data Sukses
-                document.getElementById('trxIdDisplay').textContent = trxId;
-                document.getElementById('paymentNumberDisplay').textContent = paymentNumber;
-
-            }, 1500);
+            btn.classList.replace('bg-blue-600', 'bg-gray-300');
+            btn.classList.replace('hover:bg-blue-700', 'cursor-not-allowed');
         }
 
         // ==========================================
-        // UTILITIES
+        // API HELPER
         // ==========================================
-        function formatRupiah(angka) {
-            return "Rp " + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        async function apiCall(url) {
+            const response = await fetch(API_BASE + encodeURIComponent(url), {
+                headers: { 'Accept': 'application/json' }
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return response.json();
         }
+
+        // Close modal on outside click
+        document.getElementById('disclaimerModal').addEventListener('click', function(e) {
+            if (e.target === this) closeDisclaimer();
+        });
     </script>
 </body>
 </html>
