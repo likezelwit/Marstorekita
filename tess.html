@@ -3,237 +3,353 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roblox Profile Finder | Final Edition</title>
+    <title>Roblox Profile Finder — Vercel Edition</title>
     <style>
-        /* Modern UI Glassmorphism */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            background: radial-gradient(circle at center, #1e1e2f 0%, #111119 100%);
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             color: #fff;
             padding: 20px;
         }
         .card {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(15px);
-            padding: 40px;
-            border-radius: 28px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            padding: 35px;
+            border-radius: 24px;
             border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             text-align: center;
             width: 100%;
-            max-width: 450px;
+            max-width: 420px;
+        }
+        .vercel-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.75em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+        .vercel-badge::before {
+            content: "▲";
+            color: #fff;
+            font-size: 1.1em;
         }
         h3 {
-            font-size: 2em;
-            margin-bottom: 25px;
-            background: linear-gradient(135deg, #00d4ff, #9d50bb);
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        .mode-toggle {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        .mode-btn {
-            flex: 1;
-            padding: 10px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px;
-            color: rgba(255,255,255,0.6);
-            cursor: pointer;
-            font-weight: 600;
-            transition: 0.3s;
-        }
-        .mode-btn.active {
-            background: #00d4ff22;
-            border-color: #00d4ff;
-            color: #00d4ff;
+        .input-hint {
+            font-size: 0.75em;
+            color: rgba(255,255,255,0.4);
+            margin-bottom: 8px;
+            text-align: left;
         }
         input {
-            padding: 16px;
+            padding: 14px 16px;
             width: 100%;
             border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 14px;
-            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.2);
             color: #fff;
             font-size: 1em;
             outline: none;
-            margin-bottom: 15px;
-            transition: 0.3s;
+            margin-bottom: 12px;
+            transition: all 0.3s;
         }
-        input:focus { border-color: #00d4ff; box-shadow: 0 0 15px rgba(0, 212, 255, 0.2); }
-        
-        button#searchBtn {
-            padding: 16px;
+        input::placeholder { color: rgba(255, 255, 255, 0.4); }
+        input:focus {
+            border-color: #00d4ff;
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
+        }
+        button {
+            padding: 14px 24px;
             background: linear-gradient(90deg, #007bff, #00d4ff);
             color: white;
             border: none;
-            border-radius: 14px;
+            border-radius: 12px;
             cursor: pointer;
             width: 100%;
             font-weight: bold;
-            font-size: 1.1em;
-            transition: 0.3s;
+            font-size: 1em;
+            transition: all 0.3s;
         }
-        button#searchBtn:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0, 123, 255, 0.4); }
-        button#searchBtn:disabled { opacity: 0.5; cursor: not-allowed; }
-
+        button:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0, 123, 255, 0.4); }
+        button:active { transform: scale(0.98); }
+        button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
         .spinner {
             display: none;
-            width: 30px;
-            height: 30px;
-            border: 4px solid rgba(255,255,255,0.1);
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255,255,255,0.2);
             border-radius: 50%;
             border-top-color: #00d4ff;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
+            animation: spin 0.8s linear infinite;
+            margin: 15px auto;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-
         #result {
-            margin-top: 30px;
-            display: none;
-            animation: fadeIn 0.5s ease forwards;
+            margin-top: 25px;
+            opacity: 0;
+            transform: translateY(15px);
+            transition: all 0.5s ease;
         }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
+        #result.show { opacity: 1; transform: translateY(0); }
         #avatar {
-            width: 160px;
-            height: 160px;
+            width: 150px;
+            height: 150px;
             border-radius: 50%;
+            margin: 0 auto 15px;
             border: 4px solid #00d4ff;
-            box-shadow: 0 0 30px rgba(0, 212, 255, 0.2);
-            margin-bottom: 15px;
+            object-fit: cover;
+            display: none;
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
         }
+        #avatar.loaded { display: block; }
+        h2 { margin: 10px 0 5px; font-size: 1.5em; color: #fff; word-break: break-word; }
+        .username-text { font-size: 1em; color: #00d4ff; font-weight: 600; }
+        .user-id-text { 
+            font-size: 0.8em; 
+            color: rgba(255,255,255,0.4); 
+            margin-top: 4px;
+        }
+        .status-text {
+            font-size: 0.85em;
+            color: rgba(255,255,255,0.5);
+            margin-top: 10px;
+            padding: 8px 14px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            display: inline-block;
+        }
+        .error { color: #ff6b6b; background: rgba(255,107,107,0.1); }
+        .success { color: #51cf66; background: rgba(81,207,102,0.1); }
         .verified-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(0,212,255,0.15);
             color: #00d4ff;
-            background: rgba(0, 212, 255, 0.1);
             padding: 4px 12px;
             border-radius: 20px;
-            font-size: 0.8em;
-            display: inline-block;
-            margin-top: 10px;
+            font-size: 0.75em;
+            font-weight: bold;
+            margin-top: 8px;
         }
-        .status-msg { font-size: 0.9em; margin-top: 15px; padding: 10px; border-radius: 8px; }
-        .error { background: rgba(255, 82, 82, 0.1); color: #ff5252; }
-        .success { background: rgba(76, 175, 80, 0.1); color: #4caf50; }
+        .mode-toggle {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .mode-btn {
+            flex: 1;
+            padding: 8px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: rgba(255,255,255,0.5);
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.3s;
+        }
+        .mode-btn.active {
+            background: rgba(0, 212, 255, 0.2);
+            border-color: #00d4ff;
+            color: #00d4ff;
+        }
+        .api-info {
+            font-size: 0.7em;
+            color: rgba(255,255,255,0.3);
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <h3>🔍 Profile Finder</h3>
+        <div class="vercel-badge">Powered by Vercel Serverless</div>
+        <h3>🔍 Roblox Profile Finder</h3>
         
         <div class="mode-toggle">
-            <button class="mode-btn active" id="btnUser" onclick="switchMode('username')">Username</button>
-            <button class="mode-btn" id="btnId" onclick="switchMode('id')">User ID</button>
+            <button class="mode-btn active" id="modeUsername" onclick="setMode('username')">By Username</button>
+            <button class="mode-btn" id="modeId" onclick="setMode('id')">By User ID</button>
         </div>
 
-        <input type="text" id="userInput" placeholder="Masukkan username..." onkeypress="if(event.key==='Enter') executeSearch()">
-        <button id="searchBtn" onclick="executeSearch()">Cari Sekarang</button>
+        <div class="input-hint" id="inputHint">Masukkan Username Roblox</div>
+        <input type="text" id="userInput" placeholder="Contoh: Roblox, Builderman, Stickmasterluke" onkeypress="if(event.key==='Enter')findProfile()">
+        <button onclick="findProfile()" id="searchBtn">Cari Profil</button>
+        <div class="spinner" id="spinner"></div>
         
-        <div class="spinner" id="loader"></div>
-        <div id="stepLogger" style="font-size: 0.75em; color: gray; margin-top: 10px;"></div>
-
         <div id="result">
-            <img id="avatar" src="" alt="Roblox Avatar">
-            <h2 id="resDisplayName"></h2>
-            <div id="resUsername" style="color: #00d4ff;"></div>
-            <div id="resUserId" style="opacity: 0.5; font-size: 0.85em;"></div>
-            <div id="resVerified"></div>
-            <div id="statusBox" class="status-msg"></div>
+            <img id="avatar" src="" alt="Avatar" onload="this.classList.add('loaded')">
+            <h2 id="displayName"></h2>
+            <div id="username" class="username-text"></div>
+            <div id="userId" class="user-id-text"></div>
+            <div id="verifiedBadge"></div>
+            <div id="status" class="status-text"></div>
         </div>
+        <div class="api-info" id="apiInfo">API: /api/roblox (Serverless Function)</div>
     </div>
 
     <script>
-        let currentMode = 'username';
-        const PROXY_LIST = [
-            { name: "CORSProxy", url: (target) => `https://corsproxy.io/?${encodeURIComponent(target)}` },
-            { name: "AllOrigins", url: (target) => `https://api.allorigins.win/raw?url=${encodeURIComponent(target)}` }
-        ];
+        // ============================================
+        // KONFIGURASI — LANGSUNG KE VERCEL API
+        // ============================================
+        const API_BASE = '/api/roblox?url=';
+        let searchMode = 'username';
 
-        function switchMode(mode) {
-            currentMode = mode;
-            document.getElementById('btnUser').classList.toggle('active', mode === 'username');
-            document.getElementById('btnId').classList.toggle('active', mode === 'id');
-            document.getElementById('userInput').placeholder = mode === 'username' ? "Masukkan username..." : "Masukkan angka ID...";
-        }
-
-        async function fetchWithRetry(targetUrl) {
-            for (let proxy of PROXY_LIST) {
-                try {
-                    logStep(`Mencoba via ${proxy.name}...`);
-                    const response = await fetch(proxy.url(targetUrl));
-                    if (!response.ok) throw new Error("Gagal load");
-                    return await response.json();
-                } catch (e) {
-                    console.warn(`${proxy.name} failed, trying next...`);
-                }
+        function setMode(mode) {
+            searchMode = mode;
+            document.getElementById('modeUsername').classList.toggle('active', mode === 'username');
+            document.getElementById('modeId').classList.toggle('active', mode === 'id');
+            const input = document.getElementById('userInput');
+            const hint = document.getElementById('inputHint');
+            if (mode === 'username') {
+                input.placeholder = "Contoh: Roblox, Builderman, Stickmasterluke";
+                hint.innerText = "Masukkan Username Roblox (bukan Display Name)";
+            } else {
+                input.placeholder = "Contoh: 1, 156, 9229907018";
+                hint.innerText = "Masukkan User ID Roblox (Angka)";
             }
-            throw new Error("Semua proxy gagal. Silakan coba lagi nanti.");
         }
 
-        function logStep(msg) { document.getElementById('stepLogger').innerText = msg; }
-
-        async function executeSearch() {
+        // ============================================
+        // FUNGSI UTAMA
+        // ============================================
+        async function findProfile() {
             const input = document.getElementById('userInput').value.trim();
-            if (!input) return;
+            const btn = document.getElementById('searchBtn');
+            const spinner = document.getElementById('spinner');
+            const result = document.getElementById('result');
+            const avatarImg = document.getElementById('avatar');
+            const dispName = document.getElementById('displayName');
+            const usernameEl = document.getElementById('username');
+            const userIdEl = document.getElementById('userId');
+            const statusEl = document.getElementById('status');
+            const verifiedBadge = document.getElementById('verifiedBadge');
+
+            if (!input) {
+                alert(searchMode === 'username' ? "Masukkan Username!" : "Masukkan User ID!");
+                return;
+            }
 
             // Reset UI
-            const resDiv = document.getElementById('result');
-            const loader = document.getElementById('loader');
-            const btn = document.getElementById('searchBtn');
-            resDiv.style.display = 'none';
-            loader.style.display = 'block';
             btn.disabled = true;
+            btn.innerText = "Mencari...";
+            spinner.style.display = "block";
+            result.classList.remove('show');
+            avatarImg.classList.remove('loaded');
+            avatarImg.src = "";
+            dispName.innerText = "";
+            usernameEl.innerText = "";
+            userIdEl.innerText = "";
+            statusEl.innerText = "";
+            statusEl.className = "status-text";
+            verifiedBadge.innerHTML = "";
 
             try {
-                let userId = input;
+                let userId, userData, headshotUrl;
 
-                // Step 1: Convert Username to ID if needed
-                if (currentMode === 'username') {
-                    logStep("Mencari User ID...");
-                    const searchData = await fetchWithRetry(`https://users.roblox.com/v1/users/search?keyword=${input}&limit=1`);
-                    if (!searchData.data || searchData.data.length === 0) throw new Error("User tidak ditemukan.");
-                    userId = searchData.data[0].id;
+                if (searchMode === 'username') {
+                    userId = await getUserIdFromUsername(input);
+                    userData = await fetchUserData(userId);
+                    headshotUrl = await fetchHeadshotUrl(userId);
+                } else {
+                    userId = parseInt(input);
+                    if (isNaN(userId) || userId <= 0) throw new Error("User ID tidak valid!");
+                    userData = await fetchUserData(userId);
+                    headshotUrl = await fetchHeadshotUrl(userId);
                 }
 
-                // Step 2: Get Profile Detail
-                logStep("Mengambil data profil...");
-                const userData = await fetchWithRetry(`https://users.roblox.com/v1/users/${userId}`);
-
-                // Step 3: Get Avatar
-                logStep("Mengambil avatar...");
-                const thumbData = await fetchWithRetry(`https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userId}&size=420x420&format=Png`);
-
-                // Update UI
-                document.getElementById('resDisplayName').innerText = userData.displayName;
-                document.getElementById('resUsername').innerText = `@${userData.name}`;
-                document.getElementById('resUserId').innerText = `ID: ${userData.id}`;
-                document.getElementById('avatar').src = thumbData.data[0].imageUrl;
-                document.getElementById('resVerified').innerHTML = userData.hasVerifiedBadge ? '<span class="verified-badge">✓ Verified Artist/Creator</span>' : '';
+                // Tampilkan hasil
+                dispName.innerText = userData.displayName || userData.name;
+                usernameEl.innerText = "@" + userData.name;
+                userIdEl.innerText = `User ID: ${userData.id}`;
                 
-                const statusBox = document.getElementById('statusBox');
-                statusBox.innerText = "Profil berhasil ditemukan!";
-                statusBox.className = "status-msg success";
+                if (userData.hasVerifiedBadge) {
+                    verifiedBadge.innerHTML = `<div class="verified-badge">✓ Verified</div>`;
+                }
 
-                resDiv.style.display = 'block';
-                logStep("");
-            } catch (err) {
-                alert(err.message);
-                logStep("Gagal.");
+                avatarImg.src = headshotUrl;
+                statusEl.innerText = "✅ Profil ditemukan!";
+                statusEl.className = "status-text success";
+
+                setTimeout(() => result.classList.add('show'), 100);
+
+            } catch (error) {
+                console.error("Error:", error);
+                dispName.innerText = "❌ Gagal Memuat";
+                statusEl.innerText = error.message || "Terjadi kesalahan.";
+                statusEl.className = "status-text error";
+                result.classList.add('show');
             } finally {
-                loader.style.display = 'none';
                 btn.disabled = false;
+                btn.innerText = "Cari Profil";
+                spinner.style.display = "none";
             }
+        }
+
+        // ============================================
+        // API CALLS — LANGSUNG KE VERCEL SERVERLESS
+        // ============================================
+        async function apiCall(robloxUrl) {
+            const url = API_BASE + encodeURIComponent(robloxUrl);
+            const response = await fetch(url, {
+                headers: { 'Accept': 'application/json' }
+            });
+            
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({}));
+                throw new Error(error.error || `HTTP ${response.status}`);
+            }
+            
+            return response.json();
+        }
+
+        async function getUserIdFromUsername(username) {
+            const cleanUsername = username.replace(/\s+/g, '').toLowerCase();
+            const data = await apiCall(
+                `https://users.roblox.com/v1/users/search?keyword=${encodeURIComponent(cleanUsername)}&limit=10`
+            );
+
+            if (!data.data || data.data.length === 0) {
+                throw new Error(`Username "${cleanUsername}" tidak ditemukan`);
+            }
+
+            const exactMatch = data.data.find(u => u.name.toLowerCase() === cleanUsername);
+            return exactMatch ? exactMatch.id : data.data[0].id;
+        }
+
+        async function fetchUserData(userId) {
+            const data = await apiCall(`https://users.roblox.com/v1/users/${userId}`);
+            if (data.errors) throw new Error(data.errors[0]?.message || 'User tidak ditemukan');
+            return data;
+        }
+
+        async function fetchHeadshotUrl(userId) {
+            const data = await apiCall(
+                `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userId}&size=420x420&format=Png&isCircular=false`
+            );
+            if (!data.data || !data.data[0] || !data.data[0].imageUrl) {
+                throw new Error('Avatar tidak tersedia');
+            }
+            return data.data[0].imageUrl;
         }
     </script>
 </body>
