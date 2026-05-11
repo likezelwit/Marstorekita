@@ -5,14 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Marstorekita - Checkout</title>
     
-    <script src="https://www.paypal.com/sdk/js?client-id=Abs1uneKUaR7cv_AJLNk38p0fF5PzL_m9z7NA9tNxlKi-0-BnCULHgl54eS8A7agg3ivOQMiVisCncCI&currency=USD"></script>
-
     <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: #f0f2f5; margin: 0; }
-        .card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); text-align: center; width: 100%; max-width: 400px; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            background-color: #f0f2f5; 
+            margin: 0; 
+        }
+        .card { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 20px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1); 
+            text-align: center; 
+            width: 100%; 
+            max-width: 400px; 
+        }
         h2 { margin-bottom: 10px; color: #333; }
         .price { font-size: 28px; font-weight: bold; color: #0070ba; margin: 20px 0; }
-        #paypal-button-container { margin-top: 20px; min-height: 150px; }
+        #paypal-button-container { margin-top: 20px; min-height: 45px; }
+        .error-msg { color: #d9534f; font-size: 14px; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -22,36 +37,53 @@
         <p>Proyek: Marstorekita</p>
         <div class="price">$10.00 USD</div>
         
-        <div id="paypal-button-container"></div>
+        <!-- Container untuk tombol PayPal -->
+        <div id="paypal-button-container">
+            <p>Memuat sistem pembayaran...</p>
+        </div>
     </div>
 
+    <!-- 
+        PENTING: Ganti 'MASUKKAN_CLIENT_ID_ANDA_DISINI' dengan Sandbox Client ID asli Anda 
+        dari dashboard developer.paypal.com
+    -->
+    <script src="https://www.paypal.com/sdk/js?client-id=MASUKKAN_CLIENT_ID_ANDA_DISINI&currency=USD"></script>
+
     <script>
-        // Memastikan SDK PayPal sudah termuat
-        window.onload = function() {
-            if (typeof paypal !== 'undefined') {
-                paypal.Buttons({
-                    createOrder: function(data, actions) {
-                        return actions.order.create({
-                            purchase_units: [{
-                                amount: { value: '10.00' }
-                            }]
-                        });
-                    },
-                    onApprove: function(data, actions) {
-                        return actions.order.capture().then(function(details) {
-                            alert('Sukses! Pembayaran selesai oleh ' + details.payer.name.given_name);
-                        });
-                    },
-                    onError: function(err) {
-                        console.error('PayPal Error:', err);
-                        alert('Gagal memuat tombol. Cek Client ID di konsol.');
-                    }
-                }).render('#paypal-button-container');
-            } else {
-                console.error('SDK PayPal gagal dimuat. Periksa koneksi atau Client ID.');
-                document.getElementById('paypal-button-container').innerHTML = "<p style='color:red'>Gagal memuat sistem pembayaran.</p>";
-            }
-        };
+        // Kita menggunakan Promise 'resolve' dari window.paypal untuk memastikan SDK siap
+        if (window.paypal) {
+            paypal.Buttons({
+                // 1. Set up transaksi
+                createOrder: function(data, actions) {
+                    return actions.order.create({
+                        purchase_units: [{
+                            amount: {
+                                value: '10.00' // Pastikan format desimal benar
+                            }
+                        }]
+                    });
+                },
+                // 2. Finalisasi transaksi setelah user approve
+                onApprove: function(data, actions) {
+                    return actions.order.capture().then(function(details) {
+                        // Berhasil
+                        alert('Pembayaran Sukses! Terima kasih ' + details.payer.name.given_name);
+                        // Optional: Redirect ke halaman sukses
+                        // window.location.href = "sukses.html";
+                    });
+                },
+                // 3. Handle error
+                onError: function(err) {
+                    console.error('PayPal Error:', err);
+                    document.getElementById('paypal-button-container').innerHTML = 
+                        '<p class="error-msg">Terjadi kesalahan sistem pembayaran.</p>';
+                }
+            }).render('#paypal-button-container');
+        } else {
+            // Jika script SDK gagal dimuat (misal koneksi mati)
+            document.getElementById('paypal-button-container').innerHTML = 
+                '<p class="error-msg">Gagal memuat SDK. Periksa koneksi internet Anda.</p>';
+        }
     </script>
 </body>
 </html>
