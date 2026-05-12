@@ -3,20 +3,26 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Top Up Robux - PayPal Payment</title>
+    <title>Top Up Robux - PayPal Payment (Sandbox)</title>
     
     <!-- External Libraries (Tailwind, FontAwesome, Firebase, PayPal) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
-    <!-- Pastikan ID di bawah ini diganti dengan Sandbox ID Anda -->
-    <script src="https://www.paypal.com/sdk/js?client-id=AQq-vLiqrftLbzO3Muz_nVAOES0Yb9bOoUFSe4uShYg-HW5xqVJegBBxytSyc6dQnbLpmOPLVVTe4Kn8&currency=USD&enable-funding=venmo"></script>
+    <!-- PAYPAL SANDBOX CLIENT ID - Replace with your Sandbox Client ID -->
+    <script src="https://www.paypal.com/sdk/js?client-id=AQq-vLiqrftLbzO3Muz_nVAOES0Yb9bOoUFSe4uShYg-HW5xqVJegBBxytSyc6dQnbLpmOPLVVTe4Kn8&currency=USD&enable-funding=venmo&intent=capture&components=buttons"></script>
     
     <!-- Custom CSS -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-gray-50 text-gray-800">
+
+    <!-- Sandbox Banner -->
+    <div class="sandbox-banner">
+        <i class="fas fa-flask mr-2"></i>
+        <strong>MODE SANDBOX</strong> — Website ini masih dalam tahap uji coba. Semua pembayaran menggunakan uang virtual/test.
+    </div>
 
     <!-- Header -->
     <header class="bg-white shadow-sm sticky top-0 z-50">
@@ -196,11 +202,11 @@
                     </div>
                 </div>
 
-                <!-- STEP 4: PEMBAYARAN (PAYPAL) -->
+                <!-- STEP 4: PEMBAYARAN (PAYPAL + SAWERIA) -->
                 <div id="step-4" class="hidden fade-in">
                     <div class="step-label">Step 4</div>
                     <h3 class="text-xl font-bold mb-2">💳 Pembayaran</h3>
-                    <p class="text-sm text-gray-500 mb-6">Selesaikan pembayaran aman melalui PayPal atau Saweria.</p>
+                    <p class="text-sm text-gray-500 mb-6">Selesaikan pembayaran aman melalui PayPal (Sandbox) atau Saweria.</p>
                     
                     <div class="payment-summary">
                         <div class="summary-row">
@@ -208,7 +214,7 @@
                             <span class="font-semibold">Top Up Robux</span>
                         </div>
                         <div class="summary-row">
-                            <span>Username</span>
+                            <span>Username Roblox</span>
                             <span class="font-medium" id="payUsername">-</span>
                         </div>
                         <div class="summary-row">
@@ -216,19 +222,26 @@
                             <span class="font-bold text-blue-600" id="payRobux">-</span>
                         </div>
                         <div class="summary-row">
-                            <small class="text-gray-400">Kurs: 1 USD ≈ Rp 15.000</small>
+                            <small class="text-gray-400">Kurs: 1 Robux ≈ Rp 144 | 1 USD ≈ Rp 15.000</small>
                         </div>
                         <div class="summary-row total">
                             <span>Total Bayar</span>
-                            <div>
-                                <span id="payTotalUSD" class="text-blue-600">$0.00</span>
-                                <span class="paypal-badge"><i class="fab fa-paypal"></i></span>
+                            <div class="text-right">
+                                <div id="payTotalIDR" class="text-2xl font-bold text-blue-600">Rp 0</div>
+                                <div id="payTotalUSD" class="text-sm text-gray-500">≈ $0.00 USD</div>
                             </div>
                         </div>
                     </div>
 
                     <!-- PayPal Button Container -->
-                    <div id="paypal-button-container" class="max-w-sm mx-auto mb-4"></div>
+                    <div class="mb-4">
+                        <div class="text-center mb-2">
+                            <span class="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                                <i class="fas fa-flask mr-1 text-yellow-600"></i>PayPal Sandbox Mode
+                            </span>
+                        </div>
+                        <div id="paypal-button-container" class="max-w-sm mx-auto"></div>
+                    </div>
                     
                     <!-- PEMISAH (ATAU) -->
                     <div class="payment-divider">
@@ -236,20 +249,9 @@
                     </div>
 
                     <!-- Tombol Saweria -->
-                    <a href="https://saweria.co/VowViwEntertainment" target="_blank" class="btn-saweria max-w-sm mx-auto">
+                    <button onclick="showSaweriaDisclaimer()" class="btn-saweria max-w-sm mx-auto">
                         <i class="fa-solid fa-hand-holding-dollar mr-2"></i> Donasi via Saweria
-                    </a>
-                    
-                    <!-- Processing Overlay -->
-                    <div class="processing-overlay" id="paymentProcessing">
-                        <div class="loading-spinner w-12 h-12 border-4 mb-4" style="border-top-color: #0070ba;"></div>
-                        <h4 class="font-bold text-gray-700">Memproses Pembayaran...</h4>
-                        <p class="text-sm text-gray-500">Jangan tutup halaman ini.</p>
-                    </div>
-                </div>
-
-                    <!-- PayPal Button Container -->
-                    <div id="paypal-button-container" class="max-w-sm mx-auto"></div>
+                    </button>
                     
                     <!-- Processing Overlay -->
                     <div class="processing-overlay" id="paymentProcessing">
@@ -280,7 +282,8 @@
                             <div class="flex justify-between items-center">
                                 <div>
                                     <p class="text-xs text-gray-500 uppercase font-bold">Total Bayar</p>
-                                    <p id="paymentTotalFinal" class="font-bold text-2xl text-blue-600">-</p>
+                                    <p id="paymentTotalFinalIDR" class="font-bold text-2xl text-blue-600">-</p>
+                                    <p id="paymentTotalFinalUSD" class="text-sm text-gray-500">-</p>
                                 </div>
                                 <div class="text-right">
                                     <p class="text-xs text-gray-500 uppercase font-bold">Status</p>
@@ -310,7 +313,7 @@
         </div>
     </main>
 
-    <!-- DISCLAIMER MODAL -->
+    <!-- DISCLAIMER MODAL (Game Pass) -->
     <div class="modal-overlay" id="disclaimerModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -359,7 +362,87 @@
         </div>
     </div>
 
+    <!-- SAWERIA DISCLAIMER MODAL -->
+    <div class="modal-overlay" id="saweriaModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>💰 Pembayaran via Saweria</h3>
+                <p>Ikuti langkah-langkah berikut dengan benar</p>
+            </div>
+            <div class="modal-body">
+                <div class="saweria-info-box">
+                    <div class="saweria-row">
+                        <span class="saweria-label">Nominal yang harus dibayar</span>
+                        <span class="saweria-value highlight" id="saweriaAmount">Rp 0</span>
+                    </div>
+                    <div class="saweria-row">
+                        <span class="saweria-label">Nama/Nama pengirim</span>
+                        <span class="saweria-value" id="saweriaUsername">@username</span>
+                    </div>
+                    <div class="saweria-row">
+                        <span class="saweria-label">Pesan (opsional)</span>
+                        <span class="saweria-value text-gray-400">Top Up Robux - [Username]</span>
+                    </div>
+                </div>
+
+                <div class="warning-box saweria-warning">
+                    <i class="fas fa-info-circle"></i>
+                    <p>
+                        <strong>Cara Pembayaran Saweria:</strong><br>
+                        1. Klik tombol "Buka Saweria" di bawah<br>
+                        2. Masukkan nominal <strong>tepat seharga <span id="saweriaInstrAmount">Rp 0</span></strong><br>
+                        3. Isi nama pengirim dengan username: <strong id="saweriaInstrName">@username</strong><br>
+                        4. Pilih metode pembayaran (QRIS/Gopay/dll)<br>
+                        5. Selesaikan pembayaran<br>
+                        6. <strong>Screenshot bukti pembayaran</strong><br>
+                        7. Kembali ke website dan upload screenshot
+                    </p>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn-cancel" onclick="closeSaweriaModal()">Batal</button>
+                    <a href="https://saweria.co/VowViwEntertainment" target="_blank" class="btn-saweria-modal" onclick="openSaweriaLink()">
+                        <i class="fas fa-external-link-alt mr-2"></i> Buka Saweria
+                    </a>
+                </div>
+
+                <!-- Upload Screenshot Section -->
+                <div id="uploadSection" class="upload-section hidden">
+                    <div class="border-t border-gray-700 mt-4 pt-4">
+                        <p class="text-white text-sm font-bold mb-3 text-center">
+                            <i class="fas fa-camera mr-2"></i>Upload Bukti Pembayaran
+                        </p>
+                        <div class="upload-area" id="uploadArea">
+                            <input type="file" id="screenshotInput" accept="image/*" class="hidden" onchange="handleScreenshotUpload(event)">
+                            <div class="upload-placeholder" onclick="document.getElementById('screenshotInput').click()">
+                                <i class="fas fa-cloud-upload-alt text-4xl mb-2 text-blue-400"></i>
+                                <p class="text-sm text-gray-400">Klik untuk upload screenshot</p>
+                                <p class="text-xs text-gray-500 mt-1">Format: JPG, PNG (Max 5MB)</p>
+                            </div>
+                            <div class="upload-preview hidden" id="uploadPreview">
+                                <img id="previewImg" src="" alt="Preview">
+                                <button class="btn-remove-img" onclick="removeScreenshot()">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button id="btnConfirmSaweria" onclick="confirmSaweriaPayment()" disabled class="btn-ok w-full mt-4">
+                            <i class="fas fa-check mr-2"></i> Konfirmasi Pembayaran
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Custom JavaScript -->
     <script src="script.js"></script>
 </body>
-</html>
+</html>'''
+
+# Write HTML file
+with open('/mnt/agents/output/index.html', 'w', encoding='utf-8') as f:
+    f.write(html_code)
+
+print("HTML file written successfully")
+print("Length:", len(html_code))
