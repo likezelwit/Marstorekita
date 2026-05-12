@@ -6,7 +6,7 @@ let currentStep = 1;
 let selectedUser = null;
 let selectedGame = null;
 let searchTimeout = null;
-let paypalRendered = false; // Flag agar tidak render button 2x
+let paypalRendered = false;
 let saweriaScreenshotUploaded = false;
 let uploadedScreenshotData = null;
 
@@ -19,18 +19,18 @@ let orderData = {
     userId: null,
     username: '',
     displayName: '',
-    idrAmount: 0,    // Primary currency - IDR
-    usdAmount: 0     // Secondary - USD (for PayPal sandbox)
+    idrAmount: 0,
+    usdAmount: 0
 };
 
 // ==========================================
 // CURRENCY CONFIG
 // ==========================================
-const RATE_ROBUX_TO_IDR = 144;    // 1 Robux = Rp 144
-const RATE_USD_TO_IDR = 15000;    // 1 USD = Rp 15.000
+const RATE_ROBUX_TO_IDR = 144;
+const RATE_USD_TO_IDR = 15000;
 
 function formatIDR(amount) {
-    return 'Rp ' + amount.toLocaleString('id-ID');
+    return 'Rp ' + Math.round(amount).toLocaleString('id-ID');
 }
 
 function formatUSD(amount) {
@@ -111,13 +111,17 @@ async function searchUsers(keyword) {
 
         // Fetch avatars
         const userIds = results.map(u => u.id).join(',');
-        const avatarData = await apiCall(`https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userIds}&size=150x150&format=Png&isCircular=true`);
+        let avatarMap = {};
         
-        const avatarMap = {};
-        if (avatarData.data) {
-            avatarData.data.forEach(a => {
-                if (a.imageUrl) avatarMap[a.targetId] = a.imageUrl;
-            });
+        try {
+            const avatarData = await apiCall(`https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userIds}&size=150x150&format=Png&isCircular=true`);
+            if (avatarData.data) {
+                avatarData.data.forEach(a => {
+                    if (a.imageUrl) avatarMap[a.targetId] = a.imageUrl;
+                });
+            }
+        } catch (avatarErr) {
+            console.warn('Avatar fetch failed:', avatarErr);
         }
 
         searchDropdown.innerHTML = results.map(user => `
@@ -132,7 +136,9 @@ async function searchUsers(keyword) {
         
         searchDropdown.classList.add('show');
     } catch (error) {
-        console.error(error);
+        console.error('Search error:', error);
+        searchDropdown.innerHTML = '<div class="p-4 text-center text-red-500">Gagal mencari user</div>';
+        searchDropdown.classList.add('show');
     } finally {
         document.getElementById('searchSpinner').classList.add('hidden');
     }
@@ -198,20 +204,35 @@ async function fetchUserGames(userId) {
         const data = await apiCall(`https://games.roblox.com/v2/users/${userId}/games?sortOrder=Asc&limit=10`);
         
         if (data.data && data.data.length > 0) {
-            const universeIds = data.data.map(g => g.id).join(',');
-            try {
-                const thumbData = await apiCall(`https://thumbnails.roblox.com/v1/games/multiget/thumbnails?universeIds=${universeIds}&size=150x150&format=Png&isCircular=false`);
-                const thumbMap = {};
-                if (thumbData.data) {
-                    thumbData.data.forEach(t => {
-                        if (t.thumbnails && t.thumbnails[0]) thumbMap[t.universeId] = t.thumbnails[0].imageUrl;
-                    });
+            // Fetch thumbnails in smaller batches to avoid 400 error
+            const batchSize = 5;
+            const thumbMap = {};
+            
+            for (let i = 0; i < data.data.length; i += batchSize) {
+                const batch = data.data.slice(i, i + batchSize);
+                const universeIds = batch.map(g => g.id).join(',');
+                
+                try {
+                    const thumbData = await apiCall(`https://thumbnails.roblox.com/v1/games/multiget/thumbnails?universeIds=${universeIds}&size=150x150&format=Png&isCircular=false`);
+                    if (thumbData.data) {
+                        thumbData.data.forEach(t => {
+                            if (t.thumbnails && t.thumbnails[0] && t.thumbnails[0].imageUrl) {
+                                thumbMap[t.universeId] = t.thumbnails[0].imageUrl;
+                            }
+                        });
+                    }
+                } catch (thumbErr) {
+                    console.warn('Thumbnail batch failed:', thumbErr);
                 }
-                data.data.forEach(g => g.thumbnail = thumbMap[g.id]);
-            } catch (e) {}
+            }
+            
+            data.data.forEach(g => {
+                g.thumbnail = thumbMap[g.id] || '';
+            });
         }
         return data.data || [];
     } catch (error) {
+        console.error('Fetch games error:', error);
         return [];
     }
 }
@@ -329,89 +350,113 @@ function goToStep4() {
 // STEP 4: PAYPAL SANDBOX INTEGRATION
 // ==========================================
 function renderPayPalButtons() {
-    // Prevent multiple renders
     if (paypalRendered) return;
 
-    // Clear container first
     const container = document.getElementById('paypal-button-container');
     container.innerHTML = '';
 
-    paypal.Buttons({
-        // Sandbox mode configuration
-        createOrder: function(data, actions) {
-            return actions.order.create({
-                intent: 'CAPTURE',
-                purchase_units: [{
-                    description: `Top Up ${orderData.desiredRobux} Robux for @${orderData.username}`,
-                    amount: {
-                        currency_code: 'USD',
-                        value: orderData.usdAmount
-                    }
-                }],
-                application_context: {
-                    shipping_preference: 'NO_SHIPPING'
-                }
-            });
-        },
-        onApprove: function(data, actions) {
-            // Show processing overlay
-            document.getElementById('paymentProcessing').classList.add('show');
+    // Check if PayPal SDK loaded
+    if (typeof paypal === 'undefined') {
+        container.innerHTML = '<div class="text-red-500 text-sm text-center p-4 bg-red-50 rounded-lg">PayPal SDK gagal dimuat. Refresh halaman.</div>';
+        return;
+    }
 
-            return actions.order.capture().then(function(details) {
-                // Simulate server processing delay
-                setTimeout(() => {
+    try {
+        paypal.Buttons({
+            createOrder: function(data, actions) {
+                return actions.order.create({
+                    intent: 'CAPTURE',
+                    purchase_units: [{
+                        description: `Top Up ${orderData.desiredRobux} Robux for @${orderData.username}`,
+                        amount: {
+                            currency_code: 'USD',
+                            value: orderData.usdAmount
+                        }
+                    }],
+                    application_context: {
+                        shipping_preference: 'NO_SHIPPING'
+                    }
+                });
+            },
+            onApprove: function(data, actions) {
+                document.getElementById('paymentProcessing').classList.add('show');
+
+                return actions.order.capture().then(function(details) {
+                    setTimeout(() => {
+                        document.getElementById('paymentProcessing').classList.remove('show');
+                        
+                        hideStep(4);
+                        currentStep = 5;
+                        showStep(5);
+                        updateNavButtons();
+                        
+                        document.getElementById('paymentLoading').classList.remove('block');
+                        document.getElementById('paymentSuccess').classList.remove('hidden');
+                        
+                        document.getElementById('trxIdDisplay').textContent = data.orderID || ('TRX-' + Date.now());
+                        document.getElementById('paymentTotalFinalIDR').textContent = formatIDR(orderData.idrAmount);
+                        document.getElementById('paymentTotalFinalUSD').textContent = '≈ ' + formatUSD(orderData.usdAmount);
+                        
+                        saveTransaction(data.orderID, 'paypal', details);
+                    }, 2000);
+                }).catch(function(err) {
+                    console.error('Capture error:', err);
                     document.getElementById('paymentProcessing').classList.remove('show');
                     
-                    // Move to Success Step
-                    hideStep(4);
-                    currentStep = 5;
-                    showStep(5);
-                    updateNavButtons();
-                    
-                    // Show Success Content
-                    document.getElementById('paymentLoading').classList.remove('block');
-                    document.getElementById('paymentSuccess').classList.remove('hidden');
-                    
-                    document.getElementById('trxIdDisplay').textContent = data.orderID || ('TRX-' + Date.now());
-                    document.getElementById('paymentTotalFinalIDR').textContent = formatIDR(orderData.idrAmount);
-                    document.getElementById('paymentTotalFinalUSD').textContent = '≈ ' + formatUSD(orderData.usdAmount);
-                    
-                    // Save to Firebase (optional)
-                    saveTransaction(data.orderID, 'paypal', details);
-                }, 2000);
-            });
-        },
-        onCancel: function(data) {
-            console.log('PayPal payment cancelled by user');
-            alert('Pembayaran dibatalkan. Silakan coba lagi.');
-        },
-        onError: function(err) {
-            console.error('PayPal Error:', err);
-            alert('Terjadi kesalahan saat pembayaran PayPal (Sandbox). Silakan coba lagi.\n\nCatatan: Pastikan Anda menggunakan akun PayPal Sandbox untuk testing.');
-            document.getElementById('paymentProcessing').classList.remove('show');
-        },
-        style: {
-            layout: 'vertical',
-            color:  'blue',
-            shape:  'rect',
-            label:  'pay'
-        }
-    }).render('#paypal-button-container');
-    
-    paypalRendered = true;
+                    // Handle specific sandbox error
+                    if (err.message && err.message.includes('Buyer access token')) {
+                        alert('⚠️ ERROR SANDBOX:\\n\\nKamu harus login dengan akun PayPal SANDBOX (bukan akun real).\\n\\n1. Buat akun sandbox di developer.paypal.com\\n2. Gunakan akun tersebut untuk test pembayaran');
+                    } else {
+                        alert('Terjadi kesalahan saat capture pembayaran: ' + (err.message || 'Unknown error'));
+                    }
+                });
+            },
+            onCancel: function(data) {
+                console.log('PayPal payment cancelled');
+                alert('Pembayaran dibatalkan.');
+            },
+            onError: function(err) {
+                console.error('PayPal Error:', err);
+                
+                let errorMsg = 'Terjadi kesalahan saat pembayaran PayPal.';
+                
+                if (err.message) {
+                    if (err.message.includes('Buyer access token')) {
+                        errorMsg = '⚠️ ERROR SANDBOX:\\n\\nBuyer access token tidak ditemukan.\\n\\nSolusi:\\n1. Pastikan kamu menggunakan akun PayPal SANDBOX\\n2. Bukan akun PayPal real/live\\n3. Buat akun sandbox di developer.paypal.com';
+                    } else if (err.message.includes('INSTRUMENT_DECLINED')) {
+                        errorMsg = 'Kartu/test akun ditolak. Coba akun sandbox lain.';
+                    } else if (err.message.includes('NOT_ENABLED')) {
+                        errorMsg = 'PayPal account belum diaktifkan untuk pembayaran. Cek setting sandbox account.';
+                    }
+                }
+                
+                alert(errorMsg);
+                document.getElementById('paymentProcessing').classList.remove('show');
+            },
+            style: {
+                layout: 'vertical',
+                color:  'blue',
+                shape:  'rect',
+                label:  'pay'
+            }
+        }).render('#paypal-button-container');
+        
+        paypalRendered = true;
+    } catch (renderErr) {
+        console.error('Render error:', renderErr);
+        container.innerHTML = '<div class="text-red-500 text-sm text-center p-4 bg-red-50 rounded-lg">Gagal memuat tombol PayPal. Coba refresh halaman.</div>';
+    }
 }
 
 // ==========================================
 // SAWERIA DISCLAIMER & FLOW
 // ==========================================
 function showSaweriaDisclaimer() {
-    // Update modal with current order data
     document.getElementById('saweriaAmount').innerText = formatIDR(orderData.idrAmount);
     document.getElementById('saweriaUsername').innerText = '@' + orderData.username;
     document.getElementById('saweriaInstrAmount').innerText = formatIDR(orderData.idrAmount);
     document.getElementById('saweriaInstrName').innerText = '@' + orderData.username;
     
-    // Reset upload section
     saweriaScreenshotUploaded = false;
     uploadedScreenshotData = null;
     document.getElementById('uploadSection').classList.add('hidden');
@@ -425,7 +470,6 @@ function closeSaweriaModal() {
 }
 
 function openSaweriaLink() {
-    // Show upload section after clicking Saweria link
     setTimeout(() => {
         document.getElementById('uploadSection').classList.remove('hidden');
         document.getElementById('uploadSection').scrollIntoView({ behavior: 'smooth' });
@@ -437,7 +481,6 @@ function handleScreenshotUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
     
-    // Validate file
     if (file.size > 5 * 1024 * 1024) {
         alert('File terlalu besar! Maksimal 5MB.');
         return;
@@ -453,13 +496,14 @@ function handleScreenshotUpload(event) {
         uploadedScreenshotData = e.target.result;
         saweriaScreenshotUploaded = true;
         
-        // Show preview
         document.getElementById('previewImg').src = e.target.result;
         document.querySelector('.upload-placeholder').classList.add('hidden');
         document.getElementById('uploadPreview').classList.remove('hidden');
         
-        // Enable confirm button
         document.getElementById('btnConfirmSaweria').disabled = false;
+    };
+    reader.onerror = function() {
+        alert('Gagal membaca file. Coba lagi.');
     };
     reader.readAsDataURL(file);
 }
@@ -479,23 +523,17 @@ function confirmSaweriaPayment() {
         return;
     }
     
-    // Close modal
     closeSaweriaModal();
-    
-    // Show processing
     document.getElementById('paymentProcessing').classList.add('show');
     
-    // Simulate verification
     setTimeout(() => {
         document.getElementById('paymentProcessing').classList.remove('show');
         
-        // Move to Success Step
         hideStep(4);
         currentStep = 5;
         showStep(5);
         updateNavButtons();
         
-        // Show Success Content
         document.getElementById('paymentLoading').classList.remove('block');
         document.getElementById('paymentSuccess').classList.remove('hidden');
         
@@ -504,7 +542,6 @@ function confirmSaweriaPayment() {
         document.getElementById('paymentTotalFinalIDR').textContent = formatIDR(orderData.idrAmount);
         document.getElementById('paymentTotalFinalUSD').textContent = '≈ ' + formatUSD(orderData.usdAmount);
         
-        // Save to Firebase (optional)
         saveTransaction(trxId, 'saweria', { screenshot: uploadedScreenshotData });
     }, 3000);
 }
@@ -513,8 +550,6 @@ function confirmSaweriaPayment() {
 // FIREBASE: SAVE TRANSACTION
 // ==========================================
 function saveTransaction(trxId, method, details) {
-    // Firebase config should be initialized in your main app
-    // This is a placeholder for the save function
     console.log('Saving transaction:', {
         trxId,
         method,
@@ -526,10 +561,6 @@ function saveTransaction(trxId, method, details) {
         details
     });
 }
-
-// ==========================================
-// STEP 5: SUCCESS (Handled inside payment callbacks)
-// ==========================================
 
 // ==========================================
 // NAVIGATION
@@ -547,7 +578,6 @@ function nextStep() {
 function prevStep() {
     if (currentStep > 1) {
         if(currentStep === 4) {
-             // Reset PayPal render flag when going back
              paypalRendered = false;
              document.getElementById('paypal-button-container').innerHTML = '';
         }
@@ -562,7 +592,6 @@ function prevStep() {
 function showStep(step) {
     document.getElementById(`step-${step}`).classList.remove('hidden');
     
-    // Update Dots
     for(let i=1; i<=5; i++) {
         const dot = document.getElementById(`dot-${i}`);
         dot.classList.remove('active', 'completed');
@@ -582,7 +611,6 @@ function updateNavButtons() {
 
     backBtn.classList.toggle('hidden', currentStep === 1);
     
-    // Hide default navigation in Payment and Success steps
     if (currentStep === 4 || currentStep === 5) {
         navContainer.classList.add('hidden');
     } else {
@@ -612,7 +640,10 @@ async function apiCall(url) {
     const response = await fetch(API_BASE + encodeURIComponent(url), {
         headers: { 'Accept': 'application/json' }
     });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+    }
     return response.json();
 }
 
