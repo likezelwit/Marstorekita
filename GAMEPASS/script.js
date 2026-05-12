@@ -1,4 +1,4 @@
-// ==========================================
+==========================================
 // CONFIG & STATE
 // ==========================================
 const API_BASE = '/api/roblox?url=';
@@ -7,6 +7,8 @@ let selectedUser = null;
 let selectedGame = null;
 let searchTimeout = null;
 let paypalRendered = false; // Flag agar tidak render button 2x
+let saweriaScreenshotUploaded = false;
+let uploadedScreenshotData = null;
 
 // State Data
 let orderData = {
@@ -16,8 +18,24 @@ let orderData = {
     gameName: '',
     userId: null,
     username: '',
-    usdAmount: 0 // New property for USD
+    displayName: '',
+    idrAmount: 0,    // Primary currency - IDR
+    usdAmount: 0     // Secondary - USD (for PayPal sandbox)
 };
+
+// ==========================================
+// CURRENCY CONFIG
+// ==========================================
+const RATE_ROBUX_TO_IDR = 144;    // 1 Robux = Rp 144
+const RATE_USD_TO_IDR = 15000;    // 1 USD = Rp 15.000
+
+function formatIDR(amount) {
+    return 'Rp ' + amount.toLocaleString('id-ID');
+}
+
+function formatUSD(amount) {
+    return '$' + parseFloat(amount).toFixed(2) + ' USD';
+}
 
 // ==========================================
 // STEP 1: PACKAGE SELECTION
@@ -28,7 +46,7 @@ function selectPackage(amount) {
     document.getElementById('customInfo').classList.add('hidden');
     
     orderData.desiredRobux = amount;
-    // Reset USD calculation placeholder
+    orderData.idrAmount = 0;
     orderData.usdAmount = 0;
     event.currentTarget.classList.add('selected');
     enableNext();
@@ -42,6 +60,7 @@ function calculateCustom() {
     
     if (val && val >= 10) {
         orderData.desiredRobux = val;
+        orderData.idrAmount = 0;
         orderData.usdAmount = 0;
         info.classList.remove('hidden');
         info.classList.add('flex');
@@ -123,6 +142,7 @@ function selectUser(userId, username, displayName, avatarUrl, isVerified) {
     selectedUser = { id: userId, name: username, displayName, avatar: avatarUrl, verified: isVerified };
     orderData.userId = userId;
     orderData.username = username;
+    orderData.displayName = displayName;
     
     searchDropdown.classList.remove('show');
     searchInput.value = username;
@@ -208,18 +228,17 @@ function selectGameItem(index, gameId, gameName) {
     // Math: Game Pass Price (Robux)
     orderData.gamePassPrice = Math.ceil(orderData.desiredRobux / 0.7);
     
-    // Math: USD Calculation
-    // Asumsi: 1 Robux = Rp 144 (Marked up)
-    // Asumsi Kurs: 1 USD = Rp 15.000
-    // Total USD = (gamePassPrice * 144) / 15000
-    const priceIDR = orderData.gamePassPrice * 144;
-    orderData.usdAmount = (priceIDR / 15000).toFixed(2);
+    // Math: IDR Calculation (Primary)
+    orderData.idrAmount = orderData.gamePassPrice * RATE_ROBUX_TO_IDR;
+    
+    // Math: USD Calculation (Secondary - for PayPal sandbox)
+    orderData.usdAmount = (orderData.idrAmount / RATE_USD_TO_IDR).toFixed(2);
     
     showDisclaimer();
 }
 
 // ==========================================
-// DISCLAIMER MODAL
+// DISCLAIMER MODAL (Game Pass)
 // ==========================================
 function showDisclaimer() {
     document.getElementById('calcDesired').innerText = orderData.desiredRobux + ' R$';
@@ -296,31 +315,42 @@ function goToStep4() {
     showStep(4);
     updateNavButtons();
     
-    // Populate Payment Summary
+    // Populate Payment Summary - IDR Primary, USD Secondary
     document.getElementById('payUsername').innerText = '@' + orderData.username;
     document.getElementById('payRobux').innerText = orderData.desiredRobux + ' Robux';
-    document.getElementById('payTotalUSD').innerText = '$' + orderData.usdAmount;
+    document.getElementById('payTotalIDR').innerText = formatIDR(orderData.idrAmount);
+    document.getElementById('payTotalUSD').innerText = '≈ ' + formatUSD(orderData.usdAmount);
     
-    // Render PayPal Button
+    // Render PayPal Button (Sandbox)
     renderPayPalButtons();
 }
 
 // ==========================================
-// STEP 4: PAYPAL INTEGRATION
+// STEP 4: PAYPAL SANDBOX INTEGRATION
 // ==========================================
 function renderPayPalButtons() {
     // Prevent multiple renders
     if (paypalRendered) return;
 
+    // Clear container first
+    const container = document.getElementById('paypal-button-container');
+    container.innerHTML = '';
+
     paypal.Buttons({
+        // Sandbox mode configuration
         createOrder: function(data, actions) {
             return actions.order.create({
+                intent: 'CAPTURE',
                 purchase_units: [{
                     description: `Top Up ${orderData.desiredRobux} Robux for @${orderData.username}`,
                     amount: {
+                        currency_code: 'USD',
                         value: orderData.usdAmount
                     }
-                }]
+                }],
+                application_context: {
+                    shipping_preference: 'NO_SHIPPING'
+                }
             });
         },
         onApprove: function(data, actions) {
@@ -339,17 +369,25 @@ function renderPayPalButtons() {
                     updateNavButtons();
                     
                     // Show Success Content
-                    document.getElementById('paymentLoading').classList.remove('block'); // ensure hidden if logic changes
+                    document.getElementById('paymentLoading').classList.remove('block');
                     document.getElementById('paymentSuccess').classList.remove('hidden');
                     
                     document.getElementById('trxIdDisplay').textContent = data.orderID || ('TRX-' + Date.now());
-                    document.getElementById('paymentTotalFinal').textContent = '$' + orderData.usdAmount;
+                    document.getElementById('paymentTotalFinalIDR').textContent = formatIDR(orderData.idrAmount);
+                    document.getElementById('paymentTotalFinalUSD').textContent = '≈ ' + formatUSD(orderData.usdAmount);
+                    
+                    // Save to Firebase (optional)
+                    saveTransaction(data.orderID, 'paypal', details);
                 }, 2000);
             });
         },
-        onError: function (err) {
-            console.error(err);
-            alert('Terjadi kesalahan saat pembayaran PayPal. Silakan coba lagi.');
+        onCancel: function(data) {
+            console.log('PayPal payment cancelled by user');
+            alert('Pembayaran dibatalkan. Silakan coba lagi.');
+        },
+        onError: function(err) {
+            console.error('PayPal Error:', err);
+            alert('Terjadi kesalahan saat pembayaran PayPal (Sandbox). Silakan coba lagi.\\n\\nCatatan: Pastikan Anda menggunakan akun PayPal Sandbox untuk testing.');
             document.getElementById('paymentProcessing').classList.remove('show');
         },
         style: {
@@ -364,7 +402,133 @@ function renderPayPalButtons() {
 }
 
 // ==========================================
-// STEP 5: SUCCESS (Handled inside PayPal onApprove)
+// SAWERIA DISCLAIMER & FLOW
+// ==========================================
+function showSaweriaDisclaimer() {
+    // Update modal with current order data
+    document.getElementById('saweriaAmount').innerText = formatIDR(orderData.idrAmount);
+    document.getElementById('saweriaUsername').innerText = '@' + orderData.username;
+    document.getElementById('saweriaInstrAmount').innerText = formatIDR(orderData.idrAmount);
+    document.getElementById('saweriaInstrName').innerText = '@' + orderData.username;
+    
+    // Reset upload section
+    saweriaScreenshotUploaded = false;
+    uploadedScreenshotData = null;
+    document.getElementById('uploadSection').classList.add('hidden');
+    document.getElementById('btnConfirmSaweria').disabled = true;
+    
+    document.getElementById('saweriaModal').classList.add('show');
+}
+
+function closeSaweriaModal() {
+    document.getElementById('saweriaModal').classList.remove('show');
+}
+
+function openSaweriaLink() {
+    // Show upload section after clicking Saweria link
+    setTimeout(() => {
+        document.getElementById('uploadSection').classList.remove('hidden');
+        document.getElementById('uploadSection').scrollIntoView({ behavior: 'smooth' });
+    }, 1000);
+}
+
+// Screenshot Upload Handling
+function handleScreenshotUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    // Validate file
+    if (file.size > 5 * 1024 * 1024) {
+        alert('File terlalu besar! Maksimal 5MB.');
+        return;
+    }
+    
+    if (!file.type.startsWith('image/')) {
+        alert('Hanya file gambar yang diperbolehkan!');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        uploadedScreenshotData = e.target.result;
+        saweriaScreenshotUploaded = true;
+        
+        // Show preview
+        document.getElementById('previewImg').src = e.target.result;
+        document.querySelector('.upload-placeholder').classList.add('hidden');
+        document.getElementById('uploadPreview').classList.remove('hidden');
+        
+        // Enable confirm button
+        document.getElementById('btnConfirmSaweria').disabled = false;
+    };
+    reader.readAsDataURL(file);
+}
+
+function removeScreenshot() {
+    uploadedScreenshotData = null;
+    saweriaScreenshotUploaded = false;
+    document.getElementById('screenshotInput').value = '';
+    document.querySelector('.upload-placeholder').classList.remove('hidden');
+    document.getElementById('uploadPreview').classList.add('hidden');
+    document.getElementById('btnConfirmSaweria').disabled = true;
+}
+
+function confirmSaweriaPayment() {
+    if (!saweriaScreenshotUploaded) {
+        alert('Silakan upload screenshot bukti pembayaran terlebih dahulu!');
+        return;
+    }
+    
+    // Close modal
+    closeSaweriaModal();
+    
+    // Show processing
+    document.getElementById('paymentProcessing').classList.add('show');
+    
+    // Simulate verification
+    setTimeout(() => {
+        document.getElementById('paymentProcessing').classList.remove('show');
+        
+        // Move to Success Step
+        hideStep(4);
+        currentStep = 5;
+        showStep(5);
+        updateNavButtons();
+        
+        // Show Success Content
+        document.getElementById('paymentLoading').classList.remove('block');
+        document.getElementById('paymentSuccess').classList.remove('hidden');
+        
+        const trxId = 'SWR-' + Date.now();
+        document.getElementById('trxIdDisplay').textContent = trxId;
+        document.getElementById('paymentTotalFinalIDR').textContent = formatIDR(orderData.idrAmount);
+        document.getElementById('paymentTotalFinalUSD').textContent = '≈ ' + formatUSD(orderData.usdAmount);
+        
+        // Save to Firebase (optional)
+        saveTransaction(trxId, 'saweria', { screenshot: uploadedScreenshotData });
+    }, 3000);
+}
+
+// ==========================================
+// FIREBASE: SAVE TRANSACTION
+// ==========================================
+function saveTransaction(trxId, method, details) {
+    // Firebase config should be initialized in your main app
+    // This is a placeholder for the save function
+    console.log('Saving transaction:', {
+        trxId,
+        method,
+        username: orderData.username,
+        robux: orderData.desiredRobux,
+        idrAmount: orderData.idrAmount,
+        usdAmount: orderData.usdAmount,
+        timestamp: new Date().toISOString(),
+        details
+    });
+}
+
+// ==========================================
+// STEP 5: SUCCESS (Handled inside payment callbacks)
 // ==========================================
 
 // ==========================================
@@ -381,16 +545,11 @@ function nextStep() {
 }
 
 function prevStep() {
-    // If going back from Payment (Step 4), we might need to reset PayPal container if implemented dynamically, 
-    // but since we stay in DOM, it's fine. 
-    // However, if we go back to change amount, we need to re-render buttons next time.
-    
     if (currentStep > 1) {
-        // If going back from step 4, we might want to hide nav buttons logic specifically
         if(currentStep === 4) {
-             // Optional: clear paypal container if you want to reset state
-             // document.getElementById('paypal-button-container').innerHTML = '';
-             // paypalRendered = false; 
+             // Reset PayPal render flag when going back
+             paypalRendered = false;
+             document.getElementById('paypal-button-container').innerHTML = '';
         }
 
         hideStep(currentStep);
@@ -457,6 +616,18 @@ async function apiCall(url) {
     return response.json();
 }
 
+// Modal click outside to close
 document.getElementById('disclaimerModal').addEventListener('click', function(e) {
     if (e.target === this) closeDisclaimer();
 });
+
+document.getElementById('saweriaModal').addEventListener('click', function(e) {
+    if (e.target === this) closeSaweriaModal();
+});'''
+
+# Write JS file
+with open('/mnt/agents/output/script.js', 'w', encoding='utf-8') as f:
+    f.write(js_code)
+
+print("JS file written successfully")
+print("Length:", len(js_code))
