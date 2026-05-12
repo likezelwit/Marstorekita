@@ -10,8 +10,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
-    <!-- PAYPAL SANDBOX CLIENT ID - Replace with your Sandbox Client ID -->
-    <script src="https://www.paypal.com/sdk/js?client-id=AQq-vLiqrftLbzO3Muz_nVAOES0Yb9bOoUFSe4uShYg-HW5xqVJegBBxytSyc6dQnbLpmOPLVVTe4Kn8&currency=USD&enable-funding=venmo&intent=capture&components=buttons"></script>
+    
+    <!-- PAYPAL SANDBOX SDK v5 - With proper config -->
+    <script 
+        src="https://www.paypal.com/sdk/js?client-id=AQq-vLiqrftLbzO3Muz_nVAOES0Yb9bOoUFSe4uShYg-HW5xqVJegBBxytSyc6dQnbLpmOPLVVTe4Kn8&currency=USD&intent=capture&commit=true&disable-funding=credit,card&enable-funding=paypal"
+        data-sdk-integration-source="button-factory"
+        data-namespace="paypal_sdk">
+    </script>
     
     <!-- Custom CSS -->
     <link rel="stylesheet" href="style.css">
@@ -233,6 +238,22 @@
                         </div>
                     </div>
 
+                    <!-- PayPal Info Box -->
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                        <div class="flex items-start gap-3">
+                            <i class="fas fa-info-circle text-yellow-600 mt-1"></i>
+                            <div>
+                                <p class="text-sm font-bold text-yellow-800">Cara Testing PayPal Sandbox:</p>
+                                <p class="text-xs text-yellow-700 mt-1">
+                                    1. Klik tombol PayPal di bawah<br>
+                                    2. Login dengan akun sandbox: <strong>sb-zenze51095260@personal.example.com</strong><br>
+                                    3. Password: <strong>NH+7ajeh</strong><br>
+                                    4. Klik "Pay Now" untuk menyelesaikan
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- PayPal Button Container -->
                     <div class="mb-4">
                         <div class="text-center mb-2">
@@ -241,6 +262,7 @@
                             </span>
                         </div>
                         <div id="paypal-button-container" class="max-w-sm mx-auto"></div>
+                        <div id="paypal-error-msg" class="hidden text-red-500 text-sm text-center mt-2 p-2 bg-red-50 rounded"></div>
                     </div>
                     
                     <!-- PEMISAH (ATAU) -->
