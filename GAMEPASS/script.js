@@ -1,4 +1,4 @@
-//==========================================
+// ==========================================
 // CONFIG & STATE
 // ==========================================
 const API_BASE = '/api/roblox?url=';
@@ -387,7 +387,7 @@ function renderPayPalButtons() {
         },
         onError: function(err) {
             console.error('PayPal Error:', err);
-            alert('Terjadi kesalahan saat pembayaran PayPal (Sandbox). Silakan coba lagi.\\n\\nCatatan: Pastikan Anda menggunakan akun PayPal Sandbox untuk testing.');
+            alert('Terjadi kesalahan saat pembayaran PayPal (Sandbox). Silakan coba lagi.\n\nCatatan: Pastikan Anda menggunakan akun PayPal Sandbox untuk testing.');
             document.getElementById('paymentProcessing').classList.remove('show');
         },
         style: {
@@ -623,11 +623,4 @@ document.getElementById('disclaimerModal').addEventListener('click', function(e)
 
 document.getElementById('saweriaModal').addEventListener('click', function(e) {
     if (e.target === this) closeSaweriaModal();
-});'''
-
-# Write JS file
-with open('/mnt/agents/output/script.js', 'w', encoding='utf-8') as f:
-    f.write(js_code)
-
-print("JS file written successfully")
-print("Length:", len(js_code))
+});
