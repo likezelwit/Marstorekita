@@ -1,6 +1,19 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
 body { font-family: "Inter", sans-serif; }
 
+/* Sandbox Banner */
+.sandbox-banner {
+    background: linear-gradient(90deg, #f59e0b, #d97706);
+    color: white;
+    text-align: center;
+    padding: 10px 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    position: sticky;
+    top: 0;
+    z-index: 60;
+}
+
 .gradient-bg {
     background: linear-gradient(135deg, #00b4d8 0%, #0077b6 100%);
 }
@@ -213,6 +226,8 @@ body { font-family: "Inter", sans-serif; }
     max-width: 500px;
     border: 1px solid rgba(255,255,255,0.1);
     overflow: hidden;
+    max-height: 90vh;
+    overflow-y: auto;
 }
 .modal-header {
     padding: 25px;
@@ -305,6 +320,11 @@ body { font-family: "Inter", sans-serif; }
 .btn-ok:hover {
     box-shadow: 0 5px 20px rgba(0, 180, 216, 0.4);
     transform: translateY(-2px);
+}
+.btn-ok:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
 }
 
 /* Verification Step */
@@ -495,3 +515,124 @@ body { font-family: "Inter", sans-serif; }
 .btn-saweria:active {
     transform: translateY(0);
 }
+
+/* Saweria Modal Styles */
+.saweria-info-box {
+    background: rgba(0,0,0,0.3);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+.saweria-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.saweria-row:last-child { border-bottom: none; }
+.saweria-label { color: rgba(255,255,255,0.6); font-size: 0.9em; }
+.saweria-value { color: #fff; font-weight: 600; }
+.saweria-value.highlight { color: #ffd43b; font-size: 1.3em; }
+
+.saweria-warning {
+    background: rgba(0, 212, 255, 0.1) !important;
+    border-color: rgba(0, 212, 255, 0.3) !important;
+}
+.saweria-warning i { color: #00d4ff !important; }
+
+.btn-saweria-modal {
+    flex: 2;
+    padding: 14px;
+    background: linear-gradient(135deg, #ff8e53 0%, #ff6b6b 100%);
+    border: none;
+    color: #fff;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.btn-saweria-modal:hover {
+    box-shadow: 0 5px 20px rgba(255, 107, 107, 0.4);
+    transform: translateY(-2px);
+}
+
+/* Upload Section */
+.upload-section {
+    animation: fadeIn 0.5s ease;
+}
+.upload-area {
+    border: 2px dashed rgba(255,255,255,0.2);
+    border-radius: 12px;
+    padding: 30px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+}
+.upload-area:hover {
+    border-color: #00d4ff;
+    background: rgba(0, 212, 255, 0.05);
+}
+.upload-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.upload-preview {
+    position: relative;
+    display: inline-block;
+}
+.upload-preview img {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 8px;
+}
+.btn-remove-img {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 28px;
+    height: 28px;
+    background: #ff4444;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8em;
+}
+.btn-remove-img:hover {
+    background: #cc0000;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .sandbox-banner {
+        font-size: 0.75rem;
+        padding: 8px 12px;
+    }
+    .modal-content {
+        margin: 10px;
+        max-height: 95vh;
+    }
+    .btn-group {
+        flex-direction: column;
+    }
+    .btn-cancel, .btn-ok, .btn-saweria-modal {
+        width: 100%;
+    }
+}'''
+
+# Write CSS file
+with open('/mnt/agents/output/style.css', 'w', encoding='utf-8') as f:
+    f.write(css_code)
+
+print("CSS file written successfully")
+print("Length:", len(css_code))
