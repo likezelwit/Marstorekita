@@ -628,11 +628,4 @@ body { font-family: "Inter", sans-serif; }
     .btn-cancel, .btn-ok, .btn-saweria-modal {
         width: 100%;
     }
-}'''
-
-# Write CSS file
-with open('/mnt/agents/output/style.css', 'w', encoding='utf-8') as f:
-    f.write(css_code)
-
-print("CSS file written successfully")
-print("Length:", len(css_code))
+}
